@@ -12,6 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import { FsdResultStats } from "@/components/fsd/fsd-result-stats";
 import { useToast } from "@/hooks/use-toast";
+import { StarRating } from "@/components/fsd/star-rating";
+import { PromoteCommentDialog } from "@/components/fsd/promote-comment-dialog";
 import {
   ArrowLeft,
   Download,
@@ -33,6 +35,7 @@ interface FsdData {
   markdown: string;
   warnings: string;
   aiEnabled: boolean;
+  rating: number | null;
   shareId: string | null;
   createdAt: string;
   comments: Array<{
@@ -135,6 +138,22 @@ export default function FsdDetailPage() {
     }
   }
 
+  async function handleRate(rating: number) {
+    try {
+      const res = await fetch(`/api/fsd/${id}/rate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating }),
+      });
+      if (res.ok) {
+        setFsd((prev) => (prev ? { ...prev, rating } : prev));
+        toast({ title: `Rated ${rating} star${rating > 1 ? "s" : ""}!` });
+      }
+    } catch {
+      toast({ title: "Failed to save rating", variant: "destructive" });
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center text-muted-foreground">
@@ -183,6 +202,14 @@ export default function FsdDetailPage() {
             {fsd.aiEnabled && (
               <Badge className="bg-wc-blue/10 text-wc-blue">AI-Powered</Badge>
             )}
+          </div>
+          {/* Star Rating */}
+          <div className="mt-3">
+            <StarRating
+              currentRating={fsd.rating ?? 0}
+              onRate={handleRate}
+              size="lg"
+            />
           </div>
         </div>
       </div>
@@ -275,18 +302,27 @@ export default function FsdDetailPage() {
             <div className="space-y-4">
               {fsd.comments.map((comment) => (
                 <div key={comment.id} className="bg-white border rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-sm text-navy">
-                      {comment.authorName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(comment.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm text-navy">
+                        {comment.authorName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(comment.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <PromoteCommentDialog
+                      fsdId={id}
+                      commentId={comment.id}
+                      commentContent={comment.content}
+                      module={fsd.primaryModule}
+                      processArea={fsd.processArea}
+                    />
                   </div>
                   <p className="text-sm text-foreground">{comment.content}</p>
                 </div>

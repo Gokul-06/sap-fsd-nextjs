@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText } from "lucide-react";
+import { FileText, Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ async function getFsds() {
         primaryModule: true,
         processArea: true,
         aiEnabled: true,
+        rating: true,
         createdAt: true,
         author: true,
         _count: { select: { comments: true } },
@@ -79,6 +80,20 @@ export default async function HistoryPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
+                      {fsd.rating && (
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3.5 w-3.5 ${
+                                i < fsd.rating!
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-gray-200"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                       <Badge
                         variant="secondary"
                         className="bg-navy/10 text-navy font-semibold"

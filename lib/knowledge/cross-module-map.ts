@@ -180,6 +180,76 @@ export const CROSS_MODULE_INTEGRATIONS: IntegrationLink[] = [
       "Activity type confirmation and pricing",
     ],
   },
+  // SD ↔ PP
+  {
+    sourceModule: "SD",
+    targetModule: "PP",
+    process: "Make-to-Order Production",
+    dataFlow: "Sales order triggers planned order / production order for MTO items",
+    keyObjects: ["Sales Order", "Planned Order", "Production Order", "BOM"],
+    criticalConsiderations: [
+      "MTO vs MTS strategy determines trigger",
+      "Individual or collective requirements",
+      "Customer-specific BOM and routing",
+      "Order settlement to sales order cost",
+    ],
+  },
+  // SD ↔ EWM
+  {
+    sourceModule: "SD",
+    targetModule: "EWM",
+    process: "Outbound Delivery Processing",
+    dataFlow: "Outbound delivery triggers warehouse task for picking and shipping",
+    keyObjects: ["Outbound Delivery", "Warehouse Task", "Handling Unit", "Shipping"],
+    criticalConsiderations: [
+      "Wave management for pick optimization",
+      "Packing and HU management",
+      "Goods issue posting synchronization",
+      "Integration model: embedded vs decentralized EWM",
+    ],
+  },
+  // FI ↔ MM
+  {
+    sourceModule: "FI",
+    targetModule: "MM",
+    process: "Automatic Payment Program",
+    dataFlow: "F110 payment run clears vendor open items from MM invoices",
+    keyObjects: ["Payment Document", "Vendor Line Items", "Bank Account"],
+    criticalConsiderations: [
+      "Payment method and bank determination",
+      "Payment block on MM invoices",
+      "Cash discount terms from PO/contract",
+      "Withholding tax at payment time",
+    ],
+  },
+  // CO ↔ PP
+  {
+    sourceModule: "CO",
+    targetModule: "PP",
+    process: "Activity Confirmation Costing",
+    dataFlow: "Production confirmations post activity costs to cost centers and orders",
+    keyObjects: ["Activity Type", "Cost Center", "Production Order", "Confirmation"],
+    criticalConsiderations: [
+      "Activity price calculation (plan vs actual)",
+      "Target cost version for variance analysis",
+      "Work-in-process calculation",
+      "Month-end settlement rules",
+    ],
+  },
+  // PP ↔ QM
+  {
+    sourceModule: "PP",
+    targetModule: "QM",
+    process: "In-Process Quality Inspection",
+    dataFlow: "Production order triggers inspection lots at operation milestones",
+    keyObjects: ["Inspection Lot", "Production Order", "Inspection Plan", "Results Recording"],
+    criticalConsiderations: [
+      "Inspection type 03 for in-process inspection",
+      "Automatic usage decision and stock posting",
+      "Defect recording and quality notifications",
+      "Certificate of analysis for finished goods",
+    ],
+  },
 ];
 
 export const MODULE_DESCRIPTIONS: Record<string, string> = {

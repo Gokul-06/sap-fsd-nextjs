@@ -167,6 +167,22 @@ export function identifyProcessArea(requirementsText: string, module: string): s
       "Bank Accounting": ["bank", "payment program", "bank statement"],
       "Tax Management": ["tax", "withholding tax", "GST", "VAT"],
     },
+    CO: {
+      "Cost Center Accounting": ["cost center", "cost center accounting", "overhead", "activity type"],
+      "Internal Orders": ["internal order", "overhead order", "investment order"],
+      "Product Costing": ["product costing", "cost estimate", "standard cost", "material cost"],
+      "Profitability Analysis (CO-PA)": ["profitability analysis", "COPA", "profit segment", "contribution margin"],
+      "Profit Center Accounting": ["profit center", "profit center accounting", "transfer pricing"],
+      "Planning & Budgeting": ["planning", "budget", "cost planning", "forecast"],
+    },
+    PP: {
+      "Production Orders": ["production order", "manufacturing order", "shop floor", "confirmation"],
+      "Material Requirements Planning": ["MRP", "planned order", "requirements planning", "demand management"],
+      "Bill of Materials": ["BOM", "bill of material", "component", "assembly"],
+      "Capacity Planning": ["capacity", "work center", "scheduling", "capacity planning"],
+      "Repetitive Manufacturing": ["repetitive manufacturing", "production line", "backflush"],
+      "Process Manufacturing": ["process order", "recipe", "batch management"],
+    },
   };
 
   const areas = processAreas[module] || {};

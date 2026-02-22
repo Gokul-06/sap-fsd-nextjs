@@ -32,6 +32,12 @@ export function Header() {
             >
               History
             </Link>
+            <Link
+              href="/feedback"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-[#1B2A4A]"
+            >
+              Feedback
+            </Link>
           </nav>
           <span className="rounded-full bg-[#0091DA]/10 px-3 py-1 text-xs font-semibold text-[#0091DA]">
             Digital Core NA

@@ -2,6 +2,7 @@
  * Claude AI Integration for FSD Generation
  * Calls Anthropic API to generate intelligent narrative content
  * for FSD sections that require contextual writing.
+ * Supports feedback context and few-shot examples injection.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -23,7 +24,7 @@ export function isAIEnabled(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
 
-async function callClaude(prompt: string): Promise<string> {
+export async function callClaude(prompt: string): Promise<string> {
   const anthropic = getClient();
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -38,6 +39,12 @@ async function callClaude(prompt: string): Promise<string> {
   return '';
 }
 
+/** Append extra context (feedback rules + few-shot) to a prompt if available */
+function withExtraContext(prompt: string, extraContext?: string): string {
+  if (!extraContext?.trim()) return prompt;
+  return `${prompt}\n\n${extraContext}`;
+}
+
 // ─────────────────────────────────────────────
 // Section Generators — Each returns markdown
 // ─────────────────────────────────────────────
@@ -47,6 +54,7 @@ export async function aiExecutiveSummary(
   module: string,
   requirements: string,
   processArea: string,
+  extraContext?: string,
 ): Promise<string> {
   const prompt = `You are a senior SAP functional consultant at a top consulting firm. Write a professional executive summary for a Functional Specification Document (FSD).
 
@@ -66,7 +74,7 @@ Rules:
 - Do NOT use markdown headers — just plain paragraphs
 - Keep it under 200 words`;
 
-  return await callClaude(prompt);
+  return await callClaude(withExtraContext(prompt, extraContext));
 }
 
 export async function aiProposedSolution(
@@ -76,14 +84,15 @@ export async function aiProposedSolution(
   tables: string[],
   tcodes: string[],
   fioriApps: string[],
+  extraContext?: string,
 ): Promise<string> {
   const prompt = `You are a senior SAP ${module} solution architect. Design the proposed solution for this FSD.
 
 Requirements: ${requirements}
 Process Area: ${processArea}
-Available SAP Tables: ${tables.slice(0, 15).join(', ')}
-Key Transactions: ${tcodes.slice(0, 15).join(', ')}
-Fiori Apps: ${fioriApps.slice(0, 8).join(', ')}
+Available SAP Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
+Key Transactions: ${tcodes.slice(0, 15).join(', ') || 'Standard ' + module + ' transactions'}
+Fiori Apps: ${fioriApps.slice(0, 8).join(', ') || 'Standard ' + module + ' Fiori apps'}
 
 Write the following in markdown format:
 
@@ -102,13 +111,14 @@ Rules:
 - Reference actual tcodes and Fiori apps from the list above
 - Keep it practical and implementable`;
 
-  return await callClaude(prompt);
+  return await callClaude(withExtraContext(prompt, extraContext));
 }
 
 export async function aiOutputManagement(
   module: string,
   processArea: string,
   requirements: string,
+  extraContext?: string,
 ): Promise<string> {
   const prompt = `You are an SAP ${module} consultant. Define the output management requirements for this FSD.
 
@@ -119,7 +129,7 @@ Write in markdown format:
 
 ### 9.1 Output Types
 A markdown table with columns: Output Type | Description | Format | Trigger | Recipient
-Include 4-6 output types relevant to the ${processArea} process (e.g., purchase orders, GR slips, invoices, approval notifications).
+Include 4-6 output types relevant to the ${processArea} process.
 
 ### 9.2 Email Notifications & Workflows
 A markdown table with columns: Notification | Trigger Event | Recipients | Template
@@ -128,15 +138,16 @@ Include 3-5 workflow notifications.
 Rules:
 - Be specific to SAP ${module} ${processArea}
 - Include both printed outputs and email/workflow notifications
-- Reference SAP output types (MEDRUCK, etc.) where applicable`;
+- Reference SAP output types where applicable`;
 
-  return await callClaude(prompt);
+  return await callClaude(withExtraContext(prompt, extraContext));
 }
 
 export async function aiErrorHandling(
   module: string,
   processArea: string,
   requirements: string,
+  extraContext?: string,
 ): Promise<string> {
   const prompt = `You are an SAP ${module} consultant. Define error handling and validations for this FSD.
 
@@ -162,18 +173,19 @@ Rules:
 - Include realistic error messages
 - Reference SAP message classes where possible`;
 
-  return await callClaude(prompt);
+  return await callClaude(withExtraContext(prompt, extraContext));
 }
 
 export async function aiDataMigration(
   module: string,
   processArea: string,
   tables: string[],
+  extraContext?: string,
 ): Promise<string> {
   const prompt = `You are an SAP ${module} data migration specialist. Define the data migration plan for this FSD.
 
 Process Area: ${processArea}
-Key Tables: ${tables.slice(0, 15).join(', ')}
+Key Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
 
 Write in markdown format:
 
@@ -194,12 +206,13 @@ Rules:
 - Reference actual migration tools available in S/4HANA
 - Include realistic dependencies between objects`;
 
-  return await callClaude(prompt);
+  return await callClaude(withExtraContext(prompt, extraContext));
 }
 
 export async function aiCutoverPlan(
   module: string,
   processArea: string,
+  extraContext?: string,
 ): Promise<string> {
   const prompt = `You are an SAP ${module} cutover manager. Define the cutover and go-live plan for this FSD.
 
@@ -223,5 +236,5 @@ Rules:
 - Include realistic timeframes
 - Cover both technical and business cutover activities`;
 
-  return await callClaude(prompt);
+  return await callClaude(withExtraContext(prompt, extraContext));
 }

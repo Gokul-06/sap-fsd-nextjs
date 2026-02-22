@@ -9,22 +9,25 @@ datasource db {
 }
 
 model Fsd {
-  id             String    @id @default(cuid())
-  title          String
-  projectName    String
-  author         String
-  companyName    String?
-  primaryModule  String
-  processArea    String
-  relatedModules String    @default("[]")
-  markdown       String    @db.Text
-  warnings       String    @default("[]")
-  aiEnabled      Boolean   @default(true)
-  shareId        String?   @unique
-  docxBlobUrl    String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  comments       Comment[]
+  id                  String    @id @default(cuid())
+  title               String
+  projectName         String
+  author              String
+  companyName         String?
+  primaryModule       String
+  processArea         String
+  relatedModules      String    @default("[]")
+  markdown            String    @db.Text
+  warnings            String    @default("[]")
+  aiEnabled           Boolean   @default(true)
+  shareId             String?   @unique
+  docxBlobUrl         String?
+  rating              Int?      // 1-5 stars (Level 3)
+  usedFeedbackRuleIds String    @default("[]") // JSON array of rule IDs used in generation
+  usedFewShotFsdIds   String    @default("[]") // JSON array of FSD IDs used as few-shot examples
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  comments            Comment[]
 }
 
 model Comment {
@@ -34,4 +37,21 @@ model Comment {
   authorName String   @default("Anonymous")
   content    String   @db.Text
   createdAt  DateTime @default(now())
+}
+
+model FeedbackRule {
+  id              String   @id @default(cuid())
+  module          String
+  processArea     String?
+  ruleType        String   // "content_improvement" | "structure" | "validation" | "terminology"
+  content         String   @db.Text
+  source          String   // "comment" | "manual" | "ai_extracted"
+  sourceCommentId String?
+  active          Boolean  @default(true)
+  appliedCount    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([module, processArea])
+  @@index([active])
 }

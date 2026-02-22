@@ -1,6 +1,7 @@
 /**
  * FSD Generation Engine
  * Takes classified requirements and produces a structured FSD markdown document
+ * Uses module-registry for all module data (MM, SD, FI, CO, PP)
  */
 
 import { FSD_TEMPLATE_SECTIONS, generateFSDMarkdown } from "@/lib/templates/fsd-template";
@@ -15,20 +16,23 @@ import {
   aiCutoverPlan,
 } from "@/lib/tools/claude-ai";
 import {
-  MM_TABLES,
-  MM_TCODES,
-  MM_FIORI_APPS,
-  MM_CDS_VIEWS,
-  MM_BAPIS,
-  MM_MOVEMENT_TYPES,
-  MM_INTEGRATION_POINTS,
-  MM_PROCESS_AREAS,
-  MM_CONFIG_AREAS,
-} from "@/lib/knowledge/sap-mm-reference";
+  getModuleData,
+  isModuleSupported,
+  flattenTableNames,
+  flattenTcodeNames,
+  flattenAppNames,
+  generateModuleTablesMarkdown,
+  generateModuleTcodesMarkdown,
+  generateModuleFioriAppsMarkdown,
+  generateModuleCdsViewsMarkdown,
+  generateModuleBapisMarkdown,
+  generateModuleConfigMarkdown,
+  generateModuleAuthorizationMarkdown,
+  generateModuleTestScenarios,
+} from "@/lib/knowledge/module-registry";
 import {
   getIntegrationsForModule,
   getAffectedModules,
-  CROSS_MODULE_INTEGRATIONS,
 } from "@/lib/knowledge/cross-module-map";
 
 export interface FSDInput {
@@ -38,6 +42,8 @@ export interface FSDInput {
   requirements: string;
   module?: string; // Optional override — if not provided, auto-classify
   includeAllSections?: boolean;
+  feedbackContext?: string; // Injected feedback rules context
+  fewShotContext?: string; // Injected few-shot examples context
 }
 
 export interface FSDOutput {
@@ -89,7 +95,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
       `${i.sourceModule} → ${i.targetModule}: ${i.process} — ${i.dataFlow}`
   );
 
-  // Step 4: Build section content (hardcoded data)
+  // Step 4: Build section content using module-registry (generic for all modules)
   const sections = buildSectionContent(
     primaryModule,
     relatedModules,
@@ -101,28 +107,16 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
   // Step 5: AI-enhanced sections (if API key is available)
   if (isAIEnabled()) {
     try {
-      // Collect table/tcode/app names for context
-      const tableNames: string[] = [];
-      const tcodeNames: string[] = [];
-      const appNames: string[] = [];
+      // Collect table/tcode/app names for AI context — works for ALL modules
+      const tableNames = flattenTableNames(primaryModule);
+      const tcodeNames = flattenTcodeNames(primaryModule);
+      const appNames = flattenAppNames(primaryModule);
 
-      if (primaryModule === "MM") {
-        for (const group of Object.values(MM_TABLES)) {
-          for (const [tbl, desc] of Object.entries(group)) {
-            tableNames.push(`${tbl} (${desc})`);
-          }
-        }
-        for (const group of Object.values(MM_TCODES)) {
-          for (const [tc, desc] of Object.entries(group)) {
-            tcodeNames.push(`${tc} (${desc})`);
-          }
-        }
-        for (const group of Object.values(MM_FIORI_APPS)) {
-          for (const [id, name] of Object.entries(group)) {
-            appNames.push(`${id}: ${name}`);
-          }
-        }
-      }
+      // Build extra context from feedback rules and few-shot examples
+      const extraContext = [
+        input.feedbackContext || "",
+        input.fewShotContext || "",
+      ].filter(Boolean).join("\n\n");
 
       // Call Claude AI for all empty sections in parallel
       const [
@@ -133,12 +127,12 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         dataMigration,
         cutoverPlan,
       ] = await Promise.all([
-        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea),
-        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames),
-        aiOutputManagement(primaryModule, processArea, input.requirements),
-        aiErrorHandling(primaryModule, processArea, input.requirements),
-        aiDataMigration(primaryModule, processArea, tableNames),
-        aiCutoverPlan(primaryModule, processArea),
+        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, extraContext),
+        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, extraContext),
+        aiOutputManagement(primaryModule, processArea, input.requirements, extraContext),
+        aiErrorHandling(primaryModule, processArea, input.requirements, extraContext),
+        aiDataMigration(primaryModule, processArea, tableNames, extraContext),
+        aiCutoverPlan(primaryModule, processArea, extraContext),
       ]);
 
       // Inject AI content into sections
@@ -201,21 +195,21 @@ function buildSectionContent(
     requirements_list: generateRequirementsTable(requirements),
   };
 
-  // Section 5: SAP Configuration (module-specific)
-  if (primaryModule === "MM") {
+  // Section 5: SAP Configuration (generic for all supported modules)
+  if (isModuleSupported(primaryModule)) {
     sections["sap_configuration"] = {
-      config_items: generateMMConfigTable(processArea),
-      master_data: generateMMMasterDataTable(processArea),
+      config_items: generateModuleConfigMarkdown(primaryModule),
+      master_data: generateMasterDataTable(primaryModule, processArea),
     };
   }
 
-  // Section 6: Technical Objects (module-specific)
-  if (primaryModule === "MM") {
+  // Section 6: Technical Objects (generic for all supported modules)
+  if (isModuleSupported(primaryModule)) {
     sections["technical_objects"] = {
-      standard_tables: generateMMTablesSection(processArea),
-      cds_views: generateMMCDSViewsSection(processArea),
-      fiori_apps: generateMMFioriAppsSection(processArea),
-      bapis_rfcs: generateMMBAPIsSection(processArea),
+      standard_tables: generateModuleTablesMarkdown(primaryModule),
+      cds_views: generateModuleCdsViewsMarkdown(primaryModule),
+      fiori_apps: generateModuleFioriAppsMarkdown(primaryModule),
+      bapis_rfcs: generateModuleBapisMarkdown(primaryModule),
     };
   }
 
@@ -224,14 +218,14 @@ function buildSectionContent(
     cross_module: generateIntegrationTable(integrations),
   };
 
-  // Section 8: Authorization
+  // Section 8: Authorization (generic for all supported modules)
   sections["authorization"] = {
-    roles: generateAuthorizationSection(primaryModule, processArea),
+    roles: generateModuleAuthorizationMarkdown(primaryModule),
   };
 
-  // Section 12: Testing
+  // Section 12: Testing (generic for all supported modules)
   sections["testing"] = {
-    test_scenarios: generateTestScenarios(primaryModule, processArea, requirements),
+    test_scenarios: generateModuleTestScenarios(primaryModule, processArea),
     integration_tests: generateIntegrationTestScenarios(primaryModule, integrations),
   };
 
@@ -257,103 +251,51 @@ function generateRequirementsTable(requirements: string): string {
   return table;
 }
 
-function generateMMTablesSection(processArea: string): string {
-  let table =
-    "| Table | Description | Usage in This Spec |\n|-------|-------------|-------------------|\n";
+function generateMasterDataTable(module: string, processArea: string): string {
+  const masterDataMap: Record<string, Array<{ object: string; views: string; resp: string; migrate: string }>> = {
+    MM: [
+      { object: "Material Master", views: "Basic, Purchasing, MRP, Accounting, Storage", resp: "MDM Team", migrate: "Yes" },
+      { object: "Vendor Master", views: "General, Company Code, Purchasing Org", resp: "MDM Team", migrate: "Yes" },
+      { object: "Purchasing Info Record", views: "General, Purchasing Org", resp: "Procurement", migrate: "Yes" },
+      { object: "Source List", views: "Material/Vendor/Plant", resp: "Procurement", migrate: "Conditional" },
+      { object: "Quota Arrangement", views: "Vendor split ratios", resp: "Procurement", migrate: "Conditional" },
+    ],
+    SD: [
+      { object: "Customer Master", views: "General, Company Code, Sales Area", resp: "MDM Team", migrate: "Yes" },
+      { object: "Material Master", views: "Basic, Sales Org, Plant, Distribution", resp: "MDM Team", migrate: "Yes" },
+      { object: "Pricing Conditions", views: "Condition records, Scales", resp: "Sales Team", migrate: "Yes" },
+      { object: "Credit Master", views: "Credit limits, Risk categories", resp: "Finance", migrate: "Conditional" },
+      { object: "Output Master", views: "Output types, Partners, Media", resp: "IT Team", migrate: "Conditional" },
+    ],
+    FI: [
+      { object: "GL Account Master", views: "COA, Company Code", resp: "Finance Team", migrate: "Yes" },
+      { object: "Vendor Master", views: "General, Company Code, Payment", resp: "MDM Team", migrate: "Yes" },
+      { object: "Customer Master", views: "General, Company Code, Dunning", resp: "MDM Team", migrate: "Yes" },
+      { object: "Bank Master", views: "Bank key, Account ID", resp: "Treasury", migrate: "Yes" },
+      { object: "Asset Master", views: "General, Depreciation areas, Time-dependent", resp: "Finance Team", migrate: "Conditional" },
+    ],
+    CO: [
+      { object: "Cost Center Master", views: "Basic, Indicators, Communication", resp: "Controlling Team", migrate: "Yes" },
+      { object: "Profit Center Master", views: "Basic, Indicators, Company Code Assignment", resp: "Controlling Team", migrate: "Yes" },
+      { object: "Activity Type", views: "Basic, Prices, Allocation", resp: "Controlling Team", migrate: "Yes" },
+      { object: "Cost Element Master", views: "Primary, Secondary", resp: "Controlling Team", migrate: "Yes" },
+      { object: "Statistical Key Figures", views: "Basic data, Unit of measure", resp: "Controlling Team", migrate: "Conditional" },
+    ],
+    PP: [
+      { object: "Material Master", views: "Basic, MRP, Work Scheduling, Production", resp: "MDM Team", migrate: "Yes" },
+      { object: "Bill of Material", views: "Header, Items, Sub-items", resp: "Engineering", migrate: "Yes" },
+      { object: "Work Center", views: "Basic, Capacities, Scheduling, Costing", resp: "Production Team", migrate: "Yes" },
+      { object: "Routing", views: "Header, Operations, Component Assignment", resp: "Engineering", migrate: "Yes" },
+      { object: "Production Version", views: "BOM/Routing assignment, Lot size", resp: "Production Team", migrate: "Conditional" },
+    ],
+  };
 
-  const relevantGroups = getRelevantMMGroups(processArea);
+  const objects = masterDataMap[module] || masterDataMap["MM"];
 
-  for (const group of relevantGroups) {
-    const tables = (MM_TABLES as Record<string, Record<string, string>>)[group];
-    if (tables) {
-      for (const [tbl, desc] of Object.entries(tables)) {
-        table += `| ${tbl} | ${desc} | Read/Write |\n`;
-      }
-    }
-  }
-
-  return table;
-}
-
-function generateMMCDSViewsSection(processArea: string): string {
-  let table =
-    "| CDS View / Service | Description | Usage |\n|--------------------|-------------|-------|\n";
-
-  const relevantGroups = getRelevantMMGroups(processArea);
-
-  for (const group of relevantGroups) {
-    const views = (MM_CDS_VIEWS as Record<string, Record<string, string>>)[group];
-    if (views) {
-      for (const [view, desc] of Object.entries(views)) {
-        table += `| ${view} | ${desc} | Read |\n`;
-      }
-    }
-  }
-
-  return table;
-}
-
-function generateMMFioriAppsSection(processArea: string): string {
-  let table =
-    "| App ID | App Name | Usage | Custom Extension? |\n|--------|----------|-------|------------------|\n";
-
-  const relevantGroups = getRelevantMMFioriGroups(processArea);
-
-  for (const group of relevantGroups) {
-    const apps = (MM_FIORI_APPS as Record<string, Record<string, string>>)[group];
-    if (apps) {
-      for (const [appId, appName] of Object.entries(apps)) {
-        table += `| ${appId} | ${appName} | Standard | No |\n`;
-      }
-    }
-  }
-
-  return table;
-}
-
-function generateMMBAPIsSection(processArea: string): string {
-  let table =
-    "| BAPI/RFC/API | Description | Direction | Usage |\n|-------------|-------------|-----------|-------|\n";
-
-  const relevantGroups = getRelevantMMBAPIGroups(processArea);
-
-  for (const group of relevantGroups) {
-    const bapis = (MM_BAPIS as Record<string, Record<string, string>>)[group];
-    if (bapis) {
-      for (const [bapi, desc] of Object.entries(bapis)) {
-        table += `| ${bapi} | ${desc} | Inbound | Custom Development |\n`;
-      }
-    }
-  }
-
-  return table;
-}
-
-function generateMMConfigTable(processArea: string): string {
-  let table =
-    "| Config Item | SPRO Path / TCode | Current Setting | New Setting | Rationale |\n|-------------|-------------------|-----------------|-------------|-----------||\n";
-
-  const configs = MM_CONFIG_AREAS.slice(0, 8); // Top 8 relevant configs
-  configs.forEach((cfg) => {
-    table += `| ${cfg} | SPRO > MM | TBD | TBD | Per business requirements |\n`;
-  });
-
-  return table;
-}
-
-function generateMMMasterDataTable(processArea: string): string {
   let table =
     "| Master Data Object | Fields / Views | Responsibility | Migration? |\n|-------------------|----------------|----------------|------------|\n";
 
-  const masterDataObjects = [
-    { object: "Material Master", views: "Basic, Purchasing, MRP, Accounting, Storage", resp: "MDM Team", migrate: "Yes" },
-    { object: "Vendor Master", views: "General, Company Code, Purchasing Org", resp: "MDM Team", migrate: "Yes" },
-    { object: "Purchasing Info Record", views: "General, Purchasing Org", resp: "Procurement", migrate: "Yes" },
-    { object: "Source List", views: "Material/Vendor/Plant", resp: "Procurement", migrate: "Conditional" },
-    { object: "Quota Arrangement", views: "Vendor split ratios", resp: "Procurement", migrate: "Conditional" },
-  ];
-
-  for (const md of masterDataObjects) {
+  for (const md of objects) {
     table += `| ${md.object} | ${md.views} | ${md.resp} | ${md.migrate} |\n`;
   }
 
@@ -380,43 +322,6 @@ function generateIntegrationTable(
   return table;
 }
 
-function generateAuthorizationSection(module: string, processArea: string): string {
-  let table =
-    "| Role | Description | Auth Objects | T-Codes / Apps |\n|------|-------------|-------------|----------------|\n";
-
-  if (module === "MM") {
-    const roles = [
-      { role: "Z_MM_BUYER", desc: "Procurement Buyer", auth: "M_BEST_EKG, M_BEST_EKO, M_BEST_WRK", tcodes: "ME21N, ME22N, ME23N" },
-      { role: "Z_MM_PR_CREATOR", desc: "PR Creator", auth: "M_BANF_EKG, M_BANF_EKO, M_BANF_WRK", tcodes: "ME51N, ME52N, ME53N" },
-      { role: "Z_MM_PR_APPROVER", desc: "PR Approver", auth: "M_BANF_FRG, M_EINK_FRG", tcodes: "ME54N, ME55" },
-      { role: "Z_MM_PO_APPROVER", desc: "PO Approver", auth: "M_BEST_FRG, M_EINK_FRG", tcodes: "ME28, ME29N" },
-      { role: "Z_MM_GR_CLERK", desc: "Goods Receipt Clerk", auth: "M_MSEG_BWA, M_MSEG_WMB", tcodes: "MIGO, MB01" },
-      { role: "Z_MM_IV_CLERK", desc: "Invoice Verification Clerk", auth: "M_RECH_BUK, M_RECH_EKG", tcodes: "MIRO, MIR4, MRBR" },
-      { role: "Z_MM_INV_MANAGER", desc: "Inventory Manager", auth: "M_MSEG_BWA, M_MSEG_LGO", tcodes: "MMBE, MB52, MI01" },
-    ];
-
-    for (const r of roles) {
-      table += `| ${r.role} | ${r.desc} | ${r.auth} | ${r.tcodes} |\n`;
-    }
-  }
-
-  return table;
-}
-
-function generateTestScenarios(module: string, processArea: string, requirements: string): string {
-  let table =
-    "| Test ID | Scenario | Steps | Expected Result | Priority |\n|---------|----------|-------|-----------------|----------|\n";
-
-  if (module === "MM") {
-    const scenarios = getMMTestScenarios(processArea);
-    scenarios.forEach((s, i) => {
-      table += `| TS-${String(i + 1).padStart(3, "0")} | ${s.scenario} | ${s.steps} | ${s.expected} | ${s.priority} |\n`;
-    });
-  }
-
-  return table;
-}
-
 function generateIntegrationTestScenarios(
   module: string,
   integrations: Array<{
@@ -434,111 +339,4 @@ function generateIntegrationTestScenarios(
   });
 
   return table;
-}
-
-// --- Mapping helpers ---
-
-function getRelevantMMGroups(processArea: string): string[] {
-  const mapping: Record<string, string[]> = {
-    "Procure-to-Pay (P2P)": ["procurement", "invoiceVerification", "masterData"],
-    "Inventory Management": ["inventory", "masterData"],
-    "Invoice Verification": ["invoiceVerification", "procurement"],
-    "Material Requirements Planning": ["procurement", "inventory", "masterData"],
-    "Vendor Management": ["procurement", "masterData"],
-    "Contract Management": ["procurement", "masterData"],
-    General: ["procurement", "inventory", "invoiceVerification", "masterData"],
-  };
-  return mapping[processArea] || mapping["General"];
-}
-
-function getRelevantMMFioriGroups(processArea: string): string[] {
-  const mapping: Record<string, string[]> = {
-    "Procure-to-Pay (P2P)": ["procurement", "analytics"],
-    "Inventory Management": ["inventory", "analytics"],
-    "Invoice Verification": ["procurement"],
-    General: ["procurement", "inventory", "analytics"],
-  };
-  return mapping[processArea] || mapping["General"];
-}
-
-function getRelevantMMBAPIGroups(processArea: string): string[] {
-  const mapping: Record<string, string[]> = {
-    "Procure-to-Pay (P2P)": ["purchaseOrder", "purchaseRequisition", "goodsMovement"],
-    "Inventory Management": ["goodsMovement", "materialMaster"],
-    "Invoice Verification": ["purchaseOrder"],
-    General: ["purchaseOrder", "purchaseRequisition", "goodsMovement", "materialMaster", "vendor"],
-  };
-  return mapping[processArea] || mapping["General"];
-}
-
-function getMMTestScenarios(processArea: string): Array<{
-  scenario: string;
-  steps: string;
-  expected: string;
-  priority: string;
-}> {
-  const allScenarios = [
-    {
-      scenario: "Create Purchase Requisition",
-      steps: "1. Open ME51N  2. Enter material, qty, plant  3. Save",
-      expected: "PR created with correct account assignment",
-      priority: "High",
-    },
-    {
-      scenario: "PR Release Strategy",
-      steps: "1. Open ME54N  2. Select PR  3. Release",
-      expected: "PR released per release strategy",
-      priority: "High",
-    },
-    {
-      scenario: "Create Purchase Order from PR",
-      steps: "1. Open ME21N  2. Reference PR  3. Assign vendor  4. Save",
-      expected: "PO created with PR reference",
-      priority: "High",
-    },
-    {
-      scenario: "PO Release Strategy",
-      steps: "1. Open ME28  2. Select PO  3. Release",
-      expected: "PO released and ready for GR",
-      priority: "High",
-    },
-    {
-      scenario: "Goods Receipt against PO",
-      steps: "1. Open MIGO  2. Select GR for PO  3. Enter PO number  4. Post",
-      expected: "Material document and accounting document created",
-      priority: "High",
-    },
-    {
-      scenario: "Invoice Verification",
-      steps: "1. Open MIRO  2. Enter PO reference  3. Enter invoice amount  4. Post",
-      expected: "Invoice posted; GR/IR cleared",
-      priority: "High",
-    },
-    {
-      scenario: "3-Way Match Variance",
-      steps: "1. Post invoice with price variance  2. Check tolerance",
-      expected: "Invoice blocked if variance exceeds tolerance",
-      priority: "Medium",
-    },
-    {
-      scenario: "Stock Transfer between Plants",
-      steps: "1. Create STO  2. Post GI at sending plant  3. Post GR at receiving plant",
-      expected: "Stock moved; both material documents created",
-      priority: "Medium",
-    },
-    {
-      scenario: "Physical Inventory",
-      steps: "1. Create PI doc (MI01)  2. Enter count (MI04)  3. Post differences (MI07)",
-      expected: "Stock adjusted; variance document posted",
-      priority: "Medium",
-    },
-    {
-      scenario: "Vendor Returns",
-      steps: "1. Create return PO  2. Post GI to vendor (mvt type 122)",
-      expected: "Stock reduced; vendor credit expected",
-      priority: "Medium",
-    },
-  ];
-
-  return allScenarios;
 }
