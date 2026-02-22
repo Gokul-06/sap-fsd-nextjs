@@ -96,8 +96,18 @@ export function RefinementChat({
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Refinement failed");
+        // Handle timeout (504) or other non-JSON responses
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Server error (${res.status})`);
+        } else {
+          throw new Error(
+            res.status === 504
+              ? "Request timed out. Try a simpler instruction."
+              : `Server error (${res.status}). Please try again.`
+          );
+        }
       }
 
       const data = await res.json();
