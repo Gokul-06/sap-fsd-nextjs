@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "buildCommand": "prisma generate && prisma db push && next build",
   "functions": {
     "app/api/generate/route.ts": {
       "maxDuration": 60

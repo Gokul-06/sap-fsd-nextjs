@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Fsd {
@@ -15,9 +16,9 @@ model Fsd {
   companyName    String?
   primaryModule  String
   processArea    String
-  relatedModules String    @default("[]") // JSON array stored as string for SQLite
-  markdown       String
-  warnings       String    @default("[]") // JSON array stored as string for SQLite
+  relatedModules String    @default("[]")
+  markdown       String    @db.Text
+  warnings       String    @default("[]")
   aiEnabled      Boolean   @default(true)
   shareId        String?   @unique
   docxBlobUrl    String?
@@ -31,6 +32,6 @@ model Comment {
   fsdId      String
   fsd        Fsd      @relation(fields: [fsdId], references: [id], onDelete: Cascade)
   authorName String   @default("Anonymous")
-  content    String
+  content    String   @db.Text
   createdAt  DateTime @default(now())
 }
