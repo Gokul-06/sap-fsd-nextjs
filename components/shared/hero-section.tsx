@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { AnimatedCityscape } from "./animated-cityscape";
 
 const stats = [
   { value: "14", label: "FSD Sections", icon: "doc" },
@@ -12,7 +13,7 @@ const stats = [
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#1B2A4A] via-[#1E3258] to-[#2A3F6E] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#1B2A4A] via-[#1E3258] to-[#2A3F6E]">
       {/* Animated background patterns */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Zig-zag moving lines */}
@@ -79,75 +80,84 @@ export function HeroSection() {
         </div>
       </div>
 
-      <div className="relative mx-auto max-w-5xl text-center">
-        {/* Badge */}
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 backdrop-blur-sm border border-white/10 animate-fade-in-up">
-          <Sparkles className="h-3.5 w-3.5 text-[#0091DA]" />
-          <span className="text-xs font-medium text-white/80 tracking-wide">
-            Powered by WE-AI
-          </span>
-        </div>
+      {/* Main hero content */}
+      <div className="relative px-4 pt-20 pb-12 sm:px-6 sm:pt-28 sm:pb-16 lg:px-8">
+        <div className="mx-auto max-w-5xl text-center">
+          {/* Badge */}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 backdrop-blur-sm border border-white/10 animate-fade-in-up">
+            <Sparkles className="h-3.5 w-3.5 text-[#0091DA]" />
+            <span className="text-xs font-medium text-white/80 tracking-wide">
+              Powered by WE-AI
+            </span>
+          </div>
 
-        {/* Heading */}
-        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-in-up animation-delay-100">
-          Generate SAP Specifications
-          <span className="block mt-2 bg-gradient-to-r from-[#0091DA] to-[#33A7E4] bg-clip-text text-transparent">
-            in Seconds
-          </span>
-        </h1>
+          {/* Heading */}
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-in-up animation-delay-100">
+            Generate SAP Specifications
+            <span className="block mt-2 bg-gradient-to-r from-[#0091DA] to-[#33A7E4] bg-clip-text text-transparent">
+              in Seconds
+            </span>
+          </h1>
 
-        {/* Subtitle */}
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed animate-fade-in-up animation-delay-200">
-          Enterprise-grade functional specification documents for SAP S/4HANA implementations — powered by WE-AI intelligence
-        </p>
+          {/* Subtitle */}
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed animate-fade-in-up animation-delay-200">
+            Enterprise-grade functional specification documents for SAP S/4HANA
+            implementations — powered by WE-AI intelligence
+          </p>
 
-        {/* Stat Cards */}
-        <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((stat, i) => (
-            <div
-              key={stat.label}
-              className="group relative rounded-xl bg-white/[0.07] px-4 py-6 backdrop-blur-sm border border-white/[0.08] transition-all duration-300 hover:bg-white/[0.12] hover:border-white/[0.15] hover:scale-105 hover:shadow-lg hover:shadow-[#0091DA]/10 animate-fade-in-up"
-              style={{ animationDelay: `${300 + i * 100}ms` }}
+          {/* Stat Cards */}
+          <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className="group relative rounded-xl bg-white/[0.07] px-4 py-6 backdrop-blur-sm border border-white/[0.08] transition-all duration-300 hover:bg-white/[0.12] hover:border-white/[0.15] hover:scale-105 hover:shadow-lg hover:shadow-[#0091DA]/10 animate-fade-in-up"
+                style={{ animationDelay: `${300 + i * 100}ms` }}
+              >
+                <p className="text-3xl font-bold text-white sm:text-4xl group-hover:text-[#0091DA] transition-colors">
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 text-xs font-medium text-white/50 uppercase tracking-wider">
+                  {stat.label}
+                </p>
+                <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-[#0091DA]/0 to-transparent group-hover:via-[#0091DA]/50 transition-all duration-500" />
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Button */}
+          <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center animate-fade-in-up animation-delay-700">
+            <Link
+              href="/generate"
+              className="group inline-flex items-center rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-[#1B2A4A] shadow-lg shadow-black/20 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-[#0091DA]/20 hover:scale-105"
             >
-              <p className="text-3xl font-bold text-white sm:text-4xl group-hover:text-[#0091DA] transition-colors">
-                {stat.value}
-              </p>
-              <p className="mt-1.5 text-xs font-medium text-white/50 uppercase tracking-wider">
-                {stat.label}
-              </p>
-              <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-[#0091DA]/0 to-transparent group-hover:via-[#0091DA]/50 transition-all duration-500" />
-            </div>
-          ))}
-        </div>
-
-        {/* CTA Button */}
-        <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center animate-fade-in-up animation-delay-700">
-          <Link
-            href="/generate"
-            className="group inline-flex items-center rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-[#1B2A4A] shadow-lg shadow-black/20 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-[#0091DA]/20 hover:scale-105"
-          >
-            Generate New FSD
-            <svg
-              className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
+              Generate New FSD
+              <svg
+                className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                />
+              </svg>
+            </Link>
+            <Link
+              href="/history"
+              className="inline-flex items-center rounded-xl border border-white/20 px-8 py-3.5 text-sm font-medium text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-white/30"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-              />
-            </svg>
-          </Link>
-          <Link
-            href="/history"
-            className="inline-flex items-center rounded-xl border border-white/20 px-8 py-3.5 text-sm font-medium text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-white/30"
-          >
-            View Documents
-          </Link>
+              View Documents
+            </Link>
+          </div>
         </div>
+      </div>
+
+      {/* Animated Cityscape at bottom — Westernacher style */}
+      <div className="relative mt-4">
+        <AnimatedCityscape />
       </div>
     </section>
   );

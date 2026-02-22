@@ -222,3 +222,125 @@
 .gradient-text {
   @apply bg-gradient-to-r from-[#1B2A4A] to-[#0091DA] bg-clip-text text-transparent;
 }
+
+/* ────────────────────────────────────────────── */
+/* Animated Cityscape                              */
+/* ────────────────────────────────────────────── */
+
+/* Buildings rising from ground */
+@keyframes building-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-building-rise {
+  animation: building-rise 0.8s ease-out both;
+}
+
+/* Person walking — subtle bob */
+@keyframes walk-person {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-walk-person {
+  animation: walk-person 1.2s ease-in-out infinite;
+}
+
+/* Vehicles driving right */
+@keyframes drive-right {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(6px); }
+}
+
+.animate-drive-right {
+  animation: drive-right 3s ease-in-out infinite;
+}
+
+/* Vehicles driving left */
+@keyframes drive-left {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-6px); }
+}
+
+.animate-drive-left {
+  animation: drive-left 4s ease-in-out infinite;
+}
+
+/* Smoke rising */
+@keyframes smoke {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-8px); opacity: 0.15; }
+}
+
+.animate-smoke {
+  animation: smoke 4s ease-in-out infinite;
+}
+
+/* Server lights blinking */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.animate-blink {
+  animation: blink 2s ease-in-out infinite;
+}
+
+/* Pulse ring (antenna signal) */
+@keyframes pulse-ring {
+  0%, 100% { r: 3; opacity: 1; }
+  50% { r: 6; opacity: 0.3; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+/* Slow spin for recycling arrows */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Airplane flying */
+@keyframes fly-plane {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-15px, -3px); }
+  50% { transform: translate(-30px, 0); }
+  75% { transform: translate(-15px, 3px); }
+}
+
+.animate-fly-plane {
+  animation: fly-plane 6s ease-in-out infinite;
+}
+
+/* Data flow dot (used with SVG animateMotion) */
+@keyframes data-flow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.animate-data-flow {
+  animation: data-flow-pulse 2s ease-in-out infinite;
+}
+
+/* Continuous scroll (marquee effect) */
+@keyframes scroll-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 30s linear infinite;
+}

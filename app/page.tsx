@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HeroSection } from "@/components/shared/hero-section";
+import { AlreadyKnewSection } from "@/components/shared/already-knew-section";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/db";
@@ -35,6 +36,9 @@ export default async function HomePage() {
   return (
     <div>
       <HeroSection />
+
+      {/* Already Knew? — Westernacher-style stats */}
+      <AlreadyKnewSection />
 
       <div className="max-w-6xl mx-auto px-4 py-16">
         {/* Quick Stats */}
