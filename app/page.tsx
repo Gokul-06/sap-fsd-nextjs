@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HeroSection } from "@/components/shared/hero-section";
 import { AlreadyKnewSection } from "@/components/shared/already-knew-section";
+import { AnimatedCityscape } from "@/components/shared/animated-cityscape";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/db";
@@ -37,10 +38,15 @@ export default async function HomePage() {
     <div>
       <HeroSection />
 
+      {/* Animated Supply Chain Cityscape — WHITE background, Westernacher style */}
+      <section className="bg-white w-full overflow-hidden">
+        <AnimatedCityscape />
+      </section>
+
       {/* Already Knew? — Westernacher-style stats */}
       <AlreadyKnewSection />
 
-      <div className="max-w-6xl mx-auto px-4 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Quick Stats */}
         {total > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-14">

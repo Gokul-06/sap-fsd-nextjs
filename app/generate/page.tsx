@@ -179,14 +179,14 @@ export default function GeneratePage() {
     <div className="min-h-[calc(100vh-68px-60px)]">
       {/* Step Indicator */}
       <div className="bg-white border-b py-4">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <StepIndicator currentStep={step} />
         </div>
       </div>
 
-      {/* Step 1 & 2: Centered narrow layout */}
+      {/* Step 1 & 2: Full-width layout */}
       {step !== 3 && (
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* STEP 1: Form */}
           {step === 1 && (
             <div className="space-y-5 animate-fade-in-up">
@@ -461,7 +461,7 @@ Example (SAP Activate — Explore Phase):
 
       {/* STEP 3: Results — Full-width two-column layout */}
       {step === 3 && result && (
-        <div className="max-w-[1400px] mx-auto px-4 py-8 space-y-6">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           {/* Success Banner */}
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
             <CheckCircle2 className="h-6 w-6 text-wc-success flex-shrink-0" />
