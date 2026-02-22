@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Fsd {
+  id             String    @id @default(cuid())
+  title          String
+  projectName    String
+  author         String
+  companyName    String?
+  primaryModule  String
+  processArea    String
+  relatedModules String    @default("[]") // JSON array stored as string for SQLite
+  markdown       String
+  warnings       String    @default("[]") // JSON array stored as string for SQLite
+  aiEnabled      Boolean   @default(true)
+  shareId        String?   @unique
+  docxBlobUrl    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  comments       Comment[]
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  fsdId      String
+  fsd        Fsd      @relation(fields: [fsdId], references: [id], onDelete: Cascade)
+  authorName String   @default("Anonymous")
+  content    String
+  createdAt  DateTime @default(now())
+}

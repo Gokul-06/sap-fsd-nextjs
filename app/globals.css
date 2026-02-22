@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 14% 96%;
+    --foreground: 240 33% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 33% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 33% 14%;
+    --primary: 218 47% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 100% 43%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 16 80% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 200 100% 43%;
+    --radius: 0.75rem;
+
+    /* Westernacher custom tokens */
+    --wc-navy: #1B2A4A;
+    --wc-navy-light: #2A3F6E;
+    --wc-blue: #0091DA;
+    --wc-blue-light: #33A7E4;
+    --wc-orange: #E8491D;
+    --wc-bg: #F0F2F5;
+    --wc-success: #10B981;
+    --wc-warning: #F59E0B;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Markdown preview styling */
+.fsd-preview h1 { @apply text-2xl font-bold text-[var(--wc-navy)] mt-8 mb-3 pb-2 border-b; }
+.fsd-preview h2 { @apply text-xl font-bold text-[var(--wc-navy)] mt-6 mb-2; }
+.fsd-preview h3 { @apply text-lg font-semibold text-[var(--wc-navy)] mt-4 mb-2; }
+.fsd-preview p { @apply mb-3 leading-relaxed; }
+.fsd-preview strong { @apply font-semibold; }
+.fsd-preview blockquote { @apply border-l-4 border-[var(--wc-blue)] pl-4 py-1 my-3 text-muted-foreground italic bg-blue-50/50 rounded-r; }
+.fsd-preview hr { @apply my-6 border-border; }
+.fsd-preview ul { @apply list-disc pl-6 mb-3 space-y-1; }
+.fsd-preview ol { @apply list-decimal pl-6 mb-3 space-y-1; }
+.fsd-preview table { @apply w-full border-collapse rounded-lg overflow-hidden my-4 text-sm; }
+.fsd-preview thead { @apply bg-[var(--wc-navy)] text-white; }
+.fsd-preview th { @apply px-4 py-2.5 text-left font-medium text-xs uppercase tracking-wider; }
+.fsd-preview td { @apply px-4 py-2.5 border-b border-border; }
+.fsd-preview tbody tr:nth-child(even) { @apply bg-slate-50; }
+.fsd-preview tbody tr:hover { @apply bg-blue-50/50; }
+
+/* Loading animation */
+@keyframes spin-ring {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-ring {
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--wc-bg);
+  border-top: 4px solid var(--wc-blue);
+  border-radius: 50%;
+  animation: spin-ring 1s linear infinite;
+}
