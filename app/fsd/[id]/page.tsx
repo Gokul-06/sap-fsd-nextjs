@@ -156,7 +156,7 @@ export default function FsdDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 text-center text-muted-foreground">
+      <div className="max-w-7xl mx-auto px-4 py-12 text-center text-muted-foreground">
         Loading...
       </div>
     );
@@ -164,7 +164,7 @@ export default function FsdDetailPage() {
 
   if (!fsd) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+      <div className="max-w-7xl mx-auto px-4 py-12 text-center">
         <h2 className="text-xl font-bold text-navy mb-2">FSD Not Found</h2>
         <Link href="/history" className="text-wc-blue hover:underline">
           Back to History
@@ -176,7 +176,7 @@ export default function FsdDetailPage() {
   const relatedModules = JSON.parse(fsd.relatedModules || "[]") as string[];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/history">

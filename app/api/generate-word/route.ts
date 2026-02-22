@@ -11,47 +11,56 @@ import { getAffectedModules } from "@/lib/knowledge/cross-module-map";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, projectName, author, requirements, module, companyName } =
+    const { title, projectName, author, requirements, module, companyName, markdownOverride } =
       body;
 
-    if (!title || !requirements) {
+    if (!title || (!requirements && !markdownOverride)) {
       return NextResponse.json(
-        { error: "Missing required fields: title, requirements" },
+        { error: "Missing required fields: title, requirements (or markdownOverride)" },
         { status: 400 }
       );
     }
 
-    const fsdResult = await generateFSD({
-      title,
-      projectName: projectName || "SAP Project",
-      author: author || "FSD Agent",
-      requirements,
-      module,
-    });
+    // If markdownOverride is provided, skip regeneration and use it directly
+    let markdown: string;
+    let primaryModule: string = module || "MM";
+    let relatedModules: string[] = [];
 
-    const sections = parseMarkdownToSections(fsdResult.markdown);
-    const today = new Date().toISOString().split("T")[0];
-
-    const relatedModules = fsdResult.classifiedModules
-      .filter((m) => !m.isPrimary)
-      .map((m) => m.module);
-    const integrationModules = getAffectedModules(fsdResult.primaryModule);
-    for (const mod of integrationModules) {
-      if (
-        !relatedModules.includes(mod) &&
-        mod !== fsdResult.primaryModule
-      ) {
-        relatedModules.push(mod);
+    if (markdownOverride) {
+      markdown = markdownOverride;
+      const integrationModules = getAffectedModules(primaryModule);
+      relatedModules = integrationModules.filter((m) => m !== primaryModule);
+    } else {
+      const fsdResult = await generateFSD({
+        title,
+        projectName: projectName || "SAP Project",
+        author: author || "FSD Agent",
+        requirements,
+        module,
+      });
+      markdown = fsdResult.markdown;
+      primaryModule = fsdResult.primaryModule;
+      relatedModules = fsdResult.classifiedModules
+        .filter((m) => !m.isPrimary)
+        .map((m) => m.module);
+      const integrationModules = getAffectedModules(fsdResult.primaryModule);
+      for (const mod of integrationModules) {
+        if (!relatedModules.includes(mod) && mod !== fsdResult.primaryModule) {
+          relatedModules.push(mod);
+        }
       }
     }
+
+    const sections = parseMarkdownToSections(markdown);
+    const today = new Date().toISOString().split("T")[0];
 
     const docxBuffer = await generateWordDocument({
       title,
       projectName: projectName || "SAP Project",
       author: author || "FSD Agent",
-      module: fsdResult.primaryModule,
+      module: primaryModule,
       relatedModules,
-      processArea: fsdResult.processArea,
+      processArea: "",
       date: today,
       companyName,
       sections,

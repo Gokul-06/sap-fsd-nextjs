@@ -24,11 +24,11 @@ export function isAIEnabled(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
 
-export async function callClaude(prompt: string): Promise<string> {
+export async function callClaude(prompt: string, maxTokens: number = 2048): Promise<string> {
   const anthropic = getClient();
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
+    max_tokens: maxTokens,
     messages: [{ role: 'user', content: prompt }],
   });
 

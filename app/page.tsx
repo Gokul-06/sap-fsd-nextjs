@@ -58,7 +58,7 @@ export default async function HomePage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-wc-blue">AI-Powered</p>
-                  <p className="text-sm text-muted-foreground">Claude AI Enhanced</p>
+                  <p className="text-sm text-muted-foreground">WE-AI Enhanced</p>
                 </div>
               </CardContent>
             </Card>

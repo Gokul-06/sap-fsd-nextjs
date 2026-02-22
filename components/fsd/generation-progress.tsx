@@ -6,8 +6,8 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 const STEPS = [
   "Analyzing requirements and classifying SAP modules...",
   "Mapping tables, transactions, and Fiori apps...",
-  "Claude AI writing executive summary and solution design...",
-  "Claude AI generating test scenarios and cutover plan...",
+  "WE-AI writing executive summary and solution design...",
+  "WE-AI generating test scenarios and cutover plan...",
   "Compiling final document...",
 ];
 
@@ -28,7 +28,7 @@ export function GenerationProgress() {
         Generating your FSD with AI...
       </h3>
       <p className="text-muted-foreground mb-8 text-center">
-        Claude AI is writing 14 professional sections — this takes 20-40 seconds
+        WE-AI is writing 14 professional sections — this takes 20-40 seconds
       </p>
       <div className="space-y-3 w-full max-w-md">
         {STEPS.map((step, i) => {

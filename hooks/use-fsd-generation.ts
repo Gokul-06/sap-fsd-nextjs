@@ -62,7 +62,7 @@ export function useFsdGeneration() {
     }
   }
 
-  async function saveToHistory(input: GenerationInput) {
+  async function saveToHistory(input: GenerationInput, markdownOverride?: string) {
     if (!result) return null;
 
     setIsSaving(true);
@@ -80,7 +80,7 @@ export function useFsdGeneration() {
           relatedModules: result.classifiedModules
             .filter((m) => !m.isPrimary)
             .map((m) => m.module),
-          markdown: result.markdown,
+          markdown: markdownOverride || result.markdown,
           warnings: result.warnings,
           aiEnabled: result.aiEnabled,
         }),
@@ -98,19 +98,23 @@ export function useFsdGeneration() {
     }
   }
 
-  async function downloadWord(input: GenerationInput) {
+  async function downloadWord(input: GenerationInput, markdownOverride?: string) {
     try {
+      const bodyPayload: Record<string, unknown> = {
+        title: input.title,
+        projectName: input.projectName,
+        author: input.author,
+        requirements: input.requirements,
+        module: result?.primaryModule || input.module,
+        companyName: input.companyName,
+      };
+      if (markdownOverride) {
+        bodyPayload.markdownOverride = markdownOverride;
+      }
       const res = await fetch("/api/generate-word", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: input.title,
-          projectName: input.projectName,
-          author: input.author,
-          requirements: input.requirements,
-          module: result?.primaryModule || input.module,
-          companyName: input.companyName,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
       if (!res.ok) throw new Error("Word generation failed");
