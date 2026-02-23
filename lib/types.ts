@@ -46,3 +46,36 @@ export interface CommentItem {
   content: string;
   createdAt: Date;
 }
+
+// ─────────────────────────────────────────────
+// Agent Teams Types
+// ─────────────────────────────────────────────
+
+export type AgentPhase = "team-lead" | "specialists" | "quality-review" | "complete" | "error";
+export type AgentStatus = "pending" | "running" | "completed" | "failed";
+
+export interface AgentInfo {
+  name: string;
+  role: string;
+  status: AgentStatus;
+}
+
+export interface AgentProgressEvent {
+  phase: AgentPhase;
+  status: AgentStatus;
+  agents?: AgentInfo[];
+  message?: string;
+  result?: FSDGenerationResponse;
+  error?: string;
+}
+
+export interface TeamLeadContext {
+  moduleStrategy: string;
+  processSteps: string[];
+  designDecisions: string[];
+  terminologyGlossary: Record<string, string>;
+  riskAreas: string[];
+  crossModuleConsiderations: string;
+  keyStakeholders: string[];
+  scopeBoundaries: string;
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { AgentProgressEvent } from "@/lib/types";
 
 interface FSDResult {
   markdown: string;
@@ -26,6 +27,7 @@ interface GenerationInput {
   companyName?: string;
   language?: string;
   documentDepth?: "standard" | "comprehensive";
+  generationMode?: "standard" | "agent-team";
 }
 
 export function useFsdGeneration() {
@@ -35,11 +37,26 @@ export function useFsdGeneration() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
 
+  // Agent Teams state
+  const [agentProgress, setAgentProgress] = useState<AgentProgressEvent | null>(null);
+
   async function generate(input: GenerationInput) {
     setIsGenerating(true);
     setError(null);
     setResult(null);
+    setAgentProgress(null);
 
+    const mode = input.generationMode || "standard";
+
+    if (mode === "agent-team") {
+      return generateWithAgentTeam(input);
+    }
+
+    return generateStandard(input);
+  }
+
+  // Standard mode — single fetch, wait for JSON response
+  async function generateStandard(input: GenerationInput) {
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -55,6 +72,76 @@ export function useFsdGeneration() {
       const data: FSDResult = await res.json();
       setResult(data);
       return data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setError(message);
+      return null;
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  // Agent Teams mode — SSE streaming with progress events
+  async function generateWithAgentTeam(input: GenerationInput) {
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Agent team generation failed");
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Parse SSE events from buffer
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() || "";
+
+        for (const part of parts) {
+          const lines = part.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const json = line.slice(6);
+              try {
+                const event: AgentProgressEvent = JSON.parse(json);
+                setAgentProgress(event);
+
+                if (event.phase === "complete" && event.result) {
+                  const fsdResult = event.result as unknown as FSDResult;
+                  setResult(fsdResult);
+                  return fsdResult;
+                }
+
+                if (event.phase === "error") {
+                  throw new Error(event.error || "Agent team generation failed");
+                }
+              } catch (parseErr) {
+                // Check if it's our re-thrown error
+                if (parseErr instanceof Error && parseErr.message.includes("Agent team")) {
+                  throw parseErr;
+                }
+                // Skip malformed SSE events
+              }
+            }
+          }
+        }
+      }
+
+      return null;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       setError(message);
@@ -140,6 +227,7 @@ export function useFsdGeneration() {
     setResult(null);
     setError(null);
     setSavedId(null);
+    setAgentProgress(null);
   }
 
   return {
@@ -152,5 +240,6 @@ export function useFsdGeneration() {
     saveToHistory,
     downloadWord,
     reset,
+    agentProgress,
   };
 }

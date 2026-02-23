@@ -24,6 +24,7 @@ import { RefinementChat } from "@/components/fsd/refinement-chat";
 import { QuickTemplates, TemplateData } from "@/components/fsd/quick-templates";
 import { MethodologyTips } from "@/components/fsd/methodology-tips";
 import { PdfUpload } from "@/components/fsd/pdf-upload";
+import { TeamProgress } from "@/components/fsd/team-progress";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
 import { useModuleClassification } from "@/hooks/use-module-classification";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +40,7 @@ import {
   AlertCircle,
   Pencil,
   Eye,
+  Users,
 } from "lucide-react";
 
 function GeneratePageContent() {
@@ -51,6 +53,7 @@ function GeneratePageContent() {
   const [module, setModule] = useState("");
   const [language, setLanguage] = useState("English");
   const [documentDepth, setDocumentDepth] = useState<"standard" | "comprehensive">("standard");
+  const [generationMode, setGenerationMode] = useState<"standard" | "agent-team">("standard");
   const [requirements, setRequirements] = useState("");
   const [currentMarkdown, setCurrentMarkdown] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -71,6 +74,7 @@ function GeneratePageContent() {
     saveToHistory,
     downloadWord,
     reset,
+    agentProgress,
   } = useFsdGeneration();
   const { toast } = useToast();
 
@@ -118,6 +122,7 @@ function GeneratePageContent() {
     companyName: companyName || undefined,
     language,
     documentDepth,
+    generationMode,
   };
 
   function handleTemplateSelect(template: TemplateData) {
@@ -199,6 +204,7 @@ function GeneratePageContent() {
     setModule("");
     setLanguage("English");
     setDocumentDepth("standard");
+    setGenerationMode("standard");
     setRequirements("");
     setCurrentMarkdown("");
     setTemplateApplied(false);
@@ -330,7 +336,7 @@ function GeneratePageContent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         SAP Module
@@ -398,6 +404,24 @@ function GeneratePageContent() {
                       </Select>
                       <p className="text-[10px] text-muted-foreground/60 mt-1">
                         Comprehensive mode generates richer, more detailed sections
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
+                        <Users className="h-3.5 w-3.5 inline mr-1 -mt-0.5" />
+                        Generation Mode
+                      </label>
+                      <Select value={generationMode} onValueChange={(v) => setGenerationMode(v as "standard" | "agent-team")}>
+                        <SelectTrigger className="border-[#0091DA]/20 focus:ring-[#0091DA]/20">
+                          <SelectValue placeholder="Standard" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="standard">Standard (Fast)</SelectItem>
+                          <SelectItem value="agent-team">Agent Team (Higher Quality)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">
+                        Agent Team uses 6 coordinated AI agents with quality review
                       </p>
                     </div>
                   </div>
@@ -501,8 +525,16 @@ Example (SAP Activate — Explore Phase):
                   >
                     {/* Shimmer overlay */}
                     <div className="absolute inset-0 animate-shimmer-btn opacity-30 pointer-events-none" />
-                    <Sparkles className="h-5 w-5 relative z-10" />
-                    <span className="relative z-10">Generate FSD with WE-AI</span>
+                    {generationMode === "agent-team" ? (
+                      <Users className="h-5 w-5 relative z-10" />
+                    ) : (
+                      <Sparkles className="h-5 w-5 relative z-10" />
+                    )}
+                    <span className="relative z-10">
+                      {generationMode === "agent-team"
+                        ? "Generate FSD with Agent Team"
+                        : "Generate FSD with WE-AI"}
+                    </span>
                   </button>
 
                   {/* What you get */}
@@ -543,7 +575,11 @@ Example (SAP Activate — Explore Phase):
           {step === 2 && (
             <Card className="shadow-lg border border-[#0091DA]/10">
               <CardContent>
-                <GenerationProgress />
+                {generationMode === "agent-team" ? (
+                  <TeamProgress progress={agentProgress} />
+                ) : (
+                  <GenerationProgress />
+                )}
               </CardContent>
             </Card>
           )}
