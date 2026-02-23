@@ -159,8 +159,35 @@ export function parseMarkdownToSections(markdown: string): ParsedSection[] {
       tableSeparatorSeen = false;
     }
 
-    // Skip empty lines, code fences, and the title block
-    if (trimmed === "" || trimmed === "---" || trimmed.startsWith("```")) {
+    // Skip empty lines, separators, and the title block
+    if (trimmed === "" || trimmed === "---") {
+      continue;
+    }
+
+    // Handle mermaid code blocks — render as styled code in Word
+    if (trimmed.startsWith("```mermaid")) {
+      // Collect all lines until closing ```
+      const mermaidLines: string[] = [];
+      let foundEnd = false;
+      const mermaidStartIdx = lines.indexOf(line);
+      for (let j = mermaidStartIdx + 1; j < lines.length; j++) {
+        if (lines[j].trim() === "```") {
+          foundEnd = true;
+          // Skip ahead in the main loop — we'll handle via contentBuffer
+          break;
+        }
+        mermaidLines.push(lines[j]);
+      }
+      if (foundEnd && currentSection) {
+        // Add a note and the raw mermaid source
+        contentBuffer.push("📊 Process Flow Diagram (view in web preview for visual rendering):");
+        contentBuffer.push(...mermaidLines);
+      }
+      continue;
+    }
+
+    // Skip standalone code fences
+    if (trimmed.startsWith("```")) {
       continue;
     }
 

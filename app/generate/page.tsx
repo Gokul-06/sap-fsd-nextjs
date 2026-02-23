@@ -23,6 +23,7 @@ import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import { RefinementChat } from "@/components/fsd/refinement-chat";
 import { QuickTemplates, TemplateData } from "@/components/fsd/quick-templates";
 import { MethodologyTips } from "@/components/fsd/methodology-tips";
+import { PdfUpload } from "@/components/fsd/pdf-upload";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
 import { useModuleClassification } from "@/hooks/use-module-classification";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,7 @@ function GeneratePageContent() {
   const [companyName, setCompanyName] = useState("Westernacher");
   const [module, setModule] = useState("");
   const [language, setLanguage] = useState("English");
+  const [documentDepth, setDocumentDepth] = useState<"standard" | "comprehensive">("standard");
   const [requirements, setRequirements] = useState("");
   const [currentMarkdown, setCurrentMarkdown] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -115,6 +117,7 @@ function GeneratePageContent() {
     module: module || undefined,
     companyName: companyName || undefined,
     language,
+    documentDepth,
   };
 
   function handleTemplateSelect(template: TemplateData) {
@@ -195,6 +198,7 @@ function GeneratePageContent() {
     setCompanyName("Westernacher");
     setModule("");
     setLanguage("English");
+    setDocumentDepth("standard");
     setRequirements("");
     setCurrentMarkdown("");
     setTemplateApplied(false);
@@ -326,7 +330,7 @@ function GeneratePageContent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         SAP Module
@@ -373,15 +377,47 @@ function GeneratePageContent() {
                         <SelectContent>
                           <SelectItem value="English">English</SelectItem>
                           <SelectItem value="German">Deutsch (German)</SelectItem>
-                          <SelectItem value="French">Fran\u00e7ais (French)</SelectItem>
-                          <SelectItem value="Spanish">Espa\u00f1ol (Spanish)</SelectItem>
-                          <SelectItem value="Japanese">\u65e5\u672c\u8a9e (Japanese)</SelectItem>
+                          <SelectItem value="French">Français (French)</SelectItem>
+                          <SelectItem value="Spanish">Español (Spanish)</SelectItem>
+                          <SelectItem value="Japanese">日本語 (Japanese)</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
+                        Document Depth
+                      </label>
+                      <Select value={documentDepth} onValueChange={(v) => setDocumentDepth(v as "standard" | "comprehensive")}>
+                        <SelectTrigger className="border-[#0091DA]/20 focus:ring-[#0091DA]/20">
+                          <SelectValue placeholder="Standard" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="standard">Standard</SelectItem>
+                          <SelectItem value="comprehensive">Comprehensive (deeper detail)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">
+                        Comprehensive mode generates richer, more detailed sections
+                      </p>
                     </div>
                   </div>
 
                   <Separator className="bg-[#0091DA]/10" />
+
+                  {/* PDF Upload for Requirements Extraction */}
+                  <PdfUpload
+                    onRequirementsExtracted={(extracted) => {
+                      setRequirements((prev) =>
+                        prev.trim()
+                          ? `${prev}\n\n--- Extracted from PDF ---\n${extracted}`
+                          : extracted
+                      );
+                      toast({
+                        title: "Requirements extracted!",
+                        description: "PDF content has been added to the requirements field.",
+                      });
+                    }}
+                  />
 
                   {/* Requirements textarea */}
                   <div>

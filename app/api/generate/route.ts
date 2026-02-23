@@ -1,4 +1,4 @@
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 import { NextResponse } from "next/server";
 import { generateFSD } from "@/lib/tools/generate-fsd";
@@ -14,7 +14,7 @@ import { identifyProcessArea } from "@/lib/tools/classify-module";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, projectName, author, requirements, module, language } = body;
+    const { title, projectName, author, requirements, module, language, documentDepth } = body;
 
     if (!title || !projectName || !author || !requirements) {
       return NextResponse.json(
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       requirements,
       module,
       language: language || "English",
+      documentDepth: documentDepth || "standard",
       feedbackContext: feedbackContext || undefined,
       fewShotContext: fewShotContext || undefined,
     });

@@ -57,6 +57,19 @@
 .fsd-preview hr { @apply my-6 border-border; }
 .fsd-preview ul { @apply list-disc pl-6 mb-3 space-y-1; }
 .fsd-preview ol { @apply list-decimal pl-6 mb-3 space-y-1; }
+/* Mermaid diagram container */
+.mermaid-container {
+  @apply my-6 p-4 bg-gradient-to-br from-blue-50/50 to-white border rounded-xl;
+  border-color: rgba(0, 145, 218, 0.2);
+}
+.mermaid-rendered svg {
+  @apply w-full max-w-full;
+  height: auto;
+}
+.mermaid-fallback pre {
+  @apply text-xs leading-relaxed;
+}
+
 .fsd-preview table { @apply w-full border-collapse rounded-lg overflow-hidden my-4 text-sm; }
 .fsd-preview thead { @apply bg-[var(--wc-navy)] text-white; }
 .fsd-preview th { @apply px-4 py-2.5 text-left font-medium text-xs uppercase tracking-wider; }

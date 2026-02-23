@@ -25,6 +25,7 @@ interface GenerationInput {
   module?: string;
   companyName?: string;
   language?: string;
+  documentDepth?: "standard" | "comprehensive";
 }
 
 export function useFsdGeneration() {

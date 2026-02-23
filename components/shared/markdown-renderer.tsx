@@ -1,7 +1,47 @@
 "use client";
 
+import { MermaidDiagram } from "./mermaid-diagram";
+
 interface MarkdownRendererProps {
   markdown: string;
+}
+
+/** Split markdown into alternating text and mermaid blocks */
+function splitByMermaidBlocks(markdown: string): Array<{ type: "text" | "mermaid"; content: string }> {
+  const parts: Array<{ type: "text" | "mermaid"; content: string }> = [];
+  const regex = /```mermaid\s*\n([\s\S]*?)```/gi;
+
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(markdown)) !== null) {
+    // Text before this mermaid block
+    if (match.index > lastIndex) {
+      const textBefore = markdown.slice(lastIndex, match.index);
+      if (textBefore.trim()) {
+        parts.push({ type: "text", content: textBefore });
+      }
+    }
+
+    // The mermaid block itself
+    parts.push({ type: "mermaid", content: match[1].trim() });
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text after last mermaid block
+  if (lastIndex < markdown.length) {
+    const remaining = markdown.slice(lastIndex);
+    if (remaining.trim()) {
+      parts.push({ type: "text", content: remaining });
+    }
+  }
+
+  // No mermaid blocks found — return entire markdown as text
+  if (parts.length === 0) {
+    parts.push({ type: "text", content: markdown });
+  }
+
+  return parts;
 }
 
 function convertMarkdownToHtml(markdown: string): string {
@@ -115,12 +155,34 @@ function convertMarkdownToHtml(markdown: string): string {
 }
 
 export function MarkdownRenderer({ markdown }: MarkdownRendererProps) {
-  const html = convertMarkdownToHtml(markdown);
+  const parts = splitByMermaidBlocks(markdown);
 
+  // No mermaid blocks — fast path (identical to previous behavior)
+  if (parts.length === 1 && parts[0].type === "text") {
+    const html = convertMarkdownToHtml(parts[0].content);
+    return (
+      <div
+        className="fsd-preview"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+
+  // Mixed content — render text parts as HTML, mermaid parts as diagrams
   return (
-    <div
-      className="fsd-preview"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className="fsd-preview">
+      {parts.map((part, i) => {
+        if (part.type === "mermaid") {
+          return <MermaidDiagram key={`mermaid-${i}`} chart={part.content} />;
+        }
+        const html = convertMarkdownToHtml(part.content);
+        return (
+          <div
+            key={`text-${i}`}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
+      })}
+    </div>
   );
 }

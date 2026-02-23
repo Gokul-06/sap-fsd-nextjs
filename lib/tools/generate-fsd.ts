@@ -14,6 +14,7 @@ import {
   aiErrorHandling,
   aiDataMigration,
   aiCutoverPlan,
+  aiProcessFlowDiagram,
 } from "@/lib/tools/claude-ai";
 import {
   getModuleData,
@@ -42,6 +43,7 @@ export interface FSDInput {
   requirements: string;
   module?: string; // Optional override — if not provided, auto-classify
   language?: string; // Output language — defaults to "English"
+  documentDepth?: "standard" | "comprehensive"; // Document detail level
   includeAllSections?: boolean;
   feedbackContext?: string; // Injected feedback rules context
   fewShotContext?: string; // Injected few-shot examples context
@@ -122,6 +124,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
 
       // Call Claude AI for all empty sections in parallel
       const language = input.language || "English";
+      const depth = input.documentDepth || "standard";
       const [
         executiveSummary,
         proposedSolution,
@@ -129,18 +132,22 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         errorHandling,
         dataMigration,
         cutoverPlan,
+        processFlowDiagram,
       ] = await Promise.all([
-        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, language, extraContext),
-        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext),
-        aiOutputManagement(primaryModule, processArea, input.requirements, language, extraContext),
-        aiErrorHandling(primaryModule, processArea, input.requirements, language, extraContext),
-        aiDataMigration(primaryModule, processArea, tableNames, language, extraContext),
-        aiCutoverPlan(primaryModule, processArea, language, extraContext),
+        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth),
+        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth),
+        aiOutputManagement(primaryModule, processArea, input.requirements, language, extraContext, depth),
+        aiErrorHandling(primaryModule, processArea, input.requirements, language, extraContext, depth),
+        aiDataMigration(primaryModule, processArea, tableNames, language, extraContext, depth),
+        aiCutoverPlan(primaryModule, processArea, language, extraContext, depth),
+        aiProcessFlowDiagram(primaryModule, input.requirements, processArea, language, extraContext, depth),
       ]);
 
       // Inject AI content into sections
       sections["executive_summary"] = { content: executiveSummary };
-      sections["proposed_solution"] = { content: proposedSolution };
+      // Append process flow diagram to proposed solution
+      const solutionWithDiagram = proposedSolution + "\n\n### 4.4 Process Flow Diagram\n\n" + processFlowDiagram;
+      sections["proposed_solution"] = { content: solutionWithDiagram };
       sections["output_management"] = { content: outputManagement };
       sections["error_handling"] = { content: errorHandling };
       sections["data_migration"] = { content: dataMigration };
