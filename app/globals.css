@@ -69,6 +69,12 @@
 .mermaid-fallback pre {
   @apply text-xs leading-relaxed;
 }
+/* Hide stray mermaid error elements appended to document body */
+body > svg[id^="d"],
+body > div[id^="dmermaid"],
+body > [data-mermaid-error] {
+  display: none !important;
+}
 
 .fsd-preview table { @apply w-full border-collapse rounded-lg overflow-hidden my-4 text-sm; }
 .fsd-preview thead { @apply bg-[var(--wc-navy)] text-white; }

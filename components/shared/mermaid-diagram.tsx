@@ -28,6 +28,7 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
         if (!mermaidInitialized) {
           mermaid.initialize({
             startOnLoad: false,
+            suppressErrorRendering: true,
             theme: "base",
             themeVariables: {
               primaryColor: "#0091DA",
@@ -74,6 +75,12 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
         if (!cancelled) {
           console.error("Mermaid render error:", err);
           setError(err instanceof Error ? err.message : "Failed to render diagram");
+          // Clean up any stray mermaid error elements appended to document body
+          document.querySelectorAll("body > [id^='d'] .error-icon, body > [id^='d'] .error-text, body > svg[id^='d']").forEach((el) => {
+            el.closest("svg")?.remove();
+          });
+          // Also remove any direct mermaid error text nodes
+          document.querySelectorAll("body > div[id^='dmermaid']").forEach((el) => el.remove());
         }
       } finally {
         if (!cancelled) {
