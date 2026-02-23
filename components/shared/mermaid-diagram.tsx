@@ -6,6 +6,9 @@ interface MermaidDiagramProps {
   chart: string;
 }
 
+// Track if mermaid has been initialized globally to avoid re-init
+let mermaidInitialized = false;
+
 export function MermaidDiagram({ chart }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,28 +24,32 @@ export function MermaidDiagram({ chart }: MermaidDiagramProps) {
         // Dynamic import to avoid SSR issues
         const mermaid = (await import("mermaid")).default;
 
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: "base",
-          themeVariables: {
-            primaryColor: "#0091DA",
-            primaryTextColor: "#FFFFFF",
-            primaryBorderColor: "#1B2A4A",
-            lineColor: "#1B2A4A",
-            secondaryColor: "#F0F2F5",
-            tertiaryColor: "#E8F4FD",
-            fontFamily: "Calibri, sans-serif",
-            fontSize: "14px",
-            nodeBorder: "#1B2A4A",
-            mainBkg: "#0091DA",
-            clusterBkg: "#F0F2F5",
-          },
-          flowchart: {
-            htmlLabels: true,
-            curve: "basis",
-            padding: 15,
-          },
-        });
+        // Initialize only once, and always with startOnLoad: false
+        if (!mermaidInitialized) {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: "base",
+            themeVariables: {
+              primaryColor: "#0091DA",
+              primaryTextColor: "#FFFFFF",
+              primaryBorderColor: "#1B2A4A",
+              lineColor: "#1B2A4A",
+              secondaryColor: "#F0F2F5",
+              tertiaryColor: "#E8F4FD",
+              fontFamily: "Calibri, sans-serif",
+              fontSize: "14px",
+              nodeBorder: "#1B2A4A",
+              mainBkg: "#0091DA",
+              clusterBkg: "#F0F2F5",
+            },
+            flowchart: {
+              htmlLabels: true,
+              curve: "basis",
+              padding: 15,
+            },
+          });
+          mermaidInitialized = true;
+        }
 
         // Clean the chart string
         const cleanChart = chart

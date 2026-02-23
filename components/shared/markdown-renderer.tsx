@@ -1,6 +1,22 @@
 "use client";
 
-import { MermaidDiagram } from "./mermaid-diagram";
+import dynamic from "next/dynamic";
+
+// Lazy-load MermaidDiagram so mermaid.js only loads when a diagram actually renders.
+// This prevents mermaid from auto-initializing on pages that don't have diagrams.
+const MermaidDiagram = dynamic(
+  () => import("./mermaid-diagram").then((mod) => mod.MermaidDiagram),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mermaid-container">
+        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+          Loading diagram...
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface MarkdownRendererProps {
   markdown: string;
