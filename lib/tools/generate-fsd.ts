@@ -41,6 +41,7 @@ export interface FSDInput {
   author: string;
   requirements: string;
   module?: string; // Optional override — if not provided, auto-classify
+  language?: string; // Output language — defaults to "English"
   includeAllSections?: boolean;
   feedbackContext?: string; // Injected feedback rules context
   fewShotContext?: string; // Injected few-shot examples context
@@ -56,6 +57,7 @@ export interface FSDOutput {
   }>;
   primaryModule: string;
   processArea: string;
+  language: string;
   crossModuleImpacts: string[];
   warnings: string[];
 }
@@ -119,6 +121,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
       ].filter(Boolean).join("\n\n");
 
       // Call Claude AI for all empty sections in parallel
+      const language = input.language || "English";
       const [
         executiveSummary,
         proposedSolution,
@@ -127,12 +130,12 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         dataMigration,
         cutoverPlan,
       ] = await Promise.all([
-        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, extraContext),
-        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, extraContext),
-        aiOutputManagement(primaryModule, processArea, input.requirements, extraContext),
-        aiErrorHandling(primaryModule, processArea, input.requirements, extraContext),
-        aiDataMigration(primaryModule, processArea, tableNames, extraContext),
-        aiCutoverPlan(primaryModule, processArea, extraContext),
+        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, language, extraContext),
+        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext),
+        aiOutputManagement(primaryModule, processArea, input.requirements, language, extraContext),
+        aiErrorHandling(primaryModule, processArea, input.requirements, language, extraContext),
+        aiDataMigration(primaryModule, processArea, tableNames, language, extraContext),
+        aiCutoverPlan(primaryModule, processArea, language, extraContext),
       ]);
 
       // Inject AI content into sections
@@ -169,6 +172,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
     classifiedModules,
     primaryModule,
     processArea,
+    language: input.language || "English",
     crossModuleImpacts,
     warnings,
   };

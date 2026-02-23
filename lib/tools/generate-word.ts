@@ -35,6 +35,7 @@ export interface WordFSDInput {
   processArea: string;
   date: string;
   companyName?: string;
+  language?: string;
   logoBuffer?: Buffer;
   sections: ParsedSection[];
 }
@@ -288,6 +289,7 @@ export async function generateWordDocument(input: WordFSDInput): Promise<Buffer>
     ["SAP Module", input.module],
     ["Related Modules", input.relatedModules.join(", ")],
     ["Process Area", input.processArea],
+    ["Language", input.language || "English"],
     ["Document Status", "DRAFT"],
     ["Created", input.date],
     ["Author", input.author],

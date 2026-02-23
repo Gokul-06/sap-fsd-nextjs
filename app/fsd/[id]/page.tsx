@@ -15,12 +15,21 @@ import { useToast } from "@/hooks/use-toast";
 import { StarRating } from "@/components/fsd/star-rating";
 import { PromoteCommentDialog } from "@/components/fsd/promote-comment-dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft,
   Download,
   Share2,
   MessageSquare,
   Send,
   Copy,
+  BookmarkPlus,
+  BookmarkCheck,
 } from "lucide-react";
 
 interface FsdData {
@@ -36,6 +45,9 @@ interface FsdData {
   warnings: string;
   aiEnabled: boolean;
   rating: number | null;
+  language: string;
+  isTemplate: boolean;
+  industry: string | null;
   shareId: string | null;
   createdAt: string;
   comments: Array<{
@@ -57,6 +69,8 @@ export default function FsdDetailPage() {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showIndustryPicker, setShowIndustryPicker] = useState(false);
+  const [selectedIndustry, setSelectedIndustry] = useState("");
 
   useEffect(() => {
     fetch(`/api/fsd/${id}`)
@@ -154,6 +168,38 @@ export default function FsdDetailPage() {
     }
   }
 
+  async function handleToggleTemplate(industry?: string) {
+    if (!fsd) return;
+    const newIsTemplate = !fsd.isTemplate;
+    try {
+      const res = await fetch(`/api/fsd/${id}/template`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isTemplate: newIsTemplate,
+          industry: newIsTemplate ? (industry || selectedIndustry || null) : fsd.industry,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setFsd((prev) =>
+          prev
+            ? { ...prev, isTemplate: updated.isTemplate, industry: updated.industry }
+            : prev
+        );
+        setShowIndustryPicker(false);
+        toast({
+          title: newIsTemplate ? "Saved as template!" : "Removed from templates",
+          description: newIsTemplate
+            ? "This FSD is now available in the Template Library."
+            : "This FSD is no longer a template.",
+        });
+      }
+    } catch {
+      toast({ title: "Failed to update template status", variant: "destructive" });
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center text-muted-foreground">
@@ -242,6 +288,64 @@ export default function FsdDetailPage() {
               </>
             )}
           </Button>
+
+          {/* Template toggle */}
+          {fsd.isTemplate ? (
+            <Button
+              variant="outline"
+              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              onClick={() => handleToggleTemplate()}
+            >
+              <BookmarkCheck className="h-4 w-4 mr-2" /> Template
+              {fsd.industry && (
+                <Badge className="ml-2 bg-emerald-100 text-emerald-700 border-0 text-xs">
+                  {fsd.industry}
+                </Badge>
+              )}
+            </Button>
+          ) : showIndustryPicker ? (
+            <div className="flex items-center gap-2">
+              <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
+                <SelectTrigger className="w-[160px] border-[#0091DA]/20">
+                  <SelectValue placeholder="Industry (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No industry</SelectItem>
+                  <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                  <SelectItem value="Pharma">Pharma</SelectItem>
+                  <SelectItem value="Retail">Retail</SelectItem>
+                  <SelectItem value="Automotive">Automotive</SelectItem>
+                  <SelectItem value="Utilities">Utilities</SelectItem>
+                  <SelectItem value="Public Sector">Public Sector</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="bg-[#0091DA] hover:bg-[#007bb8] text-white"
+                onClick={() =>
+                  handleToggleTemplate(
+                    selectedIndustry === "none" ? undefined : selectedIndustry
+                  )
+                }
+              >
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowIndustryPicker(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => setShowIndustryPicker(true)}
+            >
+              <BookmarkPlus className="h-4 w-4 mr-2" /> Save as Template
+            </Button>
+          )}
         </CardContent>
       </Card>
 

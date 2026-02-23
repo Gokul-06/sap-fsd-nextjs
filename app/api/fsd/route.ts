@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       markdown,
       warnings,
       aiEnabled,
+      language,
     } = body;
 
     if (!title || !projectName || !author || !primaryModule || !markdown) {
@@ -84,6 +85,7 @@ export async function POST(request: Request) {
           ? JSON.stringify(warnings)
           : warnings || "[]",
         aiEnabled: aiEnabled ?? false,
+        language: language || "English",
       },
     });
 

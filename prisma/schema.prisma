@@ -25,9 +25,14 @@ model Fsd {
   rating              Int?      // 1-5 stars (Level 3)
   usedFeedbackRuleIds String    @default("[]") // JSON array of rule IDs used in generation
   usedFewShotFsdIds   String    @default("[]") // JSON array of FSD IDs used as few-shot examples
+  language            String    @default("English")
+  isTemplate          Boolean   @default(false)
+  industry            String?   // "Manufacturing" | "Pharma" | "Retail" | "Automotive" | "Utilities" | "Public Sector"
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   comments            Comment[]
+
+  @@index([isTemplate, primaryModule])
 }
 
 model Comment {

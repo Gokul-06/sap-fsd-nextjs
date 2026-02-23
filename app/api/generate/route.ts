@@ -14,7 +14,7 @@ import { identifyProcessArea } from "@/lib/tools/classify-module";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, projectName, author, requirements, module } = body;
+    const { title, projectName, author, requirements, module, language } = body;
 
     if (!title || !projectName || !author || !requirements) {
       return NextResponse.json(
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       author,
       requirements,
       module,
+      language: language || "English",
       feedbackContext: feedbackContext || undefined,
       fewShotContext: fewShotContext || undefined,
     });

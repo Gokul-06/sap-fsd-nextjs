@@ -2,7 +2,7 @@
  * Claude AI Integration for FSD Generation
  * Calls Anthropic API to generate intelligent narrative content
  * for FSD sections that require contextual writing.
- * Supports feedback context and few-shot examples injection.
+ * Supports feedback context, few-shot examples, and multi-language output.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -45,6 +45,17 @@ function withExtraContext(prompt: string, extraContext?: string): string {
   return `${prompt}\n\n${extraContext}`;
 }
 
+/** Build a language instruction to inject into AI prompts */
+function buildLanguageInstruction(language: string): string {
+  if (!language || language === "English") return "";
+  return `\nIMPORTANT LANGUAGE REQUIREMENT: Write ALL narrative content, descriptions, paragraphs, and bullet points in ${language}. However, keep the following in English:
+- SAP technical terms (transaction codes like ME21N, table names like EKKO, Fiori app names)
+- Column headers in markdown tables
+- Abbreviations and acronyms (BRD, FSD, SoD, MoSCoW, BAPI, RFC, IDoc, etc.)
+- Section numbering format (e.g., "### 4.1", "### 4.2")
+All descriptive and business-context text must be written in ${language}.\n`;
+}
+
 // ─────────────────────────────────────────────
 // Section Generators — Each returns markdown
 // ─────────────────────────────────────────────
@@ -54,10 +65,12 @@ export async function aiExecutiveSummary(
   module: string,
   requirements: string,
   processArea: string,
+  language: string = "English",
   extraContext?: string,
 ): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
   const prompt = `You are a senior SAP functional consultant at a top consulting firm. Write a professional executive summary for a Functional Specification Document (FSD).
-
+${langInstruction}
 Title: ${title}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -84,10 +97,12 @@ export async function aiProposedSolution(
   tables: string[],
   tcodes: string[],
   fioriApps: string[],
+  language: string = "English",
   extraContext?: string,
 ): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
   const prompt = `You are a senior SAP ${module} solution architect. Design the proposed solution for this FSD.
-
+${langInstruction}
 Requirements: ${requirements}
 Process Area: ${processArea}
 Available SAP Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
@@ -118,10 +133,12 @@ export async function aiOutputManagement(
   module: string,
   processArea: string,
   requirements: string,
+  language: string = "English",
   extraContext?: string,
 ): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
   const prompt = `You are an SAP ${module} consultant. Define the output management requirements for this FSD.
-
+${langInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -147,10 +164,12 @@ export async function aiErrorHandling(
   module: string,
   processArea: string,
   requirements: string,
+  language: string = "English",
   extraContext?: string,
 ): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
   const prompt = `You are an SAP ${module} consultant. Define error handling and validations for this FSD.
-
+${langInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -180,10 +199,12 @@ export async function aiDataMigration(
   module: string,
   processArea: string,
   tables: string[],
+  language: string = "English",
   extraContext?: string,
 ): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
   const prompt = `You are an SAP ${module} data migration specialist. Define the data migration plan for this FSD.
-
+${langInstruction}
 Process Area: ${processArea}
 Key Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
 
@@ -212,10 +233,12 @@ Rules:
 export async function aiCutoverPlan(
   module: string,
   processArea: string,
+  language: string = "English",
   extraContext?: string,
 ): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
   const prompt = `You are an SAP ${module} cutover manager. Define the cutover and go-live plan for this FSD.
-
+${langInstruction}
 Process Area: ${processArea}
 
 Write in markdown format:

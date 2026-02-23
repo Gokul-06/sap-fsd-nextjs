@@ -24,6 +24,7 @@ interface GenerationInput {
   requirements: string;
   module?: string;
   companyName?: string;
+  language?: string;
 }
 
 export function useFsdGeneration() {
@@ -83,6 +84,7 @@ export function useFsdGeneration() {
           markdown: markdownOverride || result.markdown,
           warnings: result.warnings,
           aiEnabled: result.aiEnabled,
+          language: input.language || "English",
         }),
       });
 
@@ -107,6 +109,7 @@ export function useFsdGeneration() {
         requirements: input.requirements,
         module: result?.primaryModule || input.module,
         companyName: input.companyName,
+        language: input.language || "English",
       };
       if (markdownOverride) {
         bodyPayload.markdownOverride = markdownOverride;

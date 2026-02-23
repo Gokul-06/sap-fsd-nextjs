@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,13 +40,15 @@ import {
   Eye,
 } from "lucide-react";
 
-export default function GeneratePage() {
+function GeneratePageContent() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [title, setTitle] = useState("");
   const [projectName, setProjectName] = useState("");
   const [author, setAuthor] = useState("GP");
   const [companyName, setCompanyName] = useState("Westernacher");
   const [module, setModule] = useState("");
+  const [language, setLanguage] = useState("English");
   const [requirements, setRequirements] = useState("");
   const [currentMarkdown, setCurrentMarkdown] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -76,6 +79,34 @@ export default function GeneratePage() {
     }
   }, [result]);
 
+  // Pre-fill from template URL param (e.g., /generate?template=cuid123)
+  useEffect(() => {
+    const templateId = searchParams.get("template");
+    if (templateId) {
+      fetch(`/api/fsd/${templateId}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data) {
+            setTitle(data.title ? `${data.title} (Copy)` : "");
+            setProjectName(data.projectName || "");
+            setModule(data.primaryModule || "");
+            setLanguage(data.language || "English");
+            // Extract requirements from the markdown business requirements section
+            const reqMatch = data.markdown?.match(/### 3\.3 Functional Requirements\n\n([\s\S]*?)(?=\n### |\n## |$)/);
+            if (reqMatch) {
+              setRequirements(reqMatch[1].trim());
+            }
+            setTemplateApplied(true);
+            toast({
+              title: "Template loaded!",
+              description: `Pre-filled from template: ${data.title}`,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   const formInput = {
     title,
     projectName: projectName || "SAP Project",
@@ -83,6 +114,7 @@ export default function GeneratePage() {
     requirements,
     module: module || undefined,
     companyName: companyName || undefined,
+    language,
   };
 
   function handleTemplateSelect(template: TemplateData) {
@@ -162,6 +194,7 @@ export default function GeneratePage() {
     setAuthor("GP");
     setCompanyName("Westernacher");
     setModule("");
+    setLanguage("English");
     setRequirements("");
     setCurrentMarkdown("");
     setTemplateApplied(false);
@@ -331,16 +364,18 @@ export default function GeneratePage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
-                        Output Format
+                        Document Language
                       </label>
-                      <Select value="docx" disabled>
-                        <SelectTrigger className="border-[#0091DA]/20">
-                          <SelectValue placeholder="Word Document (.docx)" />
+                      <Select value={language} onValueChange={setLanguage}>
+                        <SelectTrigger className="border-[#0091DA]/20 focus:ring-[#0091DA]/20">
+                          <SelectValue placeholder="English" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="docx">
-                            Word Document (.docx)
-                          </SelectItem>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="German">Deutsch (German)</SelectItem>
+                          <SelectItem value="French">Fran\u00e7ais (French)</SelectItem>
+                          <SelectItem value="Spanish">Espa\u00f1ol (Spanish)</SelectItem>
+                          <SelectItem value="Japanese">\u65e5\u672c\u8a9e (Japanese)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -664,5 +699,13 @@ Example (SAP Activate — Explore Phase):
         </div>
       )}
     </div>
+  );
+}
+
+export default function GeneratePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F0F2F5]" />}>
+      <GeneratePageContent />
+    </Suspense>
   );
 }

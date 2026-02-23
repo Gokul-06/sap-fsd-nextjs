@@ -11,7 +11,7 @@ import { getAffectedModules } from "@/lib/knowledge/cross-module-map";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, projectName, author, requirements, module, companyName, markdownOverride } =
+    const { title, projectName, author, requirements, module, companyName, markdownOverride, language } =
       body;
 
     if (!title || (!requirements && !markdownOverride)) {
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       processArea: "",
       date: today,
       companyName,
+      language: language || "English",
       sections,
     });
 
