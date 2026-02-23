@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import { FsdResultStats } from "@/components/fsd/fsd-result-stats";
-import { FileText, Share2 } from "lucide-react";
+import { FileText, Globe, Share2 } from "lucide-react";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,7 @@ async function getFsdByShareId(shareId: string) {
         relatedModules: true,
         markdown: true,
         aiEnabled: true,
+        language: true,
         createdAt: true,
       },
     });
@@ -67,6 +68,12 @@ export default async function SharedFsdPage({
           <Badge className="bg-navy/10 text-navy">{fsd.primaryModule}</Badge>
           {fsd.aiEnabled && (
             <Badge className="bg-wc-blue/10 text-wc-blue">AI-Powered</Badge>
+          )}
+          {fsd.language && fsd.language !== "English" && (
+            <Badge className="bg-violet-100 text-violet-700">
+              <Globe className="h-3 w-3 mr-1" />
+              {fsd.language}
+            </Badge>
           )}
         </div>
       </div>

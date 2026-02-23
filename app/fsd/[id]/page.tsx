@@ -30,6 +30,7 @@ import {
   Copy,
   BookmarkPlus,
   BookmarkCheck,
+  Globe,
 } from "lucide-react";
 
 interface FsdData {
@@ -247,6 +248,12 @@ export default function FsdDetailPage() {
             <Badge className="bg-navy/10 text-navy">{fsd.primaryModule}</Badge>
             {fsd.aiEnabled && (
               <Badge className="bg-wc-blue/10 text-wc-blue">AI-Powered</Badge>
+            )}
+            {fsd.language && fsd.language !== "English" && (
+              <Badge className="bg-violet-100 text-violet-700">
+                <Globe className="h-3 w-3 mr-1" />
+                {fsd.language}
+              </Badge>
             )}
           </div>
           {/* Star Rating */}

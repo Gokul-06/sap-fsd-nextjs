@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Star } from "lucide-react";
+import { FileText, Globe, Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ async function getFsds() {
         processArea: true,
         aiEnabled: true,
         rating: true,
+        language: true,
         createdAt: true,
         author: true,
         _count: { select: { comments: true } },
@@ -67,6 +68,12 @@ export default async function HistoryPage() {
                         {fsd.aiEnabled && (
                           <Badge className="bg-wc-blue/10 text-wc-blue text-xs flex-shrink-0">
                             AI
+                          </Badge>
+                        )}
+                        {fsd.language && fsd.language !== "English" && (
+                          <Badge className="bg-violet-100 text-violet-700 text-xs flex-shrink-0">
+                            <Globe className="h-3 w-3 mr-1" />
+                            {fsd.language}
                           </Badge>
                         )}
                       </div>
