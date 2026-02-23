@@ -283,8 +283,7 @@ export async function orchestrateAgentTeam(
     warnings,
   };
 
-  onProgress({ phase: "complete", status: "completed" });
-
+  // Note: "complete" event with result is sent by the API route handler, not here
   return output;
 }
 

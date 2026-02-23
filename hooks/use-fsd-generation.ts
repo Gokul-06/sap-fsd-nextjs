@@ -101,6 +101,38 @@ export function useFsdGeneration() {
       const decoder = new TextDecoder();
       let buffer = "";
 
+      let finalResult: FSDResult | null = null;
+
+      // Helper to parse SSE events from a chunk of text
+      const parseSSEChunk = (chunk: string): FSDResult | null => {
+        const lines = chunk.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const json = line.slice(6);
+            try {
+              const event: AgentProgressEvent = JSON.parse(json);
+              setAgentProgress(event);
+
+              if (event.phase === "complete" && event.result) {
+                const fsdResult = event.result as unknown as FSDResult;
+                setResult(fsdResult);
+                return fsdResult;
+              }
+
+              if (event.phase === "error") {
+                throw new Error(event.error || "Agent team generation failed");
+              }
+            } catch (parseErr) {
+              if (parseErr instanceof Error && parseErr.message.includes("Agent team")) {
+                throw parseErr;
+              }
+              // Skip malformed SSE events
+            }
+          }
+        }
+        return null;
+      }
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -112,36 +144,27 @@ export function useFsdGeneration() {
         buffer = parts.pop() || "";
 
         for (const part of parts) {
-          const lines = part.split("\n");
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const json = line.slice(6);
-              try {
-                const event: AgentProgressEvent = JSON.parse(json);
-                setAgentProgress(event);
+          const result = parseSSEChunk(part);
+          if (result) {
+            finalResult = result;
+          }
+        }
+      }
 
-                if (event.phase === "complete" && event.result) {
-                  const fsdResult = event.result as unknown as FSDResult;
-                  setResult(fsdResult);
-                  return fsdResult;
-                }
-
-                if (event.phase === "error") {
-                  throw new Error(event.error || "Agent team generation failed");
-                }
-              } catch (parseErr) {
-                // Check if it's our re-thrown error
-                if (parseErr instanceof Error && parseErr.message.includes("Agent team")) {
-                  throw parseErr;
-                }
-                // Skip malformed SSE events
-              }
+      // Flush remaining buffer after stream ends
+      if (buffer.trim()) {
+        const remaining = buffer.split("\n\n");
+        for (const part of remaining) {
+          if (part.trim()) {
+            const result = parseSSEChunk(part);
+            if (result) {
+              finalResult = result;
             }
           }
         }
       }
 
-      return null;
+      return finalResult;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       setError(message);
