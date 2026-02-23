@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       const fsdResult = await generateFSD({
         title,
         projectName: projectName || "SAP Project",
-        author: author || "FSD Agent",
+        author: author || "GP",
         requirements,
         module,
       });
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     const docxBuffer = await generateWordDocument({
       title,
       projectName: projectName || "SAP Project",
-      author: author || "FSD Agent",
+      author: author || "GP",
       module: primaryModule,
       relatedModules,
       processArea: "",

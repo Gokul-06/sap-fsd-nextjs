@@ -157,7 +157,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
     module: primaryModule,
     relatedModules,
     date: today,
-    author: input.author,
+    author: input.author || "GP",
     projectName: input.projectName,
     requirements: input.requirements,
     processArea,

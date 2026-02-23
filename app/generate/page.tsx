@@ -576,13 +576,38 @@ Example (SAP Activate — Explore Phase):
 
             {/* Right: Document Preview with Edit Toggle */}
             <Card className="shadow-lg border border-[#0091DA]/10">
-              <CardHeader className="pb-3">
+              {/* ── Prominent Edit/Preview Toolbar ── */}
+              <div className="border-b border-[#0091DA]/10 bg-gradient-to-r from-slate-50 to-white px-5 py-3">
                 <div className="flex items-center justify-between">
+                  {/* Tab-style toggle */}
+                  <div className="flex items-center bg-[#0091DA]/[0.06] rounded-lg p-1">
+                    <button
+                      onClick={() => { if (isEditing) toggleEditMode(); }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        !isEditing
+                          ? "bg-white text-[#1B2A4A] shadow-sm"
+                          : "text-muted-foreground hover:text-[#1B2A4A]"
+                      }`}
+                    >
+                      <Eye className="h-4 w-4" />
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => { if (!isEditing) toggleEditMode(); }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        isEditing
+                          ? "bg-[#0091DA] text-white shadow-sm"
+                          : "text-muted-foreground hover:text-[#0091DA]"
+                      }`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit Document
+                    </button>
+                  </div>
+
+                  {/* Status badges + actions */}
                   <div className="flex items-center gap-3">
-                    <CardTitle className="text-lg text-[#1B2A4A]">
-                      {isEditing ? "Edit Document" : "Document Preview"}
-                    </CardTitle>
-                    {currentMarkdown !== result.markdown && !isEditing && (
+                    {currentMarkdown !== result.markdown && (
                       <Badge
                         variant="outline"
                         className="text-amber-600 border-amber-300 bg-amber-50"
@@ -590,53 +615,46 @@ Example (SAP Activate — Explore Phase):
                         Modified
                       </Badge>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
+                    {isEditing && (
+                      <button
+                        onClick={cancelEdit}
+                        className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        Discard changes
+                      </button>
+                    )}
                     {isEditing && (
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive text-xs"
-                        onClick={cancelEdit}
+                        className="bg-[#0091DA] hover:bg-[#0091DA]/90 text-white"
+                        onClick={toggleEditMode}
                       >
-                        Cancel
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                        Save Changes
                       </Button>
                     )}
-                    <Button
-                      size="sm"
-                      variant={isEditing ? "default" : "outline"}
-                      className={
-                        isEditing
-                          ? "bg-[#0091DA] hover:bg-[#0091DA]/90 text-white"
-                          : "border-[#0091DA]/30 text-[#0091DA] hover:bg-[#0091DA]/5"
-                      }
-                      onClick={toggleEditMode}
-                    >
-                      {isEditing ? (
-                        <>
-                          <Eye className="h-3.5 w-3.5 mr-1.5" />
-                          Save & Preview
-                        </>
-                      ) : (
-                        <>
-                          <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                          Edit Markdown
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </div>
+
+              <CardContent className="p-0">
                 {isEditing ? (
-                  <textarea
-                    value={editBuffer}
-                    onChange={(e) => setEditBuffer(e.target.value)}
-                    className="w-full min-h-[calc(100vh-350px)] p-4 font-mono text-sm bg-[#1B2A4A] text-green-300 rounded-lg border border-[#0091DA]/30 focus:outline-none focus:ring-2 focus:ring-[#0091DA]/50 resize-y leading-relaxed"
-                    spellCheck={false}
-                  />
+                  <div className="relative">
+                    <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                      <Badge className="bg-[#1B2A4A]/80 text-green-300 border-0 text-[10px] font-mono">
+                        MARKDOWN EDITOR
+                      </Badge>
+                    </div>
+                    <textarea
+                      value={editBuffer}
+                      onChange={(e) => setEditBuffer(e.target.value)}
+                      className="w-full min-h-[calc(100vh-320px)] p-6 pt-12 font-mono text-sm bg-[#1B2A4A] text-green-300 border-0 focus:outline-none focus:ring-0 resize-y leading-relaxed"
+                      spellCheck={false}
+                      placeholder="Edit your FSD markdown here..."
+                    />
+                  </div>
                 ) : (
-                  <div className="max-h-[calc(100vh-350px)] overflow-y-auto border border-[#0091DA]/10 rounded-lg p-6 bg-white">
+                  <div className="max-h-[calc(100vh-320px)] overflow-y-auto p-6 bg-white">
                     <MarkdownRenderer markdown={currentMarkdown} />
                   </div>
                 )}
