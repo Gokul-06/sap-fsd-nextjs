@@ -162,9 +162,14 @@ function GeneratePageContent() {
       setStep(3);
     } else {
       setStep(1);
+      // Note: error state may not be updated yet due to React batching,
+      // so we show a generic message. The actual error is logged to console.
       toast({
         title: "Generation failed",
-        description: error || "Please try again.",
+        description:
+          generationMode === "agent-team"
+            ? "Agent Team timed out or encountered an error. Check browser console for details, or try Standard mode."
+            : error || "Please try again.",
         variant: "destructive",
       });
     }

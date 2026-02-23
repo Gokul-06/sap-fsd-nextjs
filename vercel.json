@@ -3,10 +3,10 @@
   "buildCommand": "prisma generate && prisma db push && next build",
   "functions": {
     "app/api/generate/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "app/api/generate-word/route.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   }
 }

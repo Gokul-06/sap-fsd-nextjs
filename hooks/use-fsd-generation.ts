@@ -164,9 +164,19 @@ export function useFsdGeneration() {
         }
       }
 
+      // If stream ended without a complete event, it likely timed out
+      if (!finalResult) {
+        throw new Error(
+          "Agent Team generation timed out or failed to complete. " +
+          "The server may have run out of time processing 6 AI calls. " +
+          "Try again with Standard mode or shorter requirements."
+        );
+      }
+
       return finalResult;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("[AgentTeam] SSE error:", message);
       setError(message);
       return null;
     } finally {
