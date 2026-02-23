@@ -344,3 +344,43 @@
 .animate-scroll-left {
   animation: scroll-left 30s linear infinite;
 }
+
+/* ────────────────────────────────────────────── */
+/* Generate Button Shimmer                         */
+/* ────────────────────────────────────────────── */
+
+@keyframes shimmer-btn {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer-btn {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: shimmer-btn 2.5s ease-in-out infinite;
+}
+
+/* Generate button pulse on hover */
+.generate-btn {
+  position: relative;
+}
+
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0091DA, #1B2A4A, #0091DA);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.generate-btn:hover::before {
+  opacity: 1;
+  animation: pulse-glow 2s ease-in-out infinite;
+}

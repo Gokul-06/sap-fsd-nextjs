@@ -35,32 +35,24 @@ import {
   BookOpen,
   Layers,
   AlertCircle,
+  Pencil,
+  Eye,
 } from "lucide-react";
-
-/** SAP Activate process areas for tagging */
-const PROCESS_AREAS = [
-  "Procure-to-Pay",
-  "Order-to-Cash",
-  "Record-to-Report",
-  "Plan-to-Produce",
-  "Hire-to-Retire",
-  "Warehouse Management",
-  "Transportation Management",
-  "Asset Management",
-  "Project Management",
-  "Quality Management",
-];
 
 export default function GeneratePage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [title, setTitle] = useState("");
   const [projectName, setProjectName] = useState("");
-  const [author, setAuthor] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [author, setAuthor] = useState("GP");
+  const [companyName, setCompanyName] = useState("Westernacher");
   const [module, setModule] = useState("");
   const [requirements, setRequirements] = useState("");
   const [currentMarkdown, setCurrentMarkdown] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
+
+  // Inline editor state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editBuffer, setEditBuffer] = useState("");
 
   const { result: classificationResult, isLoading: isClassifying } =
     useModuleClassification(requirements);
@@ -87,7 +79,7 @@ export default function GeneratePage() {
   const formInput = {
     title,
     projectName: projectName || "SAP Project",
-    author: author || "FSD Agent",
+    author: author || "GP",
     requirements,
     module: module || undefined,
     companyName: companyName || undefined,
@@ -167,18 +159,41 @@ export default function GeneratePage() {
     setStep(1);
     setTitle("");
     setProjectName("");
-    setAuthor("");
-    setCompanyName("");
+    setAuthor("GP");
+    setCompanyName("Westernacher");
     setModule("");
     setRequirements("");
     setCurrentMarkdown("");
     setTemplateApplied(false);
+    setIsEditing(false);
+    setEditBuffer("");
+  }
+
+  function toggleEditMode() {
+    if (!isEditing) {
+      // Entering edit mode — copy current markdown to buffer
+      setEditBuffer(currentMarkdown);
+      setIsEditing(true);
+    } else {
+      // Saving edits — apply buffer to currentMarkdown
+      setCurrentMarkdown(editBuffer);
+      setIsEditing(false);
+      toast({
+        title: "Changes applied",
+        description: "Your edits have been saved to the document.",
+      });
+    }
+  }
+
+  function cancelEdit() {
+    setIsEditing(false);
+    setEditBuffer("");
   }
 
   return (
-    <div className="min-h-[calc(100vh-68px-60px)]">
+    <div className="min-h-[calc(100vh-68px-60px)] bg-[#F0F2F5]">
       {/* Step Indicator */}
-      <div className="bg-white border-b py-4">
+      <div className="bg-white border-b border-[#0091DA]/10 py-4">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <StepIndicator currentStep={step} />
         </div>
@@ -191,22 +206,22 @@ export default function GeneratePage() {
           {step === 1 && (
             <div className="space-y-5 animate-fade-in-up">
               {/* Quick-Start Templates */}
-              <Card className="shadow-sm border-none bg-gradient-to-br from-slate-50 to-white">
+              <Card className="shadow-sm border border-[#0091DA]/10 bg-gradient-to-br from-[#0091DA]/[0.02] to-white">
                 <CardContent className="p-5">
                   <QuickTemplates onSelect={handleTemplateSelect} />
                 </CardContent>
               </Card>
 
               {/* Main Form Card */}
-              <Card className="shadow-lg border-none">
+              <Card className="shadow-lg border border-[#0091DA]/10">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-navy/5 rounded-lg">
-                        <FileText className="h-5 w-5 text-navy" />
+                      <div className="p-2 bg-[#0091DA]/10 rounded-lg">
+                        <FileText className="h-5 w-5 text-[#0091DA]" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-navy">
+                        <CardTitle className="text-xl text-[#1B2A4A]">
                           FSD Requirements
                         </CardTitle>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -226,7 +241,7 @@ export default function GeneratePage() {
                   {/* Project info fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         FSD Title{" "}
                         <span className="text-destructive">*</span>
                       </label>
@@ -234,53 +249,57 @@ export default function GeneratePage() {
                         placeholder="e.g. Purchase Order Automation"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                        className="border-[#0091DA]/20 focus:border-[#0091DA] focus:ring-[#0091DA]/20"
                       />
                       <p className="text-[10px] text-muted-foreground/60 mt-1">
                         Concise name describing the functional scope
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         Project Name
                       </label>
                       <Input
                         placeholder="e.g. S/4HANA Migration Phase 2"
                         value={projectName}
                         onChange={(e) => setProjectName(e.target.value)}
+                        className="border-[#0091DA]/20 focus:border-[#0091DA] focus:ring-[#0091DA]/20"
                       />
                       <p className="text-[10px] text-muted-foreground/60 mt-1">
                         SAP implementation project reference
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         Author
                       </label>
                       <Input
                         placeholder="Your name"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
+                        className="border-[#0091DA]/20 focus:border-[#0091DA] focus:ring-[#0091DA]/20"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         Company Name
                       </label>
                       <Input
                         placeholder="e.g. Westernacher"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
+                        className="border-[#0091DA]/20 focus:border-[#0091DA] focus:ring-[#0091DA]/20"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         SAP Module
                       </label>
                       <Select value={module} onValueChange={setModule}>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-[#0091DA]/20 focus:ring-[#0091DA]/20">
                           <SelectValue placeholder="Auto-detect from requirements" />
                         </SelectTrigger>
                         <SelectContent>
@@ -311,11 +330,11 @@ export default function GeneratePage() {
                       </Select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         Output Format
                       </label>
                       <Select value="docx" disabled>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-[#0091DA]/20">
                           <SelectValue placeholder="Word Document (.docx)" />
                         </SelectTrigger>
                         <SelectContent>
@@ -327,12 +346,12 @@ export default function GeneratePage() {
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="bg-[#0091DA]/10" />
 
                   {/* Requirements textarea */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium block">
+                      <label className="text-sm font-medium block text-[#1B2A4A]">
                         Business Requirements{" "}
                         <span className="text-destructive">*</span>
                       </label>
@@ -364,7 +383,7 @@ Example (SAP Activate — Explore Phase):
                         setRequirements(e.target.value);
                         if (templateApplied) setTemplateApplied(false);
                       }}
-                      className="min-h-[220px] resize-y font-mono text-sm"
+                      className="min-h-[220px] resize-y font-mono text-sm border-[#0091DA]/20 focus:border-[#0091DA] focus:ring-[#0091DA]/20"
                     />
 
                     {/* Smart tips based on content length */}
@@ -403,19 +422,20 @@ Example (SAP Activate — Explore Phase):
                   {/* SAP Activate Methodology Tips (collapsible) */}
                   <MethodologyTips />
 
-                  {/* Generate button */}
-                  <Button
-                    size="lg"
-                    className="w-full bg-navy hover:bg-navy-light text-white font-semibold py-6 text-base"
+                  {/* Animated Generate Button */}
+                  <button
+                    className="generate-btn w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0091DA] to-[#1B2A4A] text-white font-semibold py-4 text-base transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none flex items-center justify-center gap-2"
                     onClick={handleGenerate}
                     disabled={isGenerating}
                   >
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    Generate FSD with WE-AI
-                  </Button>
+                    {/* Shimmer overlay */}
+                    <div className="absolute inset-0 animate-shimmer-btn opacity-30 pointer-events-none" />
+                    <Sparkles className="h-5 w-5 relative z-10" />
+                    <span className="relative z-10">Generate FSD with WE-AI</span>
+                  </button>
 
                   {/* What you get */}
-                  <div className="bg-slate-50 rounded-lg p-4">
+                  <div className="bg-[#0091DA]/[0.04] border border-[#0091DA]/10 rounded-lg p-4">
                     <p className="text-xs font-semibold text-[#1B2A4A] mb-2">
                       Your FSD will include:
                     </p>
@@ -450,7 +470,7 @@ Example (SAP Activate — Explore Phase):
 
           {/* STEP 2: Loading */}
           {step === 2 && (
-            <Card className="shadow-lg border-none">
+            <Card className="shadow-lg border border-[#0091DA]/10">
               <CardContent>
                 <GenerationProgress />
               </CardContent>
@@ -463,22 +483,27 @@ Example (SAP Activate — Explore Phase):
       {step === 3 && result && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           {/* Success Banner */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
+          <div className="bg-gradient-to-r from-[#0091DA]/10 to-emerald-50 border border-[#0091DA]/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
             <CheckCircle2 className="h-6 w-6 text-wc-success flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-emerald-800">
+            <div className="flex-1">
+              <p className="font-semibold text-[#1B2A4A]">
                 FSD Generated Successfully!
               </p>
-              <p className="text-sm text-emerald-600">
-                Your document is ready. Use the chat to refine it, then download
-                or save.
+              <p className="text-sm text-muted-foreground">
+                Your document is ready. Use the chat to refine it, or edit
+                directly — then download or save.
               </p>
             </div>
-            {result.aiEnabled && (
-              <Badge className="ml-auto bg-wc-blue text-white">
-                WE-AI Powered
+            <div className="flex items-center gap-2 ml-auto">
+              {result.aiEnabled && (
+                <Badge className="bg-[#0091DA] text-white border-0">
+                  WE-AI Powered
+                </Badge>
+              )}
+              <Badge variant="outline" className="border-[#1B2A4A]/30 text-[#1B2A4A]">
+                by {author || "GP"}
               </Badge>
-            )}
+            </div>
           </div>
 
           {/* Stats */}
@@ -490,12 +515,12 @@ Example (SAP Activate — Explore Phase):
           />
 
           {/* Actions */}
-          <Card className="shadow-sm border-none">
+          <Card className="shadow-sm border border-[#0091DA]/10">
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-3">
                 <Button
                   size="lg"
-                  className="bg-navy hover:bg-navy-light text-white"
+                  className="bg-gradient-to-r from-[#0091DA] to-[#1B2A4A] hover:from-[#0091DA]/90 hover:to-[#1B2A4A]/90 text-white shadow-md hover:shadow-lg transition-all"
                   onClick={handleDownload}
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -504,6 +529,7 @@ Example (SAP Activate — Explore Phase):
                 <Button
                   size="lg"
                   variant="outline"
+                  className="border-[#0091DA]/30 text-[#0091DA] hover:bg-[#0091DA]/5"
                   onClick={handleSave}
                   disabled={isSaving || !!savedId}
                 >
@@ -519,7 +545,12 @@ Example (SAP Activate — Explore Phase):
                     </>
                   )}
                 </Button>
-                <Button size="lg" variant="ghost" onClick={handleStartOver}>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="text-[#1B2A4A] hover:bg-[#0091DA]/5"
+                  onClick={handleStartOver}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   New FSD
                 </Button>
@@ -534,31 +565,81 @@ Example (SAP Activate — Explore Phase):
               <RefinementChat
                 currentMarkdown={currentMarkdown}
                 originalMarkdown={result.markdown}
-                onMarkdownUpdate={setCurrentMarkdown}
+                onMarkdownUpdate={(md) => {
+                  setCurrentMarkdown(md);
+                  if (isEditing) {
+                    setEditBuffer(md);
+                  }
+                }}
               />
             </div>
 
-            {/* Right: Document Preview */}
-            <Card className="shadow-lg border-none">
-              <CardHeader>
+            {/* Right: Document Preview with Edit Toggle */}
+            <Card className="shadow-lg border border-[#0091DA]/10">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg text-navy">
-                    Document Preview
-                  </CardTitle>
-                  {currentMarkdown !== result.markdown && (
-                    <Badge
-                      variant="outline"
-                      className="text-amber-600 border-amber-300 bg-amber-50"
+                  <div className="flex items-center gap-3">
+                    <CardTitle className="text-lg text-[#1B2A4A]">
+                      {isEditing ? "Edit Document" : "Document Preview"}
+                    </CardTitle>
+                    {currentMarkdown !== result.markdown && !isEditing && (
+                      <Badge
+                        variant="outline"
+                        className="text-amber-600 border-amber-300 bg-amber-50"
+                      >
+                        Modified
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isEditing && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive text-xs"
+                        onClick={cancelEdit}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={isEditing ? "default" : "outline"}
+                      className={
+                        isEditing
+                          ? "bg-[#0091DA] hover:bg-[#0091DA]/90 text-white"
+                          : "border-[#0091DA]/30 text-[#0091DA] hover:bg-[#0091DA]/5"
+                      }
+                      onClick={toggleEditMode}
                     >
-                      Modified
-                    </Badge>
-                  )}
+                      {isEditing ? (
+                        <>
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
+                          Save & Preview
+                        </>
+                      ) : (
+                        <>
+                          <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                          Edit Markdown
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[calc(100vh-350px)] overflow-y-auto border rounded-lg p-6 bg-white">
-                  <MarkdownRenderer markdown={currentMarkdown} />
-                </div>
+                {isEditing ? (
+                  <textarea
+                    value={editBuffer}
+                    onChange={(e) => setEditBuffer(e.target.value)}
+                    className="w-full min-h-[calc(100vh-350px)] p-4 font-mono text-sm bg-[#1B2A4A] text-green-300 rounded-lg border border-[#0091DA]/30 focus:outline-none focus:ring-2 focus:ring-[#0091DA]/50 resize-y leading-relaxed"
+                    spellCheck={false}
+                  />
+                ) : (
+                  <div className="max-h-[calc(100vh-350px)] overflow-y-auto border border-[#0091DA]/10 rounded-lg p-6 bg-white">
+                    <MarkdownRenderer markdown={currentMarkdown} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
