@@ -73,10 +73,11 @@ export default function DocTransformPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          markdown: result,
+          markdownOverride: result,
           title: processName,
           module: moduleName,
-          type: outputType === "sop" ? "Standard Operating Procedure" : "User Manual",
+          author: "Gokul Palanisamy",
+          projectName: processName,
         }),
       });
       if (!res.ok) throw new Error("Export failed");
