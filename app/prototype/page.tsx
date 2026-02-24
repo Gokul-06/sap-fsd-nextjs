@@ -226,13 +226,20 @@ export default function PrototypePage() {
   return (
     <div className="min-h-screen bg-[#F8F9FB]">
       {/* ─── Top Prototype Nav ─── */}
-      <div className="bg-[#1B2A4A] text-white px-6 py-2 flex items-center justify-between text-xs sticky top-0 z-50">
+      <div className="bg-[#0a0f1a] text-white px-6 py-2 flex items-center justify-between text-xs sticky top-0 z-50 border-b border-white/[0.06]">
         <div className="flex items-center gap-3">
-          <span className="font-bold tracking-wide text-[#0091DA]">PROTOTYPE</span>
-          <span className="text-white/30">|</span>
-          <span className="text-white/60">WE-AI Implementation Accelerator</span>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-[#0091DA] to-[#0091DA]/70 flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <span className="font-bold tracking-wide text-white/90">WE-AI</span>
+          </div>
+          <span className="text-white/10">|</span>
+          <span className="text-[10px] text-white/30 uppercase tracking-wider font-medium">Prototype</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {(
             [
               ["login", "Login"],
@@ -242,13 +249,13 @@ export default function PrototypePage() {
               ...(currentRole.canAccessAdmin ? [["admin", "Admin"]] : []),
             ] as [Screen, string][]
           ).map(([key, label]) => (
-            <button key={key} onClick={() => setScreen(key)} className={`px-3 py-1 rounded transition-all ${screen === key ? "bg-[#0091DA] text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}>
+            <button key={key} onClick={() => setScreen(key)} className={`px-3 py-1.5 rounded-lg transition-all text-[11px] font-medium ${screen === key ? "bg-[#0091DA]/15 text-[#0091DA]" : "text-white/35 hover:text-white/70 hover:bg-white/[0.05]"}`}>
               {label}
             </button>
           ))}
-          <div className="ml-3 pl-3 border-l border-white/15 flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[10px] font-semibold">GP</div>
-            <span className="text-white/50">{currentRole.label}</span>
+          <div className="ml-3 pl-3 border-l border-white/[0.08] flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#0091DA]/30 to-[#0091DA]/10 flex items-center justify-center text-[10px] font-semibold text-[#0091DA]">GP</div>
+            <span className="text-white/35">{currentRole.label}</span>
           </div>
         </div>
       </div>
@@ -257,84 +264,206 @@ export default function PrototypePage() {
       {/* LOGIN                                        */}
       {/* ════════════════════════════════════════════ */}
       {screen === "login" && (
-        <div className="min-h-[calc(100vh-36px)] flex items-center justify-center bg-gradient-to-br from-[#1B2A4A] via-[#162340] to-[#0d1a33] relative overflow-hidden">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-[#0091DA]/8 rounded-full blur-[100px]" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-[#0091DA]/5 rounded-full blur-[100px]" />
+        <div className="min-h-[calc(100vh-36px)] flex bg-[#0a0f1a] relative overflow-hidden">
+          {/* Animated background elements */}
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,rgba(0,145,218,0.08)_0%,transparent_50%)]" />
+            <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,rgba(0,145,218,0.06)_0%,transparent_50%)]" />
+            <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[#0091DA]/[0.03] rounded-full blur-[120px]" />
+            <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-[#7C3AED]/[0.03] rounded-full blur-[120px]" />
+            {/* Grid pattern overlay */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+          </div>
 
-          <div className="w-full max-w-[1100px] relative z-10 px-8">
-            <div className="text-center mb-10">
-              <div className="text-2xl font-bold text-white tracking-tight">Westernacher</div>
-              <div className="text-[11px] text-[#0091DA]/80 tracking-[0.25em] uppercase mt-1">Implementation Accelerator</div>
+          {/* Left Panel — Brand + Role Selector */}
+          <div className="flex-1 flex flex-col justify-between p-10 relative z-10">
+            {/* Brand header */}
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0091DA] to-[#0091DA]/70 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white tracking-tight">WE-AI</div>
+                  <div className="text-[10px] text-[#0091DA]/70 tracking-[0.15em] uppercase font-medium">Implementation Accelerator</div>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-[1fr_360px] gap-10">
-              {/* Role Selection */}
-              <div>
-                <div className="text-[11px] font-medium text-white/40 uppercase tracking-wider mb-4">Select role to preview access</div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {roles.map((role) => (
+            {/* Role Selector — Center */}
+            <div className="max-w-[640px]">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Choose your role</h1>
+                <p className="text-sm text-white/30">Each role has tailored access to SAP Activate lifecycle phases and AI capabilities</p>
+              </div>
+
+              {/* Role Cards — Stacked Horizontal */}
+              <div className="space-y-2">
+                {roles.map((role) => {
+                  const isSelected = selectedRole === role.id;
+                  const roleIcons: Record<Role, string> = {
+                    admin: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z",
+                    "project-manager": "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+                    presales: "M13 10V3L4 14h7v7l9-11h-7z",
+                    marketing: "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z",
+                    "solution-architect": "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z",
+                    consultant: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
+                    viewer: "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
+                  };
+                  return (
                     <button
                       key={role.id}
                       onClick={() => setSelectedRole(role.id)}
-                      className={`text-left p-4 rounded-lg border transition-all ${
-                        selectedRole === role.id
-                          ? "border-[#0091DA]/60 bg-[#0091DA]/10"
-                          : "border-white/8 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/15"
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 group ${
+                        isSelected
+                          ? "border-[#0091DA]/50 bg-[#0091DA]/[0.08] shadow-[0_0_30px_rgba(0,145,218,0.1)]"
+                          : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.12]"
                       }`}
                     >
-                      <div className="text-sm font-semibold text-white/90 mb-0.5">{role.label}</div>
-                      <p className="text-[11px] text-white/35 leading-relaxed mb-3">{role.desc}</p>
-                      <div className="flex items-center gap-1">
-                        {phases.map((p) => (
-                          <div key={p.id} className={`h-1 flex-1 rounded-full ${role.accessPhases.includes(p.id) ? "bg-[#0091DA]" : "bg-white/8"}`} />
-                        ))}
+                      {/* Icon */}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                        isSelected ? "bg-[#0091DA]/20" : "bg-white/[0.05] group-hover:bg-white/[0.08]"
+                      }`}>
+                        <svg className={`w-5 h-5 transition-colors ${isSelected ? "text-[#0091DA]" : "text-white/40 group-hover:text-white/60"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d={roleIcons[role.id]} />
+                        </svg>
                       </div>
-                      <div className="text-[10px] text-white/25 mt-2">{role.accessPhases.length} of {phases.length} phases</div>
+
+                      {/* Info */}
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-semibold transition-colors ${isSelected ? "text-white" : "text-white/70 group-hover:text-white/90"}`}>{role.label}</span>
+                          {isSelected && (
+                            <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-[#0091DA]/20 text-[#0091DA]">Active</span>
+                          )}
+                        </div>
+                        <p className={`text-[11px] leading-relaxed truncate transition-colors ${isSelected ? "text-white/40" : "text-white/25"}`}>{role.desc}</p>
+                      </div>
+
+                      {/* Phase access dots */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {phases.map((p) => (
+                          <div key={p.id} className={`w-2 h-2 rounded-full transition-all ${
+                            role.accessPhases.includes(p.id)
+                              ? isSelected ? "bg-[#0091DA]" : "bg-white/20"
+                              : "bg-white/[0.06]"
+                          }`} title={p.name} />
+                        ))}
+                        <span className={`text-[10px] ml-2 font-medium tabular-nums ${isSelected ? "text-[#0091DA]/70" : "text-white/20"}`}>{role.accessPhases.length}/{phases.length}</span>
+                      </div>
+
+                      {/* Selection indicator */}
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                        isSelected ? "border-[#0091DA] bg-[#0091DA]" : "border-white/15"
+                      }`}>
+                        {isSelected && <IconCheck className="w-3 h-3 text-white" />}
+                      </div>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Login Card */}
-              <div className="bg-white rounded-xl shadow-2xl shadow-black/20 p-8">
-                <h2 className="text-lg font-semibold text-[#1B2A4A] mb-0.5">Sign in</h2>
-                <p className="text-sm text-slate-400 mb-6">Access your implementation projects</p>
+            {/* Bottom stats */}
+            <div className="flex items-center gap-6 text-[11px] text-white/20">
+              <span>7 Roles</span>
+              <span className="w-1 h-1 rounded-full bg-white/10" />
+              <span>7 Lifecycle Phases</span>
+              <span className="w-1 h-1 rounded-full bg-white/10" />
+              <span>Enterprise RBAC</span>
+            </div>
+          </div>
 
+          {/* Right Panel — Sign In */}
+          <div className="w-[420px] flex items-center justify-center p-10 relative z-10">
+            <div className="w-full">
+              {/* Glass card */}
+              <div className="bg-white/[0.05] backdrop-blur-xl rounded-2xl border border-white/[0.08] p-8 shadow-2xl shadow-black/30">
+                {/* Role badge at top */}
+                <div className="flex items-center justify-center mb-8">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] border border-white/[0.08]">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentRole.color }} />
+                    <span className="text-[11px] font-medium text-white/60">{currentRole.label}</span>
+                  </div>
+                </div>
+
+                <h2 className="text-xl font-semibold text-white text-center mb-1">Welcome back</h2>
+                <p className="text-sm text-white/30 text-center mb-8">Sign in to your workspace</p>
+
+                {/* SSO Button */}
                 <button
                   onClick={() => { setActivePhaseIdx(Math.max(0, firstAccessibleIdx)); setScreen("dashboard"); }}
-                  className="w-full flex items-center justify-center gap-2.5 bg-[#1B2A4A] text-white rounded-lg py-3 text-sm font-medium hover:bg-[#243558] transition-all mb-4"
+                  className="w-full flex items-center justify-center gap-2.5 bg-white text-[#1B2A4A] rounded-xl py-3.5 text-sm font-semibold hover:bg-white/95 transition-all shadow-lg shadow-black/10 mb-5"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 23 23" fill="white"><path d="M0 0h10.9v10.9H0zM12.1 0H23v10.9H12.1zM0 12.1h10.9V23H0zM12.1 12.1H23V23H12.1z" /></svg>
+                  <svg className="w-4 h-4" viewBox="0 0 23 23" fill="#1B2A4A"><path d="M0 0h10.9v10.9H0zM12.1 0H23v10.9H12.1zM0 12.1h10.9V23H0zM12.1 12.1H23V23H12.1z" /></svg>
                   Continue with Microsoft
                 </button>
 
-                <div className="flex items-center gap-3 my-5"><div className="flex-1 h-px bg-slate-100" /><span className="text-[11px] text-slate-300">or</span><div className="flex-1 h-px bg-slate-100" /></div>
+                <div className="flex items-center gap-3 my-6">
+                  <div className="flex-1 h-px bg-white/[0.08]" />
+                  <span className="text-[11px] text-white/20 uppercase tracking-wider font-medium">or</span>
+                  <div className="flex-1 h-px bg-white/[0.08]" />
+                </div>
 
-                <div className="space-y-3">
+                {/* Email / Password */}
+                <div className="space-y-4">
                   <div>
-                    <label className="text-[11px] font-medium text-slate-500 block mb-1">Email</label>
-                    <div className="border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-400 bg-slate-50/50">gokul@westernacher.com</div>
+                    <label className="text-[11px] font-medium text-white/30 block mb-1.5">Email</label>
+                    <div className="border border-white/[0.1] rounded-xl px-4 py-3 text-sm text-white/50 bg-white/[0.03] focus-within:border-[#0091DA]/40 transition-colors">gokul@westernacher.com</div>
                   </div>
                   <div>
-                    <label className="text-[11px] font-medium text-slate-500 block mb-1">Password</label>
-                    <div className="border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-400 bg-slate-50/50">••••••••••</div>
+                    <label className="text-[11px] font-medium text-white/30 block mb-1.5">Password</label>
+                    <div className="border border-white/[0.1] rounded-xl px-4 py-3 text-sm text-white/50 bg-white/[0.03]">••••••••••</div>
                   </div>
-                  <button onClick={() => { setActivePhaseIdx(Math.max(0, firstAccessibleIdx)); setScreen("dashboard"); }} className="w-full bg-[#0091DA] text-white rounded-lg py-2.5 text-sm font-medium hover:bg-[#0081c4] transition-all">
+                  <button
+                    onClick={() => { setActivePhaseIdx(Math.max(0, firstAccessibleIdx)); setScreen("dashboard"); }}
+                    className="w-full bg-gradient-to-r from-[#0091DA] to-[#0091DA]/80 text-white rounded-xl py-3 text-sm font-semibold hover:from-[#0081c4] hover:to-[#0081c4]/80 transition-all shadow-lg shadow-[#0091DA]/20"
+                  >
                     Sign in
                   </button>
                 </div>
 
-                {/* Access preview */}
-                <div className="mt-6 pt-5 border-t border-slate-100">
-                  <div className="text-[11px] font-medium text-slate-400 mb-2">Access preview — {currentRole.label}</div>
-                  <div className="flex flex-wrap gap-1">
+                {/* Access Preview */}
+                <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                  <div className="text-[10px] font-medium text-white/25 uppercase tracking-wider mb-3 text-center">Phase Access Preview</div>
+                  <div className="grid grid-cols-7 gap-1.5">
                     {phases.map((p) => (
-                      <span key={p.id} className={`text-[10px] px-2 py-0.5 rounded border font-medium ${hasAccess(p.id) ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-slate-50 text-slate-300 border-slate-200"}`}>
-                        {p.name}
-                      </span>
+                      <div key={p.id} className="text-center">
+                        <div className={`w-full aspect-square rounded-lg flex items-center justify-center mb-1 transition-all ${
+                          hasAccess(p.id) ? "bg-[#0091DA]/15 border border-[#0091DA]/25" : "bg-white/[0.03] border border-white/[0.06]"
+                        }`}>
+                          {hasAccess(p.id)
+                            ? phaseIcons[p.id](`w-3.5 h-3.5 text-[#0091DA]`)
+                            : <IconLock className="w-3 h-3 text-white/15" />
+                          }
+                        </div>
+                        <div className={`text-[8px] font-medium leading-tight ${hasAccess(p.id) ? "text-white/40" : "text-white/15"}`}>{p.name}</div>
+                      </div>
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* Permissions summary below card */}
+              <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-white/20">
+                <span className="flex items-center gap-1">
+                  {currentRole.canEdit ? <IconCheck className="w-3 h-3 text-emerald-500/60" /> : <IconX className="w-3 h-3 text-red-400/40" />}
+                  Edit
+                </span>
+                <span className="flex items-center gap-1">
+                  {currentRole.canExport ? <IconCheck className="w-3 h-3 text-emerald-500/60" /> : <IconX className="w-3 h-3 text-red-400/40" />}
+                  Export
+                </span>
+                <span className="flex items-center gap-1">
+                  {currentRole.canManageTeam ? <IconCheck className="w-3 h-3 text-emerald-500/60" /> : <IconX className="w-3 h-3 text-red-400/40" />}
+                  Team
+                </span>
+                <span className="flex items-center gap-1">
+                  {currentRole.canAccessAdmin ? <IconCheck className="w-3 h-3 text-emerald-500/60" /> : <IconX className="w-3 h-3 text-red-400/40" />}
+                  Admin
+                </span>
               </div>
             </div>
           </div>
@@ -346,23 +475,31 @@ export default function PrototypePage() {
       {/* ════════════════════════════════════════════ */}
       {screen === "dashboard" && (
         <div>
-          <header className="bg-white border-b border-slate-200 px-8 py-3.5">
+          <header className="bg-white/95 backdrop-blur-lg border-b border-slate-200/60 px-8 py-3 sticky top-9 z-40">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-6">
-                <div>
-                  <span className="text-base font-bold text-[#1B2A4A]">Westernacher</span>
-                  <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] ml-2">Nonstop Innovation</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#1B2A4A] to-[#1B2A4A]/80 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-[#1B2A4A]">WE-AI</span>
+                    <span className="text-[9px] text-slate-300 uppercase tracking-[0.15em] ml-1.5">Accelerator</span>
+                  </div>
                 </div>
-                <nav className="flex items-center gap-1 text-sm">
+                <div className="h-5 w-px bg-slate-200" />
+                <nav className="flex items-center gap-0.5 text-sm">
                   {["Projects", "Templates", "Analytics", ...(currentRole.canAccessAdmin ? ["Admin"] : [])].map((tab, i) => (
-                    <button key={tab} onClick={() => tab === "Admin" && setScreen("admin")} className={`px-3 py-1.5 rounded-md transition-all ${i === 0 ? "bg-[#0091DA]/10 text-[#0091DA] font-medium" : "text-slate-500 hover:text-[#1B2A4A] hover:bg-slate-50"}`}>
+                    <button key={tab} onClick={() => tab === "Admin" && setScreen("admin")} className={`px-3 py-1.5 rounded-lg transition-all ${i === 0 ? "bg-[#0091DA]/10 text-[#0091DA] font-medium" : "text-slate-400 hover:text-[#1B2A4A] hover:bg-slate-50"}`}>
                       {tab}
                     </button>
                   ))}
                 </nav>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-medium px-2.5 py-1 rounded-md border" style={{ backgroundColor: currentRole.bgColor, color: currentRole.color, borderColor: currentRole.color + "30" }}>
+                <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg border" style={{ backgroundColor: currentRole.bgColor, color: currentRole.color, borderColor: currentRole.color + "30" }}>
                   {currentRole.label}
                 </span>
                 <Avatar initials="GP" size="sm" />
@@ -392,38 +529,50 @@ export default function PrototypePage() {
             {/* Stats Row */}
             <div className="grid grid-cols-4 gap-4 mb-8">
               {[
-                { label: "Active Projects", value: "3", sub: "+1 this month" },
-                { label: "Documents Generated", value: "24", sub: "+8 this month" },
-                { label: "Team Members", value: "7", sub: "Across 5 roles" },
-                { label: "Completion Rate", value: "72%", sub: "Ahead of schedule" },
+                { label: "Active Projects", value: "3", sub: "+1 this month", icon: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z", accent: "#0091DA" },
+                { label: "Documents Generated", value: "24", sub: "+8 this month", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z", accent: "#7C3AED" },
+                { label: "Team Members", value: "7", sub: "Across 5 roles", icon: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2", accent: "#059669" },
+                { label: "Completion Rate", value: "72%", sub: "Ahead of schedule", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", accent: "#D97706" },
               ].map((s) => (
-                <div key={s.label} className="bg-white rounded-lg p-4 border border-slate-200/80">
-                  <div className="text-[11px] text-slate-400 font-medium">{s.label}</div>
-                  <div className="text-2xl font-semibold text-[#1B2A4A] mt-1">{s.value}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{s.sub}</div>
+                <div key={s.label} className="bg-white rounded-xl p-5 border border-slate-200/60 hover:shadow-md hover:shadow-slate-100/50 transition-all group">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-[11px] text-slate-400 font-medium">{s.label}</div>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: s.accent + "10" }}>
+                      <Icon className="w-4 h-4" d={s.icon} stroke={s.accent} />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-[#1B2A4A]">{s.value}</div>
+                  <div className="text-[11px] text-emerald-500 font-medium mt-1">{s.sub}</div>
                 </div>
               ))}
             </div>
 
             {/* Pipeline */}
-            <div className="bg-white rounded-lg border border-slate-200/80 p-5 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-[#1B2A4A]">Lifecycle Pipeline</h3>
+            <div className="bg-white rounded-xl border border-slate-200/60 p-6 mb-8">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-sm font-semibold text-[#1B2A4A]">SAP Activate Lifecycle</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Your access across implementation phases</p>
+                </div>
                 <div className="flex items-center gap-4 text-[10px] text-slate-400">
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#0091DA]" />Accessible</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-slate-200" />Restricted</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#0091DA]" />Accessible</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-200" />Restricted</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {phases.map((phase, i) => {
                   const ok = hasAccess(phase.id);
                   return (
                     <div key={phase.id} className="flex items-center flex-1">
-                      <div className={`flex-1 text-center py-3 rounded-md text-[11px] font-medium transition-all ${ok ? "bg-[#0091DA]/8 text-[#0091DA] border border-[#0091DA]/15" : "bg-slate-50 text-slate-300 border border-slate-100"}`}>
-                        <div className="mb-1 flex justify-center">{ok ? phaseIcons[phase.id]("w-4 h-4") : <IconLock className="w-3.5 h-3.5" />}</div>
+                      <div className={`flex-1 text-center py-4 rounded-xl text-[11px] font-medium transition-all cursor-pointer ${ok ? "bg-gradient-to-b from-[#0091DA]/[0.06] to-[#0091DA]/[0.12] text-[#0091DA] border border-[#0091DA]/15 hover:border-[#0091DA]/30 hover:shadow-sm" : "bg-slate-50/80 text-slate-300 border border-slate-100"}`}>
+                        <div className="mb-1.5 flex justify-center">{ok ? phaseIcons[phase.id]("w-4 h-4") : <IconLock className="w-3.5 h-3.5" />}</div>
                         {phase.name}
                       </div>
-                      {i < phases.length - 1 && <IconChevron className="w-3.5 h-3.5 text-slate-200 mx-0.5 flex-shrink-0" />}
+                      {i < phases.length - 1 && (
+                        <div className={`mx-1 flex-shrink-0 ${ok && hasAccess(phases[i + 1]?.id) ? "text-[#0091DA]/30" : "text-slate-200"}`}>
+                          <IconChevron className="w-3.5 h-3.5" />
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -432,36 +581,41 @@ export default function PrototypePage() {
 
             {/* Project list */}
             <div className="space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-semibold text-[#1B2A4A]">Recent Projects</h3>
+                <button className="text-[11px] text-[#0091DA] font-medium hover:underline">View all</button>
+              </div>
               {[
-                { name: "S/4HANA Greenfield Implementation", industry: "Manufacturing", modules: ["MM", "SD", "FI"], phase: "Explore", phaseIdx: 4, progress: 57, team: ["GP", "WL", "FS"], updated: "2h ago" },
-                { name: "EWM Warehouse Transformation", industry: "Logistics", modules: ["EWM", "MM"], phase: "Prepare", phaseIdx: 2, progress: 28, team: ["GP", "AK"], updated: "1d ago" },
-                { name: "FI/CO Finance Modernization", industry: "Financial Services", modules: ["FI", "CO"], phase: "Marketing", phaseIdx: 0, progress: 8, team: ["GP"], updated: "3d ago" },
+                { name: "S/4HANA Greenfield Implementation", industry: "Manufacturing", modules: ["MM", "SD", "FI"], phase: "Explore", phaseIdx: 4, progress: 57, team: ["GP", "WL", "FS"], updated: "2h ago", color: "#0091DA" },
+                { name: "EWM Warehouse Transformation", industry: "Logistics", modules: ["EWM", "MM"], phase: "Prepare", phaseIdx: 2, progress: 28, team: ["GP", "AK"], updated: "1d ago", color: "#7C3AED" },
+                { name: "FI/CO Finance Modernization", industry: "Financial Services", modules: ["FI", "CO"], phase: "Marketing", phaseIdx: 0, progress: 8, team: ["GP"], updated: "3d ago", color: "#D97706" },
               ].map((p, i) => {
                 const ok = hasAccess(phases[p.phaseIdx].id);
                 return (
-                  <div key={i} onClick={() => { if (ok) { setActivePhaseIdx(p.phaseIdx); setScreen("project-view"); } }} className={`bg-white rounded-lg border border-slate-200/80 p-4 transition-all group ${ok ? "hover:border-[#0091DA]/30 hover:shadow-sm cursor-pointer" : "opacity-50 cursor-not-allowed"}`}>
+                  <div key={i} onClick={() => { if (ok) { setActivePhaseIdx(p.phaseIdx); setScreen("project-view"); } }} className={`bg-white rounded-xl border border-slate-200/60 p-5 transition-all group ${ok ? "hover:border-slate-300 hover:shadow-md hover:shadow-slate-100/50 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-1.5">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
                           <h3 className={`text-sm font-semibold text-[#1B2A4A] truncate ${ok ? "group-hover:text-[#0091DA]" : ""}`}>{p.name}</h3>
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#0091DA]/8 text-[#0091DA] flex-shrink-0">{p.phase}</span>
-                          {!ok && <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-red-50 text-red-400 flex-shrink-0">Restricted</span>}
+                          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.color + "10", color: p.color }}>{p.phase}</span>
+                          {!ok && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-400 border border-red-100 flex-shrink-0">Restricted</span>}
                         </div>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 ml-5">
                           <span>{p.industry}</span>
                           <span className="text-slate-200">·</span>
-                          <div className="flex gap-1">{p.modules.map((m) => <span key={m} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-medium">{m}</span>)}</div>
+                          <div className="flex gap-1">{p.modules.map((m) => <span key={m} className="px-1.5 py-0.5 bg-slate-50 text-slate-500 rounded-md text-[10px] font-medium border border-slate-100">{m}</span>)}</div>
                           <span className="text-slate-200">·</span>
                           <span>{p.updated}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-5 ml-4">
-                        <div className="flex -space-x-1.5">{p.team.map((t, j) => <Avatar key={j} initials={t} />)}</div>
-                        <div className="w-28">
-                          <div className="flex justify-between text-[10px] text-slate-400 mb-1"><span>Progress</span><span className="font-medium text-[#1B2A4A]">{p.progress}%</span></div>
-                          <div className="h-1 bg-slate-100 rounded-full"><div className="h-full bg-[#0091DA] rounded-full" style={{ width: `${p.progress}%` }} /></div>
+                      <div className="flex items-center gap-6 ml-4">
+                        <div className="flex -space-x-2">{p.team.map((t, j) => <Avatar key={j} initials={t} />)}</div>
+                        <div className="w-32">
+                          <div className="flex justify-between text-[10px] text-slate-400 mb-1.5"><span>Progress</span><span className="font-semibold text-[#1B2A4A]">{p.progress}%</span></div>
+                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${p.progress}%`, backgroundColor: p.color }} /></div>
                         </div>
-                        <IconChevron className={`w-4 h-4 ${ok ? "text-slate-300 group-hover:text-[#0091DA]" : "text-slate-200"}`} />
+                        <IconChevron className={`w-4 h-4 ${ok ? "text-slate-300 group-hover:text-[#0091DA] transition-colors" : "text-slate-200"}`} />
                       </div>
                     </div>
                   </div>
