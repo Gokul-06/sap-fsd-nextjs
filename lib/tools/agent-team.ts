@@ -112,17 +112,13 @@ export async function orchestrateAgentTeam(
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    warnings.push(`Team Lead analysis failed: ${msg}. Using fallback.`);
-    teamLeadCtx = {
-      moduleStrategy: `${primaryModule} implementation for ${processArea}.`,
-      processSteps: ["Analyze", "Design", "Configure", "Test", "Go-live"],
-      designDecisions: ["Use standard SAP functionality"],
-      terminologyGlossary: {},
-      riskAreas: ["Requirements need clarification"],
-      crossModuleConsiderations: "Standard integrations apply.",
-      keyStakeholders: ["Business Users", "IT Team"],
-      scopeBoundaries: "As defined in requirements.",
-    };
+    // Team Lead failure is critical — propagate the error with context
+    onProgress({
+      phase: "team-lead",
+      status: "failed",
+      message: `Team Lead failed: ${msg}`,
+    });
+    throw new Error(`Phase 1 (Team Lead) failed: ${msg}. Please try again or use Standard mode.`);
   }
 
   onProgress({ phase: "team-lead", status: "completed", message: "Team Lead brief ready" });
@@ -143,51 +139,68 @@ export async function orchestrateAgentTeam(
     aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief)
       .then((r) => {
         specialistAgents[0].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Business Analyst completed" });
         return r;
       })
       .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Unknown";
         specialistAgents[0].status = "failed";
-        warnings.push(`Business Analyst failed: ${err instanceof Error ? err.message : "Unknown"}`);
+        warnings.push(`Business Analyst failed: ${msg}`);
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Business Analyst failed: ${msg}` });
         return "";
       }),
 
     aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief)
       .then((r) => {
         specialistAgents[1].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Solution Architect completed" });
         return r;
       })
       .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Unknown";
         specialistAgents[1].status = "failed";
-        warnings.push(`Solution Architect failed: ${err instanceof Error ? err.message : "Unknown"}`);
+        warnings.push(`Solution Architect failed: ${msg}`);
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Solution Architect failed: ${msg}` });
         return "";
       }),
 
     aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief)
       .then((r) => {
         specialistAgents[2].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Technical Consultant completed" });
         return r;
       })
       .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Unknown";
         specialistAgents[2].status = "failed";
-        warnings.push(`Technical Consultant failed: ${err instanceof Error ? err.message : "Unknown"}`);
+        warnings.push(`Technical Consultant failed: ${msg}`);
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Technical Consultant failed: ${msg}` });
         return "";
       }),
 
     aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief)
       .then((r) => {
         specialistAgents[3].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Project Manager completed" });
         return r;
       })
       .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Unknown";
         specialistAgents[3].status = "failed";
-        warnings.push(`Project Manager failed: ${err instanceof Error ? err.message : "Unknown"}`);
+        warnings.push(`Project Manager failed: ${msg}`);
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Project Manager failed: ${msg}` });
         return "";
       }),
   ]);
+
+  // Check if ALL specialists failed — that's a critical failure
+  const failedCount = specialistAgents.filter(a => a.status === "failed").length;
+  if (failedCount === 4) {
+    throw new Error("All 4 specialist agents failed. Please check your API key and try again.");
+  }
+  if (failedCount >= 3) {
+    warnings.push(`WARNING: ${failedCount} of 4 specialists failed. Output quality will be significantly reduced.`);
+  }
 
   onProgress({ phase: "specialists", status: "completed", agents: specialistAgents });
 
@@ -222,10 +235,11 @@ export async function orchestrateAgentTeam(
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    warnings.push(`Quality review failed: ${msg}. Using raw specialist outputs.`);
-    // Fallback: use specialist outputs directly
+    warnings.push(`Quality review failed: ${msg}. Using specialist outputs directly (still good quality).`);
+    onProgress({ phase: "quality-review", status: "running", message: `Quality review had issues, using specialist outputs directly` });
+    // Fallback: use specialist outputs directly — this is OK since specialists already have Team Lead brief
     reviewResult = {
-      corrections: [],
+      corrections: [`Quality review skipped: ${msg}`],
       finalSections: {
         executiveSummary: ba,
         proposedSolution: sa,

@@ -123,10 +123,12 @@ export function useFsdGeneration() {
                 throw new Error(event.error || "Agent team generation failed");
               }
             } catch (parseErr) {
-              if (parseErr instanceof Error && parseErr.message.includes("Agent team")) {
+              // Rethrow all intentional errors (from error phase or validation)
+              if (parseErr instanceof Error && parseErr.message && !parseErr.message.includes("Unexpected token") && !parseErr.message.includes("JSON")) {
                 throw parseErr;
               }
-              // Skip malformed SSE events
+              // Only skip actual JSON parse errors from malformed SSE events
+              console.warn("[AgentTeam] Skipped malformed SSE event:", json?.substring(0, 100));
             }
           }
         }
@@ -166,10 +168,14 @@ export function useFsdGeneration() {
 
       // If stream ended without a complete event, it likely timed out
       if (!finalResult) {
+        // Check if we have any progress to help diagnose
+        const lastPhase = agentProgress?.phase || "unknown";
+        const lastStatus = agentProgress?.status || "unknown";
+        const lastMsg = agentProgress?.message || "";
         throw new Error(
-          "Agent Team generation timed out or failed to complete. " +
-          "The server may have run out of time processing 6 AI calls. " +
-          "Try again with Standard mode or shorter requirements."
+          `Agent Team generation did not complete. ` +
+          `Last phase: ${lastPhase} (${lastStatus})${lastMsg ? ` — ${lastMsg}` : ""}. ` +
+          `This usually means the server timed out. Try Standard mode or shorter requirements.`
         );
       }
 

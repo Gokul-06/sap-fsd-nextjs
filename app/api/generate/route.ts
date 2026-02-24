@@ -164,6 +164,9 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
       }
 
       try {
+        console.log("[AgentTeam] Starting orchestration for:", title, "module:", primaryModule);
+        const startTime = Date.now();
+
         const result = await orchestrateAgentTeam(
           {
             title: title as string,
@@ -179,6 +182,9 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
           sendEvent,
         );
 
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`[AgentTeam] Completed in ${elapsed}s. Warnings: ${result.warnings.length}`);
+
         // Send final complete event with the full result
         sendEvent({
           phase: "complete",
@@ -189,10 +195,12 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
           },
         });
       } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : "Agent team generation failed";
+        console.error("[AgentTeam] FAILED:", errorMsg);
         sendEvent({
           phase: "error",
           status: "failed",
-          error: error instanceof Error ? error.message : "Agent team generation failed",
+          error: errorMsg,
         });
       } finally {
         // Increment feedback counts (fire-and-forget)

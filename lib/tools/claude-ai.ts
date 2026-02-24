@@ -25,19 +25,36 @@ export function isAIEnabled(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
 }
 
-export async function callClaude(prompt: string, maxTokens: number = 2048): Promise<string> {
+export async function callClaude(prompt: string, maxTokens: number = 2048, timeoutMs: number = 120000): Promise<string> {
   const anthropic = getClient();
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-  });
 
-  const block = message.content[0];
-  if (block.type === 'text') {
-    return block.text;
+  // Wrap with a timeout to prevent single calls from hanging
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const message = await anthropic.messages.create(
+      {
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      { signal: controller.signal },
+    );
+
+    const block = message.content[0];
+    if (block.type === 'text') {
+      return block.text;
+    }
+    return '';
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(`Claude API call timed out after ${timeoutMs / 1000}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-  return '';
 }
 
 /** Append extra context (feedback rules + few-shot) to a prompt if available */
@@ -709,7 +726,11 @@ export async function aiQualityReviewer(
   };
 }> {
   const langInstruction = buildLanguageInstruction(language);
-  const prompt = `You are a Senior SAP Quality Reviewer. Four specialists wrote sections of an FSD. Review ALL outputs for consistency and alignment with the Team Lead's brief.
+
+  // ROBUST APPROACH: Instead of asking Claude to return full sections in JSON
+  // (which breaks on newlines/special chars), ask it to return corrections list
+  // and then use SECTION MARKERS to separate corrected outputs.
+  const prompt = `You are a Senior SAP Quality Reviewer. Four specialists wrote sections of an FSD. Review ALL outputs for consistency and alignment with the Team Lead's brief, then return CORRECTED versions.
 
 ${teamLeadBrief}
 
@@ -729,58 +750,74 @@ ${specialistOutputs.projectManager}
 
 Review for:
 1. TERMINOLOGY consistency across all sections (match Team Lead's glossary)
-2. CROSS-REFERENCES correctness (cutover → migration objects, error handling → process steps)
+2. CROSS-REFERENCES correctness (cutover references migration objects, error handling references process steps)
 3. CONTRADICTIONS between sections
 4. COMPLETENESS (all Team Lead's process steps, decisions, and risks addressed)
 5. QUALITY (fix vague statements, add missing SAP details)
 
-Return a JSON code block:
-\`\`\`json
-{
-  "corrections": ["correction 1", "correction 2"],
-  "executiveSummary": "corrected executive summary",
-  "proposedSolution": "corrected proposed solution (4.1-4.4 including mermaid)",
-  "outputManagement": "corrected output management (9.1, 9.2)",
-  "errorHandling": "corrected error handling (10.1-10.3)",
-  "dataMigration": "corrected data migration (11.1, 11.2)",
-  "cutoverPlan": "corrected cutover plan (13.1, 13.2)"
-}
-\`\`\`
+OUTPUT FORMAT: Return corrected sections separated by these EXACT markers. Write the FULL corrected content for each section. If a section is already good, return it as-is. Preserve all markdown tables and mermaid diagrams.
 
-Return COMPLETE corrected text for each section. If a section is good, return it unchanged. Preserve all markdown tables and mermaid diagrams. JSON string values must escape newlines as \\n.`;
+First, list corrections on a single line:
+CORRECTIONS: correction1 | correction2 | correction3
+
+Then output each corrected section with these markers:
+
+<<<EXECUTIVE_SUMMARY>>>
+(corrected executive summary here)
+<<<PROPOSED_SOLUTION>>>
+(corrected proposed solution here with 4.1-4.4 including mermaid)
+<<<OUTPUT_MANAGEMENT>>>
+(corrected output management here with 9.1, 9.2)
+<<<ERROR_HANDLING>>>
+(corrected error handling here with 10.1-10.3)
+<<<DATA_MIGRATION>>>
+(corrected data migration here with 11.1, 11.2)
+<<<CUTOVER_PLAN>>>
+(corrected cutover plan here with 13.1, 13.2)
+<<<END>>>`;
 
   const maxTokens = 8192;
-  const raw = await callClaude(withExtraContext(prompt, ""), maxTokens);
+  const raw = await callClaude(withExtraContext(prompt, ""), maxTokens, 180000);
 
-  try {
-    const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const jsonStr = jsonMatch ? jsonMatch[1].trim() : raw.trim();
-    const parsed = JSON.parse(jsonStr);
-    return {
-      corrections: Array.isArray(parsed.corrections) ? parsed.corrections : [],
-      finalSections: {
-        executiveSummary: parsed.executiveSummary || specialistOutputs.businessAnalyst,
-        proposedSolution: parsed.proposedSolution || specialistOutputs.solutionArchitect,
-        outputManagement: parsed.outputManagement || extractSection(specialistOutputs.technicalConsultant, "OUTPUT MANAGEMENT"),
-        errorHandling: parsed.errorHandling || extractSection(specialistOutputs.technicalConsultant, "ERROR HANDLING"),
-        dataMigration: parsed.dataMigration || extractSection(specialistOutputs.projectManager, "DATA MIGRATION"),
-        cutoverPlan: parsed.cutoverPlan || extractSection(specialistOutputs.projectManager, "CUTOVER PLAN"),
-      },
-    };
-  } catch {
-    // Fallback: use raw specialist outputs
-    return {
-      corrections: ["Quality review parsing failed — using raw specialist outputs"],
-      finalSections: {
-        executiveSummary: specialistOutputs.businessAnalyst,
-        proposedSolution: specialistOutputs.solutionArchitect,
-        outputManagement: extractSection(specialistOutputs.technicalConsultant, "OUTPUT MANAGEMENT"),
-        errorHandling: extractSection(specialistOutputs.technicalConsultant, "ERROR HANDLING"),
-        dataMigration: extractSection(specialistOutputs.projectManager, "DATA MIGRATION"),
-        cutoverPlan: extractSection(specialistOutputs.projectManager, "CUTOVER PLAN"),
-      },
-    };
+  // Parse using robust marker-based extraction (not JSON!)
+  const corrections: string[] = [];
+  const correctionsMatch = raw.match(/CORRECTIONS:\s*(.+?)(?:\n|<<<)/);
+  if (correctionsMatch) {
+    corrections.push(...correctionsMatch[1].split("|").map(c => c.trim()).filter(Boolean));
   }
+
+  function extractMarkerSection(text: string, marker: string, nextMarkers: string[]): string {
+    const start = text.indexOf(`<<<${marker}>>>`);
+    if (start === -1) return "";
+    const afterMarker = text.substring(start + marker.length + 6).trim();
+    let end = afterMarker.length;
+    for (const nm of nextMarkers) {
+      const idx = afterMarker.indexOf(`<<<${nm}>>>`);
+      if (idx !== -1 && idx < end) end = idx;
+    }
+    return afterMarker.substring(0, end).trim();
+  }
+
+  const markers = ["EXECUTIVE_SUMMARY", "PROPOSED_SOLUTION", "OUTPUT_MANAGEMENT", "ERROR_HANDLING", "DATA_MIGRATION", "CUTOVER_PLAN", "END"];
+
+  const executiveSummary = extractMarkerSection(raw, "EXECUTIVE_SUMMARY", markers.slice(1));
+  const proposedSolution = extractMarkerSection(raw, "PROPOSED_SOLUTION", markers.slice(2));
+  const outputManagement = extractMarkerSection(raw, "OUTPUT_MANAGEMENT", markers.slice(3));
+  const errorHandling = extractMarkerSection(raw, "ERROR_HANDLING", markers.slice(4));
+  const dataMigration = extractMarkerSection(raw, "DATA_MIGRATION", markers.slice(5));
+  const cutoverPlan = extractMarkerSection(raw, "CUTOVER_PLAN", markers.slice(6));
+
+  return {
+    corrections,
+    finalSections: {
+      executiveSummary: executiveSummary || specialistOutputs.businessAnalyst,
+      proposedSolution: proposedSolution || specialistOutputs.solutionArchitect,
+      outputManagement: outputManagement || extractSection(specialistOutputs.technicalConsultant, "OUTPUT MANAGEMENT"),
+      errorHandling: errorHandling || extractSection(specialistOutputs.technicalConsultant, "ERROR HANDLING"),
+      dataMigration: dataMigration || extractSection(specialistOutputs.projectManager, "DATA MIGRATION"),
+      cutoverPlan: cutoverPlan || extractSection(specialistOutputs.projectManager, "CUTOVER PLAN"),
+    },
+  };
 }
 
 /** Extract a subsection from combined specialist output using === markers */
