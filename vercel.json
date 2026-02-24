@@ -10,6 +10,9 @@
     },
     "app/api/doc-transform/route.ts": {
       "maxDuration": 300
+    },
+    "app/api/doc-transform-export/route.ts": {
+      "maxDuration": 60
     }
   }
 }

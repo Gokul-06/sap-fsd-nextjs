@@ -72,15 +72,15 @@ export default function DocTransformPage() {
     setExporting(true);
     setError("");
     try {
-      const res = await fetch("/api/generate-word", {
+      const res = await fetch("/api/doc-transform-export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          markdownOverride: result,
-          title: processName,
-          module: moduleName,
+          markdown: result,
+          processName,
+          moduleName,
           author: "Gokul Palanisamy",
-          projectName: processName,
+          documentType: outputType,
         }),
       });
       if (!res.ok) {
