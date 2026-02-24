@@ -391,6 +391,7 @@ function GeneratePageContent() {
                           <SelectItem value="French">Français (French)</SelectItem>
                           <SelectItem value="Spanish">Español (Spanish)</SelectItem>
                           <SelectItem value="Japanese">日本語 (Japanese)</SelectItem>
+                          <SelectItem value="Chinese">中文 (Chinese)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
