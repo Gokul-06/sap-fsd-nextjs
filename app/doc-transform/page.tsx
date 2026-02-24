@@ -17,6 +17,7 @@ export default function DocTransformPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -68,6 +69,8 @@ export default function DocTransformPage() {
 
   const handleExportWord = async () => {
     if (!result) return;
+    setExporting(true);
+    setError("");
     try {
       const res = await fetch("/api/generate-word", {
         method: "POST",
@@ -80,16 +83,24 @@ export default function DocTransformPage() {
           projectName: processName,
         }),
       });
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) {
+        let errMsg = "Export failed";
+        try { const errData = await res.json(); errMsg = errData.error || errMsg; } catch { /* ignore */ }
+        throw new Error(errMsg);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `${outputType.toUpperCase()}_${processName.replace(/\s+/g, "_")}.docx`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch {
-      setError("Word export failed. Try copying the content instead.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Word export failed. Try copying the content instead.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -418,12 +429,29 @@ export default function DocTransformPage() {
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                   Copy
                 </button>
-                <button onClick={handleExportWord} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1B2A4A] text-white rounded-md text-sm font-medium hover:bg-[#243558]">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                  Export .docx
+                <button onClick={handleExportWord} disabled={exporting} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium ${exporting ? "bg-slate-300 text-slate-500 cursor-not-allowed" : "bg-[#1B2A4A] text-white hover:bg-[#243558]"}`}>
+                  {exporting ? (
+                    <>
+                      <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" /></svg>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                      Export .docx
+                    </>
+                  )}
                 </button>
               </div>
             </div>
+
+            {/* Export error */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4 flex items-center justify-between">
+                <span>{error}</span>
+                <button onClick={() => setError("")} className="text-red-400 hover:text-red-500 text-xs ml-3">Dismiss</button>
+              </div>
+            )}
 
             {/* Result content */}
             <div className="bg-white rounded-lg border border-slate-200/80 p-8 prose prose-sm prose-slate max-w-none">
