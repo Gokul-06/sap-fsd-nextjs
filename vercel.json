@@ -7,6 +7,9 @@
     },
     "app/api/generate-word/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/doc-transform/route.ts": {
+      "maxDuration": 300
     }
   }
 }

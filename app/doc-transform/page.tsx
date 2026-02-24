@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -17,7 +17,20 @@ export default function DocTransformPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState("");
+  const [elapsed, setElapsed] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Timer for generation progress
+  useEffect(() => {
+    if (status === "generating") {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [status]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -236,24 +249,82 @@ export default function DocTransformPage() {
               </div>
 
               {/* Generate Button */}
-              <button
-                onClick={handleGenerate}
-                disabled={!file || !processName.trim() || status === "generating"}
-                className={`w-full py-3.5 rounded-lg text-sm font-medium transition-all ${
-                  !file || !processName.trim() || status === "generating"
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "bg-[#1B2A4A] text-white hover:bg-[#243558]"
-                }`}
-              >
-                {status === "generating" ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" /></svg>
-                    Generating {outputType === "sop" ? "SOP" : "User Manual"}...
-                  </span>
-                ) : (
-                  `Generate ${outputType === "sop" ? "SOP" : "User Manual"}`
-                )}
-              </button>
+              {status !== "generating" && (
+                <button
+                  onClick={handleGenerate}
+                  disabled={!file || !processName.trim()}
+                  className={`w-full py-3.5 rounded-lg text-sm font-medium transition-all ${
+                    !file || !processName.trim()
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-[#1B2A4A] text-white hover:bg-[#243558]"
+                  }`}
+                >
+                  Generate {outputType === "sop" ? "SOP" : "User Manual"}
+                </button>
+              )}
+
+              {/* Generating Progress */}
+              {status === "generating" && (
+                <div className="bg-white rounded-lg border border-slate-200/80 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="relative w-10 h-10">
+                      <svg className="animate-spin w-10 h-10" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="17" stroke="#E2E8F0" strokeWidth="3" />
+                        <circle cx="20" cy="20" r="17" stroke="#0091DA" strokeWidth="3" strokeDasharray="50 57" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-[#1B2A4A]">
+                        Generating {outputType === "sop" ? "Standard Operating Procedure" : "User Manual"}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        {elapsed < 10 ? "Parsing document..." :
+                         elapsed < 30 ? "AI is writing content..." :
+                         elapsed < 60 ? "Building detailed sections..." :
+                         elapsed < 90 ? "Generating tables and exceptions..." :
+                         "Finalizing document..."}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mb-3">
+                    <div
+                      className="bg-[#0091DA] h-1.5 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${Math.min(95, elapsed * 0.8)}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Elapsed: {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, "0")}</span>
+                    <span>Typically takes 1-2 minutes</span>
+                  </div>
+
+                  {/* Progress steps */}
+                  <div className="mt-4 space-y-2.5">
+                    {[
+                      { label: "Document parsed", time: 5 },
+                      { label: "Content analysis complete", time: 15 },
+                      { label: "Generating sections", time: 30 },
+                      { label: "Building tables & exceptions", time: 60 },
+                      { label: "Final review", time: 90 },
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        {elapsed >= step.time ? (
+                          <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="20 6 9 17 4 12" /></svg>
+                        ) : elapsed >= step.time - 10 ? (
+                          <svg className="w-4 h-4 text-[#0091DA] animate-spin flex-shrink-0" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" strokeDasharray="20 36" strokeLinecap="round" /></svg>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border border-slate-200 flex-shrink-0" />
+                        )}
+                        <span className={`text-[12px] ${elapsed >= step.time ? "text-slate-600" : "text-slate-300"}`}>
+                          {step.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">{error}</div>
