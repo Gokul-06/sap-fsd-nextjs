@@ -181,13 +181,13 @@ const phases = [
 ];
 
 const teamMembers = [
-  { initials: "GP", name: "Gokul Palanisamy", email: "gokul@westernacher.com", role: "admin" as Role },
-  { initials: "WL", name: "Wei Li", email: "wei@westernacher.com", role: "solution-architect" as Role },
-  { initials: "FS", name: "Florian Schmidt", email: "florian@westernacher.com", role: "project-manager" as Role },
-  { initials: "AK", name: "Anna König", email: "anna@westernacher.com", role: "consultant" as Role },
-  { initials: "MR", name: "Maria Rossi", email: "maria@westernacher.com", role: "marketing" as Role },
-  { initials: "TJ", name: "Tom Jansen", email: "tom@westernacher.com", role: "presales" as Role },
-  { initials: "KW", name: "Kristin Weber", email: "kristin@westernacher.com", role: "viewer" as Role },
+  { initials: "GP", name: "Gokul Palanisamy", email: "gokul.palanisamy@westernacher.com", role: "admin" as Role },
+  { initials: "WL", name: "Wei Li", email: "wei.li@westernacher.com", role: "solution-architect" as Role },
+  { initials: "FS", name: "Florian Schmidt", email: "florian.schmidt@westernacher.com", role: "project-manager" as Role },
+  { initials: "AK", name: "Anna König", email: "anna.koenig@westernacher.com", role: "consultant" as Role },
+  { initials: "MR", name: "Maria Rossi", email: "maria.rossi@westernacher.com", role: "marketing" as Role },
+  { initials: "TJ", name: "Tom Jansen", email: "tom.jansen@westernacher.com", role: "presales" as Role },
+  { initials: "KW", name: "Kristin Weber", email: "kristin.weber@westernacher.com", role: "viewer" as Role },
 ];
 
 /* ──────────────────────────────────────────────
@@ -373,8 +373,8 @@ export default function PrototypePage() {
           <div className="max-w-7xl mx-auto px-8 py-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-xl font-semibold text-[#1B2A4A]">Projects</h1>
-                <p className="text-sm text-slate-400 mt-0.5">3 active · 2 pending review</p>
+                <h1 className="text-xl font-semibold text-[#1B2A4A]">Welcome back, Gokul</h1>
+                <p className="text-sm text-slate-400 mt-0.5">3 active projects · 2 pending review</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-[11px] text-slate-400 border border-slate-200 rounded-md px-3 py-1.5 bg-white">
@@ -433,9 +433,9 @@ export default function PrototypePage() {
             {/* Project list */}
             <div className="space-y-3">
               {[
-                { name: "S/4HANA Migration — Duni Group", client: "Duni", modules: ["MM", "SD", "FI"], phase: "Explore", phaseIdx: 4, progress: 57, team: ["GP", "WL", "FS"], updated: "2h ago" },
-                { name: "EWM Implementation — Green Token", client: "Green Token", modules: ["EWM", "MM"], phase: "Prepare", phaseIdx: 2, progress: 28, team: ["GP", "AK"], updated: "1d ago" },
-                { name: "FI/CO Transformation — Bank Corp", client: "Bank Corp", modules: ["FI", "CO"], phase: "Marketing", phaseIdx: 0, progress: 8, team: ["GP"], updated: "3d ago" },
+                { name: "S/4HANA Greenfield Implementation", industry: "Manufacturing", modules: ["MM", "SD", "FI"], phase: "Explore", phaseIdx: 4, progress: 57, team: ["GP", "WL", "FS"], updated: "2h ago" },
+                { name: "EWM Warehouse Transformation", industry: "Logistics", modules: ["EWM", "MM"], phase: "Prepare", phaseIdx: 2, progress: 28, team: ["GP", "AK"], updated: "1d ago" },
+                { name: "FI/CO Finance Modernization", industry: "Financial Services", modules: ["FI", "CO"], phase: "Marketing", phaseIdx: 0, progress: 8, team: ["GP"], updated: "3d ago" },
               ].map((p, i) => {
                 const ok = hasAccess(phases[p.phaseIdx].id);
                 return (
@@ -448,7 +448,7 @@ export default function PrototypePage() {
                           {!ok && <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-red-50 text-red-400 flex-shrink-0">Restricted</span>}
                         </div>
                         <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                          <span>{p.client}</span>
+                          <span>{p.industry}</span>
                           <span className="text-slate-200">·</span>
                           <div className="flex gap-1">{p.modules.map((m) => <span key={m} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-medium">{m}</span>)}</div>
                           <span className="text-slate-200">·</span>
@@ -496,12 +496,12 @@ export default function PrototypePage() {
               <div className="space-y-5">
                 <div>
                   <label className="text-[11px] font-medium text-slate-500 block mb-1.5">Project Name</label>
-                  <div className="border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-[#1B2A4A]">S/4HANA Migration — Duni Group</div>
+                  <div className="border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-[#1B2A4A]">S/4HANA Greenfield Implementation</div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[11px] font-medium text-slate-500 block mb-1.5">Client</label>
-                    <div className="border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-[#1B2A4A]">Duni Group</div>
+                    <label className="text-[11px] font-medium text-slate-500 block mb-1.5">Industry</label>
+                    <div className="border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-[#1B2A4A]">Manufacturing</div>
                   </div>
                   <div>
                     <label className="text-[11px] font-medium text-slate-500 block mb-1.5">Industry</label>
@@ -671,9 +671,9 @@ export default function PrototypePage() {
                   <button onClick={() => setScreen("dashboard")} className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-[#0091DA] mb-0.5">
                     <IconArrowLeft className="w-3.5 h-3.5" /> All Projects
                   </button>
-                  <h1 className="text-base font-semibold text-[#1B2A4A]">S/4HANA Migration — Duni Group</h1>
+                  <h1 className="text-base font-semibold text-[#1B2A4A]">S/4HANA Greenfield Implementation</h1>
                   <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-400">
-                    <span>Duni Group</span>
+                    <span>Lead: Gokul Palanisamy</span>
                     <span className="text-slate-200">·</span>
                     <div className="flex gap-1">{["MM", "SD", "FI"].map((m) => <span key={m} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-medium">{m}</span>)}</div>
                     <span className="text-slate-200">·</span>
@@ -821,7 +821,7 @@ export default function PrototypePage() {
                           { name: "Case Study Generator", status: "complete", desc: "3 client success stories generated from past project data", count: "3 created" },
                           { name: "Industry Pitch Deck", status: "complete", desc: "Manufacturing-focused deck with SAP S/4HANA value propositions", count: "2 versions" },
                           { name: "Thought Leadership", status: "complete", desc: "5 blog posts and 2 whitepapers on S/4HANA migration", count: "7 articles" },
-                          { name: "Competitor Analysis", status: "complete", desc: "Westernacher vs 4 competitors — differentiators mapped", count: "4 reports" },
+                          { name: "Competitor Analysis", status: "complete", desc: "Market positioning and competitive differentiators mapped", count: "4 reports" },
                           { name: "Email Campaign", status: "generating", desc: "AI generating personalized outreach for Manufacturing CIOs", count: "In progress" },
                           { name: "Event Proposals", status: "pending", desc: "SAP TechEd talk proposals and webinar outlines", count: "Queued" },
                         ].map((a, i) => (
