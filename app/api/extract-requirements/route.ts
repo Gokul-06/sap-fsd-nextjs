@@ -15,6 +15,23 @@ export async function POST(request: Request) {
       );
     }
 
+    // File size validation (10MB max = ~13.3MB in base64)
+    if (typeof fileBase64 === "string" && fileBase64.length > 15_000_000) {
+      return NextResponse.json(
+        { error: "File too large. Maximum file size is 10MB." },
+        { status: 413 }
+      );
+    }
+
+    // Validate media type
+    const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
+    if (mediaType && !allowedTypes.includes(mediaType)) {
+      return NextResponse.json(
+        { error: "Unsupported file type. Accepted: PDF, DOCX, TXT." },
+        { status: 400 }
+      );
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(

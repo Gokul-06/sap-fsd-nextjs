@@ -24,8 +24,15 @@ async function getFsdByShareId(shareId: string) {
         aiEnabled: true,
         language: true,
         createdAt: true,
+        shareExpiresAt: true,
       },
     });
+
+    // Check if share link has expired (GDPR data retention)
+    if (fsd?.shareExpiresAt && new Date(fsd.shareExpiresAt) < new Date()) {
+      return null;
+    }
+
     return fsd;
   } catch {
     return null;
@@ -58,7 +65,7 @@ export default async function SharedFsdPage({
         <h1 className="text-2xl font-bold text-navy">{fsd.title}</h1>
         <p className="text-muted-foreground mt-1">
           {fsd.projectName} · {fsd.author} ·{" "}
-          {new Date(fsd.createdAt).toLocaleDateString("en-US", {
+          {new Date(fsd.createdAt).toLocaleDateString(undefined, {
             month: "long",
             day: "numeric",
             year: "numeric",

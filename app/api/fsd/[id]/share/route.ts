@@ -18,19 +18,27 @@ export async function POST(
       );
     }
 
+    // Check if share exists and is still valid
     if (fsd.shareId) {
-      const shareUrl = `${new URL(request.url).origin}/share/${fsd.shareId}`;
-      return NextResponse.json({
-        shareId: fsd.shareId,
-        shareUrl,
-      });
+      const isExpired = fsd.shareExpiresAt && new Date(fsd.shareExpiresAt) < new Date();
+      if (!isExpired) {
+        const shareUrl = `${new URL(request.url).origin}/share/${fsd.shareId}`;
+        return NextResponse.json({
+          shareId: fsd.shareId,
+          shareUrl,
+          expiresAt: fsd.shareExpiresAt,
+        });
+      }
     }
 
     const shareId = crypto.randomUUID();
+    // Share links expire in 30 days (GDPR data retention)
+    const shareExpiresAt = new Date();
+    shareExpiresAt.setDate(shareExpiresAt.getDate() + 30);
 
     await prisma.fsd.update({
       where: { id },
-      data: { shareId },
+      data: { shareId, shareExpiresAt },
     });
 
     const shareUrl = `${new URL(request.url).origin}/share/${shareId}`;
@@ -38,6 +46,7 @@ export async function POST(
     return NextResponse.json({
       shareId,
       shareUrl,
+      expiresAt: shareExpiresAt,
     });
   } catch (error) {
     console.error("Failed to generate share link:", error);

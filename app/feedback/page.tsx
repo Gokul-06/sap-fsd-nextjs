@@ -279,7 +279,7 @@ export default function FeedbackPage() {
                     </div>
                     <p className="text-sm text-foreground">{rule.content}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Created {new Date(rule.createdAt).toLocaleDateString("en-US", {
+                      Created {new Date(rule.createdAt).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
                         year: "numeric",

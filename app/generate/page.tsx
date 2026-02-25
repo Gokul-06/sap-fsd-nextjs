@@ -553,6 +553,16 @@ Example (SAP Activate — Explore Phase):
                   {/* SAP Activate Methodology Tips (collapsible) */}
                   <MethodologyTips />
 
+                  {/* AI Processing Disclosure (GDPR) */}
+                  <div className="flex items-start gap-2 text-[11px] text-muted-foreground/70 bg-amber-50/50 border border-amber-200/40 rounded-lg px-3 py-2">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                    <span>
+                      Your requirements will be processed by AI (Anthropic Claude) to generate the FSD.
+                      By proceeding, you agree to our{" "}
+                      <a href="/privacy" className="text-[#0091DA] hover:underline">Privacy Policy</a>.
+                    </span>
+                  </div>
+
                   {/* Animated Generate Button */}
                   <button
                     className="generate-btn w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0091DA] to-[#1B2A4A] text-white font-semibold py-4 text-base transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none flex items-center justify-center gap-2"

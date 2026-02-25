@@ -238,7 +238,7 @@ export default function FsdDetailPage() {
           <h1 className="text-2xl font-bold text-navy">{fsd.title}</h1>
           <p className="text-muted-foreground mt-1">
             {fsd.projectName} · {fsd.author} ·{" "}
-            {new Date(fsd.createdAt).toLocaleDateString("en-US", {
+            {new Date(fsd.createdAt).toLocaleDateString(undefined, {
               month: "long",
               day: "numeric",
               year: "numeric",
@@ -419,7 +419,7 @@ export default function FsdDetailPage() {
                         {comment.authorName}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(comment.createdAt).toLocaleDateString("en-US", {
+                        {new Date(comment.createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
                           hour: "2-digit",

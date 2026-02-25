@@ -1,6 +1,7 @@
 {
   "framework": "nextjs",
   "buildCommand": "prisma generate && prisma db push && next build",
+  "regions": ["iad1", "fra1", "hnd1"],
   "functions": {
     "app/api/generate/route.ts": {
       "maxDuration": 300

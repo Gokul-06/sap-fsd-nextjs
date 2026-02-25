@@ -130,7 +130,7 @@ export default async function HomePage() {
                         {fsd.processArea} · {fsd.author}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(fsd.createdAt).toLocaleDateString("en-US", {
+                        {new Date(fsd.createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",

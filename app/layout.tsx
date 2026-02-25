@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
+import { CookieConsent } from "@/components/shared/cookie-consent";
+import { ConditionalAnalytics } from "@/components/shared/conditional-analytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,7 +32,8 @@ export default function RootLayout({
           <Footer />
         </div>
         <Toaster />
-        <Analytics />
+        <CookieConsent />
+        <ConditionalAnalytics />
       </body>
     </html>
   );

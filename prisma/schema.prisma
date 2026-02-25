@@ -21,6 +21,7 @@ model Fsd {
   warnings            String    @default("[]")
   aiEnabled           Boolean   @default(true)
   shareId             String?   @unique
+  shareExpiresAt      DateTime?
   docxBlobUrl         String?
   rating              Int?      // 1-5 stars (Level 3)
   usedFeedbackRuleIds String    @default("[]") // JSON array of rule IDs used in generation

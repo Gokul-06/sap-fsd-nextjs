@@ -117,7 +117,7 @@ export default async function HistoryPage() {
                         {fsd.primaryModule}
                       </Badge>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(fsd.createdAt).toLocaleDateString("en-US", {
+                        {new Date(fsd.createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",

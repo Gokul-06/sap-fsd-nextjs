@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="border-t border-border/50 bg-white/50 backdrop-blur-sm py-5">
@@ -6,9 +8,17 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             Westernacher Digital Core NA &middot; 2026
           </p>
-          <p className="text-xs text-muted-foreground/60">
-            Powered by WE-AI &middot; Enterprise FSD Generator
-          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <span className="text-xs text-muted-foreground/60">
+              Powered by WE-AI
+            </span>
+          </div>
         </div>
       </div>
     </footer>
