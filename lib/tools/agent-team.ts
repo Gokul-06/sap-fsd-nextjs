@@ -1,6 +1,6 @@
 /**
  * Agent Teams Orchestration Engine
- * Coordinates a 3-phase pipeline: Team Lead → Specialists → Quality Review
+ * Coordinates a 3-phase pipeline: Project Director → Specialists → Quality Review
  * Produces higher-quality FSDs through shared context and cross-agent review.
  */
 
@@ -15,6 +15,7 @@ import {
   aiSolutionArchitect,
   aiTechnicalConsultant,
   aiProjectManager,
+  aiBpmnProcessDiagram,
   aiQualityReviewer,
   serializeTeamLeadContext,
   aiTestScripts,
@@ -39,7 +40,7 @@ import {
 } from "@/lib/knowledge/cross-module-map";
 
 // ─── Timeout budgets (must sum to < 300s Vercel limit) ───
-const PHASE1_TIMEOUT_MS = 60_000;   // Team Lead: 60s
+const PHASE1_TIMEOUT_MS = 60_000;   // Project Director: 60s
 const PHASE2_TIMEOUT_MS = 90_000;   // Specialists (parallel): 90s
 const PHASE3_TIMEOUT_MS = 90_000;   // Quality Review + Test Scripts (parallel): 90s
 // Total worst-case: 240s → 60s safety margin before 300s Vercel limit
@@ -121,11 +122,11 @@ export async function orchestrateAgentTeam(
     return { markdown, classifiedModules, primaryModule, processArea, language, crossModuleImpacts, warnings };
   }
 
-  // ─── Phase 1: Team Lead Analysis ───
+  // ─── Phase 1: Project Director Analysis ───
   onProgress({
     phase: "team-lead",
     status: "running",
-    message: "Team Lead analyzing requirements and building shared context...",
+    message: "Project Director analyzing requirements and building shared context...",
   });
 
   let teamLeadCtx: TeamLeadContext;
@@ -137,20 +138,20 @@ export async function orchestrateAgentTeam(
         language, extraContext, depth, fsdType,
       ),
       PHASE1_TIMEOUT_MS,
-      "Phase 1 (Team Lead)",
+      "Phase 1 (Project Director)",
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    // Team Lead failure is critical — propagate the error with context
+    // Project Director failure is critical — propagate the error with context
     onProgress({
       phase: "team-lead",
       status: "failed",
-      message: `Team Lead failed: ${msg}`,
+      message: `Project Director failed: ${msg}`,
     });
-    throw new Error(`Phase 1 (Team Lead) failed: ${msg}. Please try again or use Standard mode.`);
+    throw new Error(`Phase 1 (Project Director) failed: ${msg}. Please try again or use Standard mode.`);
   }
 
-  onProgress({ phase: "team-lead", status: "completed", message: "Team Lead brief ready" });
+  onProgress({ phase: "team-lead", status: "completed", message: "Project Director brief ready" });
 
   const teamLeadBrief = serializeTeamLeadContext(teamLeadCtx);
 
@@ -160,11 +161,12 @@ export async function orchestrateAgentTeam(
     { name: "Solution Architect", role: "Solution Design & Process Flows", status: "running" as AgentStatus },
     { name: "Technical Consultant", role: "Error Handling & Output Management", status: "running" as AgentStatus },
     { name: "Project Manager", role: "Migration, Cutover & Testing", status: "running" as AgentStatus },
+    { name: "BPMN Process Architect", role: "Signavio Process Flow & BPMN XML", status: "running" as AgentStatus },
   ];
 
   onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
 
-  const [ba, sa, tc, pm] = await withTimeout(Promise.all([
+  const [ba, sa, tc, pm, bpmn] = await withTimeout(Promise.all([
     aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType)
       .then((r) => {
         specialistAgents[0].status = "completed";
@@ -220,15 +222,30 @@ export async function orchestrateAgentTeam(
         onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Project Manager failed: ${msg}` });
         return "";
       }),
+
+    aiBpmnProcessDiagram(primaryModule, input.requirements, processArea, language,
+      [extraContext, teamLeadBrief].filter(Boolean).join("\n\n"), depth, fsdType)
+      .then((r) => {
+        specialistAgents[4].status = "completed";
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "BPMN Process Architect completed" });
+        return r;
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Unknown";
+        specialistAgents[4].status = "failed";
+        warnings.push(`BPMN Process Architect failed: ${msg}`);
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `BPMN Process Architect failed: ${msg}` });
+        return "";
+      }),
   ]), PHASE2_TIMEOUT_MS, "Phase 2 (Specialists)");
 
   // Check if ALL specialists failed — that's a critical failure
   const failedCount = specialistAgents.filter(a => a.status === "failed").length;
-  if (failedCount === 4) {
-    throw new Error("All 4 specialist agents failed. Please check your API key and try again.");
+  if (failedCount === 5) {
+    throw new Error("All 5 specialist agents failed. Please check your API key and try again.");
   }
-  if (failedCount >= 3) {
-    warnings.push(`WARNING: ${failedCount} of 4 specialists failed. Output quality will be significantly reduced.`);
+  if (failedCount >= 4) {
+    warnings.push(`WARNING: ${failedCount} of 5 specialists failed. Output quality will be significantly reduced.`);
   }
 
   onProgress({ phase: "specialists", status: "completed", agents: specialistAgents });
@@ -279,7 +296,7 @@ export async function orchestrateAgentTeam(
     const msg = err instanceof Error ? err.message : "Unknown error";
     warnings.push(`Quality review failed: ${msg}. Using specialist outputs directly (still good quality).`);
     onProgress({ phase: "quality-review", status: "running", message: `Quality review had issues, using specialist outputs directly` });
-    // Fallback: use specialist outputs directly — this is OK since specialists already have Team Lead brief
+    // Fallback: use specialist outputs directly — this is OK since specialists already have Project Director brief
     reviewResult = {
       corrections: [`Quality review skipped: ${msg}`],
       finalSections: {
@@ -301,7 +318,12 @@ export async function orchestrateAgentTeam(
     sections["executive_summary"] = { content: reviewResult.finalSections.executiveSummary };
   }
   if (reviewResult.finalSections.proposedSolution) {
-    sections["proposed_solution"] = { content: reviewResult.finalSections.proposedSolution };
+    let proposedContent = reviewResult.finalSections.proposedSolution;
+    // Append BPMN Agent's process diagram if SA didn't already include one
+    if (bpmn && !proposedContent.includes("bpmn-process")) {
+      proposedContent += "\n\n### 4.4 Process Flow Diagram\n\n" + bpmn;
+    }
+    sections["proposed_solution"] = { content: proposedContent };
   }
   if (reviewResult.finalSections.outputManagement) {
     sections["output_management"] = { content: reviewResult.finalSections.outputManagement };

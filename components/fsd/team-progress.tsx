@@ -7,6 +7,7 @@ import {
   Layers,
   ShieldCheck,
   ClipboardList,
+  GitBranch,
   CheckCircle2,
   Loader2,
   Search,
@@ -17,7 +18,7 @@ interface TeamProgressProps {
   progress: AgentProgressEvent | null;
 }
 
-const SPECIALIST_ICONS = [FileText, Layers, ShieldCheck, ClipboardList];
+const SPECIALIST_ICONS = [FileText, Layers, ShieldCheck, ClipboardList, GitBranch];
 
 function StatusIcon({ status }: { status: AgentStatus }) {
   if (status === "completed") {
@@ -71,7 +72,7 @@ export function TeamProgress({ progress }: TeamProgressProps) {
   if (tlStatus === "completed") pct = 25;
   if (specStatus === "running") {
     const doneCount = progress?.agents?.filter((a) => a.status === "completed").length || 0;
-    pct = 25 + (doneCount / 4) * 45;
+    pct = 25 + (doneCount / 5) * 45;
   }
   if (specStatus === "completed") pct = 70;
   if (qrStatus === "running") pct = 80;
@@ -98,7 +99,7 @@ export function TeamProgress({ progress }: TeamProgressProps) {
             Agent Team Working
           </h3>
           <p className="text-sm text-muted-foreground">
-            6 AI agents coordinating to build your FSD
+            7 AI agents coordinating to build your FSD
           </p>
         </div>
 
@@ -151,14 +152,14 @@ export function TeamProgress({ progress }: TeamProgressProps) {
                   Phase 1
                 </span>
                 <span className="text-sm font-medium text-[#1B2A4A]">
-                  Team Lead
+                  Project Director
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {tlStatus === "running"
                   ? "Analyzing requirements, building shared context..."
                   : tlStatus === "completed"
-                  ? "Shared brief ready — terminology, process steps, decisions"
+                  ? "Director brief ready — terminology, process steps, decisions"
                   : "Waiting to start..."}
               </p>
             </div>
@@ -209,10 +210,10 @@ export function TeamProgress({ progress }: TeamProgressProps) {
               </div>
               <p className="text-xs text-muted-foreground">
                 {specStatus === "running"
-                  ? "4 specialists working in parallel with shared context..."
+                  ? "5 specialists working in parallel with shared context..."
                   : specStatus === "completed"
                   ? "All specialists completed"
-                  : "Waiting for Team Lead..."}
+                  : "Waiting for Project Director..."}
               </p>
             </div>
             <StatusIcon status={specStatus} />
@@ -225,6 +226,7 @@ export function TeamProgress({ progress }: TeamProgressProps) {
               { name: "Solution Architect", role: "Solution Design", status: "pending" as AgentStatus },
               { name: "Technical Consultant", role: "Error Handling", status: "pending" as AgentStatus },
               { name: "Project Manager", role: "Migration & Cutover", status: "pending" as AgentStatus },
+              { name: "BPMN Process Architect", role: "Signavio Process Flow", status: "pending" as AgentStatus },
             ]).map((agent, i) => {
               const Icon = SPECIALIST_ICONS[i] || FileText;
               return (
@@ -298,7 +300,7 @@ export function TeamProgress({ progress }: TeamProgressProps) {
                   ? "Checking consistency, terminology, cross-references..."
                   : qrStatus === "completed"
                   ? "All sections reviewed and corrected"
-                  : "Waiting for specialists..."}
+                  : "Waiting for specialist agents..."}
               </p>
             </div>
             <StatusIcon status={qrStatus} />

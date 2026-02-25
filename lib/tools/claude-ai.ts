@@ -574,7 +574,7 @@ export function serializeTeamLeadContext(ctx: TeamLeadContext): string {
     .map(([k, v]) => `  - "${k}" → ${v}`)
     .join("\n");
 
-  return `=== TEAM LEAD BRIEF ===
+  return `=== PROJECT DIRECTOR BRIEF ===
 MODULE STRATEGY: ${ctx.moduleStrategy}
 
 PROCESS STEPS:
@@ -598,7 +598,7 @@ SCOPE BOUNDARIES: ${ctx.scopeBoundaries}
 }
 
 /**
- * Phase 1: Team Lead Analysis
+ * Phase 1: Project Director Analysis
  * Deeply analyzes requirements and produces a structured shared brief.
  */
 export async function aiTeamLeadAnalysis(
@@ -615,7 +615,7 @@ export async function aiTeamLeadAnalysis(
 ): Promise<TeamLeadContext> {
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
-  const prompt = `You are a Senior SAP Program Manager leading a team of 4 specialist consultants who will collaboratively write a Functional Specification Document (FSD). Your job is to deeply analyze the business requirements and create a comprehensive brief that all specialists will reference to ensure consistency.
+  const prompt = `You are a Senior SAP Project Director leading a team of 5 specialist consultants who will collaboratively write a Functional Specification Document (FSD). Your job is to deeply analyze the business requirements and create a comprehensive brief that all specialists will reference to ensure consistency.
 ${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -684,7 +684,7 @@ Return ONLY a valid JSON code block. No text before or after it.
 
 /**
  * Phase 2 Specialist: Business Analyst
- * Produces Executive Summary using the Team Lead's shared brief.
+ * Produces Executive Summary using the Project Director's shared brief.
  */
 export async function aiBusinessAnalyst(
   title: string,
@@ -701,7 +701,7 @@ export async function aiBusinessAnalyst(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const wordLimit = depth === "comprehensive" ? 500 : 250;
-  const prompt = `You are a Senior SAP Business Analyst on an Agent Team writing a Functional Specification Document. Your Team Lead has analyzed the requirements and provided a brief below. You MUST align your output with the Team Lead's analysis — use the same terminology, reference the same process steps, and follow the design decisions.
+  const prompt = `You are a Senior SAP Business Analyst on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your output with the Project Director's analysis — use the same terminology, reference the same process steps, and follow the design decisions.
 
 ${teamLeadBrief}
 
@@ -715,14 +715,14 @@ YOUR TASK: Write a professional executive summary (Section 2) for this FSD.
 
 Write ${depth === "comprehensive" ? "4-5" : "2-3"} concise paragraphs covering:
 1. Purpose of this specification document
-2. Scope — what business processes are covered (reference the Team Lead's process steps)
+2. Scope — what business processes are covered (reference the Project Director's process steps)
 3. Expected business benefits and outcomes
-${depth === "comprehensive" ? "4. Key stakeholders and organizational impact (reference the Team Lead's stakeholders)\n5. Success criteria and KPIs" : ""}
+${depth === "comprehensive" ? "4. Key stakeholders and organizational impact (reference the Project Director's stakeholders)\n5. Success criteria and KPIs" : ""}
 
 Rules:
 - Be specific to SAP ${module} and the ${processArea} process
-- Use the EXACT terminology from the Team Lead's glossary
-- Reference risks identified by the Team Lead where relevant
+- Use the EXACT terminology from the Project Director's glossary
+- Reference risks identified by the Project Director where relevant
 - Use professional consulting language
 - Do NOT use markdown headers — just plain paragraphs
 - Keep it under ${wordLimit} words`;
@@ -752,7 +752,7 @@ export async function aiSolutionArchitect(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const nodeCount = depth === "comprehensive" ? "12-18" : "8-12";
-  const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Team Lead has analyzed the requirements and provided a brief below. You MUST align your solution with the Team Lead's process steps and design decisions.
+  const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your solution with the Project Director's process steps and design decisions.
 
 ${teamLeadBrief}
 
@@ -768,18 +768,18 @@ YOUR TASK: Write the Proposed Solution section AND a process flow diagram.
 Write the following in markdown format:
 
 ### 4.1 Solution Overview
-A ${depth === "comprehensive" ? "4-5" : "2-3"} sentence overview referencing the Team Lead's module strategy.
+A ${depth === "comprehensive" ? "4-5" : "2-3"} sentence overview referencing the Project Director's module strategy.
 
 ### 4.2 To-Be Process Flow
-A numbered step-by-step process flow (${depth === "comprehensive" ? "12-18" : "8-12"} steps). These MUST match the Team Lead's process steps. Include the SAP transaction or Fiori app used at each step.
+A numbered step-by-step process flow (${depth === "comprehensive" ? "12-18" : "8-12"} steps). These MUST match the Project Director's process steps. Include the SAP transaction or Fiori app used at each step.
 
 ### 4.3 Key Design Decisions
 A markdown table with columns: Decision | Option Chosen | Rationale
-Include ${depth === "comprehensive" ? "8-10" : "4-6"} design decisions aligned with the Team Lead's decisions.
+Include ${depth === "comprehensive" ? "8-10" : "4-6"} design decisions aligned with the Project Director's decisions.
 
 ### 4.4 Process Flow Diagram
 
-Generate a BPMN 2.0 process flow as JSON inside a \`\`\`bpmn-process code block, based on the Team Lead's process steps.
+Generate a BPMN 2.0 process flow as JSON inside a \`\`\`bpmn-process code block, based on the Project Director's process steps.
 
 Rules for the BPMN diagram:
 - Create 3-4 swim lanes for organizational roles involved in this ${module} process
@@ -797,7 +797,7 @@ Example format:
 
 Rules:
 - Be specific to SAP ${module}
-- Use the EXACT terminology from the Team Lead's glossary
+- Use the EXACT terminology from the Project Director's glossary
 - Reference actual tcodes and Fiori apps from the list above`;
 
   const maxTokens = depth === "comprehensive" ? 6144 : 4096;
@@ -821,7 +821,7 @@ export async function aiTechnicalConsultant(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
-  const prompt = `You are a Senior SAP ${module} Technical Consultant on an Agent Team. Your Team Lead has provided a brief below. Align your specifications with the Team Lead's process steps, design decisions, and risk areas.
+  const prompt = `You are a Senior SAP ${module} Technical Consultant on an Agent Team. Your Project Director has provided a brief below. Align your specifications with the Project Director's process steps, design decisions, and risk areas.
 
 ${teamLeadBrief}
 
@@ -845,7 +845,7 @@ Include ${depth === "comprehensive" ? "6-8" : "3-5"} workflow notifications.
 
 ### 10.1 Input Validations
 A markdown table with columns: Field/Check | Validation Rule | Error Message | Severity
-Include ${depth === "comprehensive" ? "10-14" : "6-8"} validations. Address the Team Lead's risk areas.
+Include ${depth === "comprehensive" ? "10-14" : "6-8"} validations. Address the Project Director's risk areas.
 
 ### 10.2 Business Rule Validations
 A markdown table with columns: Rule ID | Business Rule | Action on Failure | Resolution
@@ -857,7 +857,7 @@ Include ${depth === "comprehensive" ? "8-10" : "4-6"} error scenarios.
 
 Rules:
 - Be specific to SAP ${module} ${processArea}
-- Use the EXACT terminology from the Team Lead's glossary
+- Use the EXACT terminology from the Project Director's glossary
 - Include realistic SAP error messages`;
 
   const maxTokens = depth === "comprehensive" ? 6144 : 4096;
@@ -881,7 +881,7 @@ export async function aiProjectManager(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
-  const prompt = `You are a Senior SAP ${module} Project Manager on an Agent Team. Your Team Lead has provided a brief below. Align your plans with the Team Lead's process steps, risk areas, and scope boundaries.
+  const prompt = `You are a Senior SAP ${module} Project Manager on an Agent Team. Your Project Director has provided a brief below. Align your plans with the Project Director's process steps, risk areas, and scope boundaries.
 
 ${teamLeadBrief}
 
@@ -911,8 +911,8 @@ ${depth === "comprehensive" ? "6-8" : "4-5"} bullet points covering rollback tri
 
 Rules:
 - Be specific to SAP ${module} ${processArea}
-- Use the EXACT terminology from the Team Lead's glossary
-- Address the Team Lead's risk areas
+- Use the EXACT terminology from the Project Director's glossary
+- Address the Project Director's risk areas
 - Include realistic timeframes`;
 
   const maxTokens = depth === "comprehensive" ? 6144 : 4096;
@@ -951,7 +951,7 @@ export async function aiQualityReviewer(
   // ROBUST APPROACH: Instead of asking Claude to return full sections in JSON
   // (which breaks on newlines/special chars), ask it to return corrections list
   // and then use SECTION MARKERS to separate corrected outputs.
-  const prompt = `You are a Senior SAP Quality Reviewer. Four specialists wrote sections of an FSD. Review ALL outputs for consistency and alignment with the Team Lead's brief, then return CORRECTED versions.
+  const prompt = `You are a Senior SAP Quality Reviewer. Five specialists wrote sections of an FSD. Review ALL outputs for consistency and alignment with the Project Director's brief, then return CORRECTED versions.
 
 ${teamLeadBrief}
 
@@ -970,10 +970,10 @@ ${specialistOutputs.technicalConsultant}
 ${specialistOutputs.projectManager}
 
 Review for:
-1. TERMINOLOGY consistency across all sections (match Team Lead's glossary)
+1. TERMINOLOGY consistency across all sections (match Project Director's glossary)
 2. CROSS-REFERENCES correctness (cutover references migration objects, error handling references process steps)
 3. CONTRADICTIONS between sections
-4. COMPLETENESS (all Team Lead's process steps, decisions, and risks addressed)
+4. COMPLETENESS (all Project Director's process steps, decisions, and risks addressed)
 5. QUALITY (fix vague statements, add missing SAP details)
 
 OUTPUT FORMAT: Return corrected sections separated by these EXACT markers. Write the FULL corrected content for each section. If a section is already good, return it as-is. Preserve all markdown tables, mermaid diagrams, and bpmn-process code blocks exactly as they are.

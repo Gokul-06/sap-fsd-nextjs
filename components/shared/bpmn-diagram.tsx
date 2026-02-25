@@ -655,8 +655,18 @@ export function BpmnDiagram({ data }: BpmnDiagramProps) {
         </svg>
       </div>
 
-      {/* Legend */}
-      <BpmnLegend />
+      {/* Legend + Download */}
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
+        <BpmnLegend />
+        <button
+          onClick={handleDownloadXml}
+          className="bpmn-download-btn flex-shrink-0 ml-4"
+          title="Download BPMN 2.0 XML — Import into SAP Signavio"
+        >
+          <Download className="h-4 w-4 mr-1.5" />
+          Export to Signavio (.bpmn)
+        </button>
+      </div>
     </div>
   );
 }
