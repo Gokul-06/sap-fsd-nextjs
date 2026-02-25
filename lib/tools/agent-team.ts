@@ -38,6 +38,29 @@ import {
   getAffectedModules,
 } from "@/lib/knowledge/cross-module-map";
 
+// ─── Timeout budgets (must sum to < 300s Vercel limit) ───
+const PHASE1_TIMEOUT_MS = 60_000;   // Team Lead: 60s
+const PHASE2_TIMEOUT_MS = 90_000;   // Specialists (parallel): 90s
+const PHASE3_TIMEOUT_MS = 90_000;   // Quality Review + Test Scripts (parallel): 90s
+// Total worst-case: 240s → 60s safety margin before 300s Vercel limit
+
+/**
+ * Wraps a promise with an orchestration-level timeout.
+ * If the promise does not resolve within `ms`, rejects with a descriptive error.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${ms / 1000}s`)),
+      ms,
+    );
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 /**
  * Main orchestration function for Agent Teams mode.
  * Runs 3 sequential phases with SSE progress events.
@@ -107,10 +130,14 @@ export async function orchestrateAgentTeam(
 
   let teamLeadCtx: TeamLeadContext;
   try {
-    teamLeadCtx = await aiTeamLeadAnalysis(
-      primaryModule, input.requirements, processArea,
-      tableNames, tcodeNames, appNames,
-      language, extraContext, depth, fsdType,
+    teamLeadCtx = await withTimeout(
+      aiTeamLeadAnalysis(
+        primaryModule, input.requirements, processArea,
+        tableNames, tcodeNames, appNames,
+        language, extraContext, depth, fsdType,
+      ),
+      PHASE1_TIMEOUT_MS,
+      "Phase 1 (Team Lead)",
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
@@ -137,7 +164,7 @@ export async function orchestrateAgentTeam(
 
   onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
 
-  const [ba, sa, tc, pm] = await Promise.all([
+  const [ba, sa, tc, pm] = await withTimeout(Promise.all([
     aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType)
       .then((r) => {
         specialistAgents[0].status = "completed";
@@ -193,7 +220,7 @@ export async function orchestrateAgentTeam(
         onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Project Manager failed: ${msg}` });
         return "";
       }),
-  ]);
+  ]), PHASE2_TIMEOUT_MS, "Phase 2 (Specialists)");
 
   // Check if ALL specialists failed — that's a critical failure
   const failedCount = specialistAgents.filter(a => a.status === "failed").length;
@@ -228,7 +255,7 @@ export async function orchestrateAgentTeam(
   // Run quality review and test scripts in parallel (test scripts don't depend on review)
   let testScriptsResult = "";
   try {
-    const [qrResult, tsResult] = await Promise.all([
+    const [qrResult, tsResult] = await withTimeout(Promise.all([
       aiQualityReviewer(
         primaryModule, processArea, language, depth,
         { businessAnalyst: ba, solutionArchitect: sa, technicalConsultant: tc, projectManager: pm },
@@ -240,7 +267,7 @@ export async function orchestrateAgentTeam(
           warnings.push(`AI test scripts failed: ${tsMsg}. Using static test scenarios.`);
           return "";
         }),
-    ]);
+    ]), PHASE3_TIMEOUT_MS, "Phase 3 (Quality Review)");
 
     reviewResult = qrResult;
     testScriptsResult = tsResult;

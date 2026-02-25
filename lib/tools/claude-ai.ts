@@ -924,8 +924,8 @@ Then output each corrected section with these markers:
 (corrected cutover plan here with 13.1, 13.2)
 <<<END>>>`;
 
-  const maxTokens = 8192;
-  const raw = await callClaude(withExtraContext(prompt, ""), maxTokens, 180000);
+  const maxTokens = 6144;
+  const raw = await callClaude(withExtraContext(prompt, ""), maxTokens, 80000);
 
   // Parse using robust marker-based extraction (not JSON!)
   const corrections: string[] = [];
