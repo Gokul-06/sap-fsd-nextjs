@@ -146,7 +146,12 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         aiDataMigration(primaryModule, processArea, tableNames, language, extraContext, depth, fsdType),
         aiCutoverPlan(primaryModule, processArea, language, extraContext, depth, fsdType),
         aiProcessFlowDiagram(primaryModule, input.requirements, processArea, language, extraContext, depth, fsdType),
-        aiTestScripts(primaryModule, input.requirements, processArea, fsdType, language, extraContext, depth),
+        aiTestScripts(primaryModule, input.requirements, processArea, fsdType, language, extraContext, depth)
+          .catch((tsErr: unknown) => {
+            const msg = tsErr instanceof Error ? tsErr.message : "Unknown";
+            console.error("[aiTestScripts] Failed:", msg);
+            return ""; // Fallback: static test scenarios will be used
+          }),
       ]);
 
       // Inject AI content into sections
@@ -158,7 +163,9 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
       sections["error_handling"] = { content: errorHandling };
       sections["data_migration"] = { content: dataMigration };
       sections["cutover"] = { content: cutoverPlan };
-      sections["testing"] = { content: testScripts };
+      if (testScripts) {
+        sections["testing"] = { content: testScripts };
+      }
 
     } catch (err: any) {
       warnings.push(`AI enhancement partially failed: ${err.message}. Some sections use templates.`);
