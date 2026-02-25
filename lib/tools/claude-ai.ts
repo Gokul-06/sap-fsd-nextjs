@@ -390,10 +390,36 @@ Rules:
 }
 
 // ─────────────────────────────────────────────
-// Process Flow Diagram Generator (Mermaid)
+// BPMN Process Diagram Generator (Signavio-compatible)
 // ─────────────────────────────────────────────
 
-export async function aiProcessFlowDiagram(
+function getSapLaneGuidance(module: string): string {
+  const guidance: Record<string, string> = {
+    MM: `- Lane 1: "Requestor" (role: End User) — initiates purchase requests
+- Lane 2: "Purchasing" (role: Buyer) — processes POs, manages vendors
+- Lane 3: "Warehouse" (role: Store Keeper) — goods receipt, inventory
+- Lane 4: "Finance / AP" (role: AP Clerk) — invoice verification, payment`,
+    SD: `- Lane 1: "Customer / Sales" (role: Sales Rep) — inquiry, quotation
+- Lane 2: "Sales Administration" (role: Order Processing) — order creation, scheduling
+- Lane 3: "Shipping / Warehouse" (role: Shipping Clerk) — delivery, picking, packing
+- Lane 4: "Finance / AR" (role: Billing Clerk) — billing, invoicing, payment`,
+    FI: `- Lane 1: "Accountant" (role: GL Accountant) — journal entries, postings
+- Lane 2: "AP / AR Clerk" (role: Clerk) — invoice processing, payment runs
+- Lane 3: "Finance Manager" (role: Manager) — approvals, reviews
+- Lane 4: "Auditor" (role: Internal Audit) — compliance, reconciliation`,
+    CO: `- Lane 1: "Cost Center Manager" (role: Department Head) — cost planning
+- Lane 2: "Controller" (role: Cost Controller) — allocations, analysis
+- Lane 3: "Budget Owner" (role: Manager) — budget approvals
+- Lane 4: "Management" (role: Executive) — reporting, decisions`,
+    PP: `- Lane 1: "Production Planner" (role: Planner) — MRP, scheduling
+- Lane 2: "Shop Floor" (role: Operator) — confirmations, execution
+- Lane 3: "Quality" (role: QA Inspector) — inspections, results
+- Lane 4: "Warehouse" (role: Store Keeper) — material staging, GR`,
+  };
+  return guidance[module] || guidance["MM"]!;
+}
+
+export async function aiBpmnProcessDiagram(
   module: string,
   requirements: string,
   processArea: string,
@@ -405,37 +431,77 @@ export async function aiProcessFlowDiagram(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
-  const nodeCount = depth === "comprehensive" ? "12-18" : "8-12";
-  const prompt = `You are an SAP ${module} process analyst. Generate a Mermaid.js process flow diagram for this business process.
+  const nodeCount = depth === "comprehensive" ? "14-20" : "8-14";
+  const laneCount = depth === "comprehensive" ? "4-6" : "3-4";
+
+  const prompt = `You are an SAP ${module} process architect creating a BPMN 2.0 process diagram for SAP Signavio.
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
-Generate a Mermaid flowchart using \`graph TD\` (top-down) syntax with ${nodeCount} nodes.
+Generate a BPMN 2.0 process flow as a JSON object with swim lanes.
 
-Rules:
-- Use graph TD direction
-- Include SAP transaction codes in node labels where applicable (e.g., "Create PO\\n(ME21N)")
-- Use proper Mermaid syntax: A[text] for rectangles, B{text} for decisions, C((text)) for circles
-- Include at least 2 decision points with Yes/No branches
-- Start with a trigger event and end with a completion state
-- Use descriptive but concise labels
-- Do NOT add any text before or after the mermaid code block
-- Return ONLY the mermaid code wrapped in triple backticks with mermaid language tag
+RULES:
+- Create ${laneCount} swim lanes representing organizational roles/departments involved in this SAP process
+- Create ${nodeCount} process nodes distributed across the lanes
+- Every process must start with exactly ONE "startEvent" and end with exactly ONE "endEvent"
+- Use "exclusiveGateway" for approval/decision points (Yes/No branches)
+- Use "parallelGateway" when multiple activities run in parallel (split and join)
+- Use "userTask" for manual human activities (creating documents, approving, reviewing)
+- Use "serviceTask" for automated system steps (auto-posting, batch jobs, workflow triggers)
+- Use "intermediateEvent" for waiting states or handoff points between departments
+- Include SAP transaction codes or Fiori app names in the sapTransaction field (e.g., "ME21N", "Manage Purchase Orders (F2229)")
+- Edge labels should be "Yes"/"No" for gateways, or descriptive labels like "Approved", "Rejected", "Complete"
+- Ensure every node has at least one incoming and one outgoing edge (except start and end events)
+- Order lanes logically: requestor/initiator at top, processors in middle, approvers/finance at bottom
+- Node IDs must be unique strings like "node_1", "node_2", etc.
+- Edge IDs must be unique strings like "edge_1", "edge_2", etc.
+- Lane IDs must be unique strings like "lane_1", "lane_2", etc.
+- Every node's laneId must reference an existing lane ID
 
-Example format:
-\`\`\`mermaid
-graph TD
-    A[Start: Requirement Identified] --> B[Create Purchase Requisition\\n(ME51N)]
-    B --> C{Approval Required?}
-    C -->|Yes| D[Approve PR\\n(ME54N)]
-    C -->|No| E[Convert to PO]
-    D --> E[Create Purchase Order\\n(ME21N)]
-    E --> F[End: PO Created]
+SAP MODULE LANE GUIDANCE for ${module}:
+${getSapLaneGuidance(module)}
+
+Return ONLY the JSON inside a bpmn-process code block. No text before or after.
+
+\`\`\`bpmn-process
+{
+  "title": "descriptive process title",
+  "lanes": [
+    {"id": "lane_1", "label": "Department Name", "role": "Role Name"},
+    ...
+  ],
+  "nodes": [
+    {"id": "node_1", "type": "startEvent", "label": "Process Start", "laneId": "lane_1"},
+    {"id": "node_2", "type": "userTask", "label": "Create Purchase Requisition", "sapTransaction": "ME51N", "laneId": "lane_1"},
+    {"id": "node_3", "type": "exclusiveGateway", "label": "Approval Required?", "laneId": "lane_2"},
+    ...
+    {"id": "node_N", "type": "endEvent", "label": "Process Complete", "laneId": "lane_4"}
+  ],
+  "edges": [
+    {"id": "edge_1", "sourceNodeId": "node_1", "targetNodeId": "node_2"},
+    {"id": "edge_2", "sourceNodeId": "node_2", "targetNodeId": "node_3"},
+    {"id": "edge_3", "sourceNodeId": "node_3", "targetNodeId": "node_4", "label": "Yes"},
+    {"id": "edge_4", "sourceNodeId": "node_3", "targetNodeId": "node_5", "label": "No"},
+    ...
+  ]
+}
 \`\`\``;
 
   const maxTokens = depth === "comprehensive" ? 4096 : 2048;
-  return await callClaude(withExtraContext(prompt, extraContext), maxTokens);
+  const raw = await callClaude(withExtraContext(prompt, extraContext), maxTokens);
+
+  // Validate the output contains parseable JSON
+  try {
+    const jsonMatch = raw.match(/```bpmn-process\s*\n([\s\S]*?)```/);
+    if (jsonMatch) {
+      JSON.parse(jsonMatch[1].trim()); // validate only
+    }
+  } catch {
+    console.warn("[aiBpmnProcessDiagram] AI returned invalid JSON, returning raw output");
+  }
+
+  return raw;
 }
 
 // ─────────────────────────────────────────────
@@ -713,14 +779,21 @@ Include ${depth === "comprehensive" ? "8-10" : "4-6"} design decisions aligned w
 
 ### 4.4 Process Flow Diagram
 
-Generate a Mermaid flowchart with ${nodeCount} nodes based on the Team Lead's process steps.
+Generate a BPMN 2.0 process flow as JSON inside a \`\`\`bpmn-process code block, based on the Team Lead's process steps.
 
-Rules for the Mermaid diagram:
-- Use graph TD direction
-- Include SAP transaction codes in node labels (e.g., "Create PO\\n(ME21N)")
-- Use proper Mermaid syntax: A[text] for rectangles, B{text} for decisions
-- Include at least 2 decision points with Yes/No branches
-- Wrap the diagram in triple backticks with mermaid language tag
+Rules for the BPMN diagram:
+- Create 3-4 swim lanes for organizational roles involved in this ${module} process
+- Create ${nodeCount} nodes: start with ONE "startEvent", end with ONE "endEvent"
+- Use "userTask" for manual steps, "serviceTask" for automated steps, "exclusiveGateway" for decisions
+- Include SAP transaction codes in the sapTransaction field (e.g., "ME21N")
+- Use edge labels "Yes"/"No" for gateways
+- Every node must have a unique ID (node_1, node_2, ...) and reference a lane ID
+- Return the JSON inside \`\`\`bpmn-process ... \`\`\` code block
+
+Example format:
+\`\`\`bpmn-process
+{"title":"Process Name","lanes":[{"id":"lane_1","label":"Department","role":"Role"}],"nodes":[{"id":"node_1","type":"startEvent","label":"Start","laneId":"lane_1"}],"edges":[{"id":"edge_1","sourceNodeId":"node_1","targetNodeId":"node_2"}]}
+\`\`\`
 
 Rules:
 - Be specific to SAP ${module}
@@ -903,7 +976,7 @@ Review for:
 4. COMPLETENESS (all Team Lead's process steps, decisions, and risks addressed)
 5. QUALITY (fix vague statements, add missing SAP details)
 
-OUTPUT FORMAT: Return corrected sections separated by these EXACT markers. Write the FULL corrected content for each section. If a section is already good, return it as-is. Preserve all markdown tables and mermaid diagrams.
+OUTPUT FORMAT: Return corrected sections separated by these EXACT markers. Write the FULL corrected content for each section. If a section is already good, return it as-is. Preserve all markdown tables, mermaid diagrams, and bpmn-process code blocks exactly as they are.
 
 First, list corrections on a single line:
 CORRECTIONS: correction1 | correction2 | correction3
@@ -913,7 +986,7 @@ Then output each corrected section with these markers:
 <<<EXECUTIVE_SUMMARY>>>
 (corrected executive summary here)
 <<<PROPOSED_SOLUTION>>>
-(corrected proposed solution here with 4.1-4.4 including mermaid)
+(corrected proposed solution here with 4.1-4.4 including bpmn-process diagram)
 <<<OUTPUT_MANAGEMENT>>>
 (corrected output management here with 9.1, 9.2)
 <<<ERROR_HANDLING>>>

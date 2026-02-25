@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { BpmnProcessDiagram } from "@/lib/types/bpmn";
 
 // Lazy-load MermaidDiagram so mermaid.js only loads when a diagram actually renders.
 // This prevents mermaid from auto-initializing on pages that don't have diagrams.
@@ -18,20 +19,38 @@ const MermaidDiagram = dynamic(
   }
 );
 
+// Lazy-load BpmnDiagram for Signavio-style BPMN process flows
+const BpmnDiagram = dynamic(
+  () => import("./bpmn-diagram").then((mod) => mod.BpmnDiagram),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bpmn-container">
+        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+          Loading BPMN process diagram...
+        </div>
+      </div>
+    ),
+  }
+);
+
 interface MarkdownRendererProps {
   markdown: string;
 }
 
-/** Split markdown into alternating text and mermaid blocks */
-function splitByMermaidBlocks(markdown: string): Array<{ type: "text" | "mermaid"; content: string }> {
-  const parts: Array<{ type: "text" | "mermaid"; content: string }> = [];
-  const regex = /```mermaid\s*\n([\s\S]*?)```/gi;
+type BlockType = "text" | "mermaid" | "bpmn";
+
+/** Split markdown into alternating text, mermaid, and bpmn-process blocks */
+function splitBySpecialBlocks(markdown: string): Array<{ type: BlockType; content: string }> {
+  const parts: Array<{ type: BlockType; content: string }> = [];
+  // Match both ```mermaid and ```bpmn-process code blocks
+  const regex = /```(mermaid|bpmn-process)\s*\n([\s\S]*?)```/gi;
 
   let lastIndex = 0;
   let match;
 
   while ((match = regex.exec(markdown)) !== null) {
-    // Text before this mermaid block
+    // Text before this block
     if (match.index > lastIndex) {
       const textBefore = markdown.slice(lastIndex, match.index);
       if (textBefore.trim()) {
@@ -39,12 +58,14 @@ function splitByMermaidBlocks(markdown: string): Array<{ type: "text" | "mermaid
       }
     }
 
-    // The mermaid block itself
-    parts.push({ type: "mermaid", content: match[1].trim() });
+    // Determine block type
+    const blockLang = match[1].toLowerCase();
+    const blockType: BlockType = blockLang === "bpmn-process" ? "bpmn" : "mermaid";
+    parts.push({ type: blockType, content: match[2].trim() });
     lastIndex = match.index + match[0].length;
   }
 
-  // Remaining text after last mermaid block
+  // Remaining text after last block
   if (lastIndex < markdown.length) {
     const remaining = markdown.slice(lastIndex);
     if (remaining.trim()) {
@@ -52,7 +73,7 @@ function splitByMermaidBlocks(markdown: string): Array<{ type: "text" | "mermaid
     }
   }
 
-  // No mermaid blocks found — return entire markdown as text
+  // No special blocks found — return entire markdown as text
   if (parts.length === 0) {
     parts.push({ type: "text", content: markdown });
   }
@@ -171,9 +192,9 @@ function convertMarkdownToHtml(markdown: string): string {
 }
 
 export function MarkdownRenderer({ markdown }: MarkdownRendererProps) {
-  const parts = splitByMermaidBlocks(markdown);
+  const parts = splitBySpecialBlocks(markdown);
 
-  // No mermaid blocks — fast path (identical to previous behavior)
+  // No special blocks — fast path (identical to previous behavior)
   if (parts.length === 1 && parts[0].type === "text") {
     const html = convertMarkdownToHtml(parts[0].content);
     return (
@@ -184,12 +205,27 @@ export function MarkdownRenderer({ markdown }: MarkdownRendererProps) {
     );
   }
 
-  // Mixed content — render text parts as HTML, mermaid parts as diagrams
+  // Mixed content — render text as HTML, mermaid as diagrams, bpmn as BPMN
   return (
     <div className="fsd-preview">
       {parts.map((part, i) => {
         if (part.type === "mermaid") {
           return <MermaidDiagram key={`mermaid-${i}`} chart={part.content} />;
+        }
+        if (part.type === "bpmn") {
+          try {
+            const data = JSON.parse(part.content) as BpmnProcessDiagram;
+            if (data.nodes?.length && data.lanes?.length) {
+              return <BpmnDiagram key={`bpmn-${i}`} data={data} />;
+            }
+          } catch {
+            // If JSON parsing fails, show as code block
+            return (
+              <pre key={`bpmn-err-${i}`} className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
+                {part.content}
+              </pre>
+            );
+          }
         }
         const html = convertMarkdownToHtml(part.content);
         return (

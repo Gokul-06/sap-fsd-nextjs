@@ -14,7 +14,7 @@ import {
   aiErrorHandling,
   aiDataMigration,
   aiCutoverPlan,
-  aiProcessFlowDiagram,
+  aiBpmnProcessDiagram,
   aiTestScripts,
 } from "@/lib/tools/claude-ai";
 import type { FsdType } from "@/lib/types";
@@ -136,7 +136,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         errorHandling,
         dataMigration,
         cutoverPlan,
-        processFlowDiagram,
+        bpmnDiagram,
         testScripts,
       ] = await Promise.all([
         aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, fsdType),
@@ -145,7 +145,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         aiErrorHandling(primaryModule, processArea, input.requirements, language, extraContext, depth, fsdType),
         aiDataMigration(primaryModule, processArea, tableNames, language, extraContext, depth, fsdType),
         aiCutoverPlan(primaryModule, processArea, language, extraContext, depth, fsdType),
-        aiProcessFlowDiagram(primaryModule, input.requirements, processArea, language, extraContext, depth, fsdType),
+        aiBpmnProcessDiagram(primaryModule, input.requirements, processArea, language, extraContext, depth, fsdType),
         aiTestScripts(primaryModule, input.requirements, processArea, fsdType, language, extraContext, depth)
           .catch((tsErr: unknown) => {
             const msg = tsErr instanceof Error ? tsErr.message : "Unknown";
@@ -157,7 +157,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
       // Inject AI content into sections
       sections["executive_summary"] = { content: executiveSummary };
       // Append process flow diagram to proposed solution
-      const solutionWithDiagram = proposedSolution + "\n\n### 4.4 Process Flow Diagram\n\n" + processFlowDiagram;
+      const solutionWithDiagram = proposedSolution + "\n\n### 4.4 Process Flow Diagram\n\n" + bpmnDiagram;
       sections["proposed_solution"] = { content: solutionWithDiagram };
       sections["output_management"] = { content: outputManagement };
       sections["error_handling"] = { content: errorHandling };
