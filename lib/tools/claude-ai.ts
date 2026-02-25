@@ -395,26 +395,72 @@ Rules:
 
 function getSapLaneGuidance(module: string): string {
   const guidance: Record<string, string> = {
-    MM: `- Lane 1: "Requestor" (role: End User) — initiates purchase requests
+    MM: `Lanes:
+- Lane 1: "Requestor" (role: End User) — initiates purchase requests
 - Lane 2: "Purchasing" (role: Buyer) — processes POs, manages vendors
 - Lane 3: "Warehouse" (role: Store Keeper) — goods receipt, inventory
-- Lane 4: "Finance / AP" (role: AP Clerk) — invoice verification, payment`,
-    SD: `- Lane 1: "Customer / Sales" (role: Sales Rep) — inquiry, quotation
+- Lane 4: "Finance / AP" (role: AP Clerk) — invoice verification, payment
+
+Expected Process Pattern (MUST include all these steps):
+Start → Requestor creates Purchase Requisition (ME51N) → Purchasing reviews PR → Approval Gateway ("PR Approved?") →
+Yes: Convert to Purchase Order (ME21N) → Send PO to Vendor (ME9F) → Warehouse performs Goods Receipt (MIGO) →
+Finance posts Invoice Verification (MIRO) → Payment Run (F110) → End
+No: Return to Requestor for revision → loops back
+Include intermediateEvent for "Await Vendor Delivery" between PO and GR`,
+    SD: `Lanes:
+- Lane 1: "Customer / Sales" (role: Sales Rep) — inquiry, quotation
 - Lane 2: "Sales Administration" (role: Order Processing) — order creation, scheduling
 - Lane 3: "Shipping / Warehouse" (role: Shipping Clerk) — delivery, picking, packing
-- Lane 4: "Finance / AR" (role: Billing Clerk) — billing, invoicing, payment`,
-    FI: `- Lane 1: "Accountant" (role: GL Accountant) — journal entries, postings
+- Lane 4: "Finance / AR" (role: Billing Clerk) — billing, invoicing, payment
+
+Expected Process Pattern (MUST include all these steps):
+Start → Sales creates Inquiry/Quotation (VA11/VA21) → Customer accepts → Create Sales Order (VA01) →
+Credit Check Gateway ("Credit Approved?") →
+Yes: Schedule delivery → Create Delivery (VL01N) → Pick & Pack → Post Goods Issue (VL02N) →
+Create Billing Document (VF01) → Payment Receipt (F-28) → End
+No: Notify Sales for resolution → converging gateway
+Include intermediateEvent for "Await Customer PO" or "Pending Credit Decision"`,
+    FI: `Lanes:
+- Lane 1: "Accountant" (role: GL Accountant) — journal entries, postings
 - Lane 2: "AP / AR Clerk" (role: Clerk) — invoice processing, payment runs
 - Lane 3: "Finance Manager" (role: Manager) — approvals, reviews
-- Lane 4: "Auditor" (role: Internal Audit) — compliance, reconciliation`,
-    CO: `- Lane 1: "Cost Center Manager" (role: Department Head) — cost planning
+- Lane 4: "Auditor" (role: Internal Audit) — compliance, reconciliation
+
+Expected Process Pattern (MUST include all these steps):
+Start → Accountant receives source document → Create Journal Entry (FB50) →
+Approval Gateway ("Posting Approved?") →
+Yes: Post document → AP/AR processing → Payment/Receipt → Period-end reconciliation →
+Audit review → End
+No: Return for correction → converging gateway
+Include intermediateEvent for "Await Manager Approval" between posting and final close`,
+    CO: `Lanes:
+- Lane 1: "Cost Center Manager" (role: Department Head) — cost planning
 - Lane 2: "Controller" (role: Cost Controller) — allocations, analysis
 - Lane 3: "Budget Owner" (role: Manager) — budget approvals
-- Lane 4: "Management" (role: Executive) — reporting, decisions`,
-    PP: `- Lane 1: "Production Planner" (role: Planner) — MRP, scheduling
+- Lane 4: "Management" (role: Executive) — reporting, decisions
+
+Expected Process Pattern (MUST include all these steps):
+Start → Cost Center Manager creates cost plan (KP06) → Controller reviews plan →
+Budget Gateway ("Budget Approved?") →
+Yes: Activate plan → Execute cost allocations (KSU5) → Period-end closing (CO88) →
+Generate reports (S_ALR_87013611) → Management reviews → End
+No: Revise plan → converging gateway
+Include intermediateEvent for "Await Budget Cycle" between planning and execution`,
+    PP: `Lanes:
+- Lane 1: "Production Planner" (role: Planner) — MRP, scheduling
 - Lane 2: "Shop Floor" (role: Operator) — confirmations, execution
 - Lane 3: "Quality" (role: QA Inspector) — inspections, results
-- Lane 4: "Warehouse" (role: Store Keeper) — material staging, GR`,
+- Lane 4: "Warehouse" (role: Store Keeper) — material staging, GR
+
+Expected Process Pattern (MUST include all these steps):
+Start → Planner runs MRP (MD01) → Create Production Order (CO01) →
+Release Gateway ("Order Released?") →
+Yes: Warehouse stages materials (MIGO 261) → Shop Floor executes production →
+Confirm operations (CO11N) → Quality inspection (QA01) →
+Quality Gateway ("Quality Passed?") → Yes: Goods Receipt (MIGO 101) → End
+No: Rework or scrap → converging gateway
+No (release): Return to planning → converging gateway
+Include intermediateEvent for "Await Material Availability"`,
   };
   return guidance[module] || guidance["MM"]!;
 }
@@ -431,7 +477,7 @@ export async function aiBpmnProcessDiagram(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
-  const nodeCount = depth === "comprehensive" ? "14-20" : "8-14";
+  const nodeCount = depth === "comprehensive" ? "16-22" : "12-16";
   const laneCount = depth === "comprehensive" ? "4-6" : "3-4";
 
   const prompt = `You are an SAP ${module} process architect creating a BPMN 2.0 process diagram for SAP Signavio.
@@ -458,6 +504,30 @@ RULES:
 - Edge IDs must be unique strings like "edge_1", "edge_2", etc.
 - Lane IDs must be unique strings like "lane_1", "lane_2", etc.
 - Every node's laneId must reference an existing lane ID
+
+LAYOUT & STRUCTURE QUALITY RULES (critical for Signavio rendering):
+1. DISTRIBUTE nodes evenly across lanes — each lane should have 2-5 nodes, never leave a lane with only 1 node
+2. Start event MUST be alone as the first node; end event MUST be alone as the last node
+3. Every exclusiveGateway MUST have a matching converging gateway later — branches must rejoin before reaching the end event
+   Example: gateway splits into Yes/No → Yes path (2-3 tasks) → converging gateway; No path (1-2 tasks) → same converging gateway → continues → end
+4. Every gateway output edge MUST have a descriptive label ("Yes"/"No", "Approved"/"Rejected", condition text)
+5. Gateway labels MUST be phrased as questions ending with "?" (e.g., "Budget Approved?" not "Approval Check", "GR Complete?" not "Goods Receipt")
+6. Spread nodes across horizontal positions — avoid placing more than 1 node per lane in the same column
+7. Minimize cross-lane edges: keep sequential steps in the same lane when possible, only cross lanes for handoffs
+8. Use parallelGateway when 2+ activities genuinely happen simultaneously (e.g., "Notify Approver" + "Update Status Log") — include both split AND join parallelGateways
+9. Include at least one intermediateEvent for waiting/handoff points between departments (e.g., "Await Delivery", "Pending Approval")
+10. EVERY userTask and serviceTask MUST have a sapTransaction field with a real SAP transaction code or Fiori app name — never leave it empty
+
+CRITICAL — Gateway Convergence Pattern (ALWAYS follow this for decisions):
+
+node_A (task) → node_G1 (exclusiveGateway label: "Approved?")
+  → edge "Yes": node_B (task) → node_C (task) → node_G2 (exclusiveGateway — converging, label: "")
+  → edge "No":  node_D (task) → node_G2
+node_G2 → next steps → endEvent
+
+The converging gateway (node_G2) has NO label and NO question — it simply merges branches.
+You MUST include BOTH the split gateway AND the merge gateway in your nodes array.
+The merge gateway has 2+ incoming edges and 1 outgoing edge.
 
 SAP MODULE LANE GUIDANCE for ${module}:
 ${getSapLaneGuidance(module)}
@@ -751,7 +821,7 @@ export async function aiSolutionArchitect(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
-  const nodeCount = depth === "comprehensive" ? "12-18" : "8-12";
+  const nodeCount = depth === "comprehensive" ? "16-22" : "12-16";
   const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your solution with the Project Director's process steps and design decisions.
 
 ${teamLeadBrief}
@@ -784,9 +854,14 @@ Generate a BPMN 2.0 process flow as JSON inside a \`\`\`bpmn-process code block,
 Rules for the BPMN diagram:
 - Create 3-4 swim lanes for organizational roles involved in this ${module} process
 - Create ${nodeCount} nodes: start with ONE "startEvent", end with ONE "endEvent"
+- DISTRIBUTE nodes evenly across lanes — each lane should have 2-5 nodes
 - Use "userTask" for manual steps, "serviceTask" for automated steps, "exclusiveGateway" for decisions
-- Include SAP transaction codes in the sapTransaction field (e.g., "ME21N")
-- Use edge labels "Yes"/"No" for gateways
+- EVERY exclusiveGateway MUST have a matching converging gateway — branches must rejoin before the end event
+  (split gateway has 1 incoming + 2 outgoing; merge gateway has 2 incoming + 1 outgoing)
+- Gateway labels MUST be questions ending with "?" (e.g., "Approved?" not "Approval")
+- ALL gateway output edges MUST have labels ("Yes"/"No", "Approved"/"Rejected")
+- Include SAP transaction codes in the sapTransaction field for EVERY task (e.g., "ME21N", "MIGO")
+- Include at least one intermediateEvent for waiting/handoff points
 - Every node must have a unique ID (node_1, node_2, ...) and reference a lane ID
 - Return the JSON inside \`\`\`bpmn-process ... \`\`\` code block
 
