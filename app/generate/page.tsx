@@ -41,7 +41,10 @@ import {
   Pencil,
   Eye,
   Users,
+  Wrench,
 } from "lucide-react";
+import type { FsdType } from "@/lib/types";
+import { FSD_TYPE_LABELS } from "@/lib/types";
 
 function GeneratePageContent() {
   const searchParams = useSearchParams();
@@ -54,6 +57,7 @@ function GeneratePageContent() {
   const [language, setLanguage] = useState("English");
   const [documentDepth, setDocumentDepth] = useState<"standard" | "comprehensive">("standard");
   const [generationMode, setGenerationMode] = useState<"standard" | "agent-team">("standard");
+  const [fsdType, setFsdType] = useState<FsdType>("standard");
   const [requirements, setRequirements] = useState("");
   const [currentMarkdown, setCurrentMarkdown] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -123,6 +127,7 @@ function GeneratePageContent() {
     language,
     documentDepth,
     generationMode,
+    fsdType,
   };
 
   function handleTemplateSelect(template: TemplateData) {
@@ -210,6 +215,7 @@ function GeneratePageContent() {
     setLanguage("English");
     setDocumentDepth("standard");
     setGenerationMode("standard");
+    setFsdType("standard");
     setRequirements("");
     setCurrentMarkdown("");
     setTemplateApplied(false);
@@ -341,7 +347,7 @@ function GeneratePageContent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         SAP Module
@@ -395,6 +401,30 @@ function GeneratePageContent() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
+                        <Wrench className="h-3.5 w-3.5 inline mr-1 -mt-0.5" />
+                        FSD Type (RICEFW)
+                      </label>
+                      <Select value={fsdType} onValueChange={(v) => setFsdType(v as FsdType)}>
+                        <SelectTrigger className="border-[#0091DA]/20 focus:ring-[#0091DA]/20">
+                          <SelectValue placeholder="Standard" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(Object.entries(FSD_TYPE_LABELS) as [FsdType, string][]).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">
+                        Tailors content to the specific FSD type
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-1.5 block text-[#1B2A4A]">
                         Document Depth

@@ -15,7 +15,9 @@ import {
   aiDataMigration,
   aiCutoverPlan,
   aiProcessFlowDiagram,
+  aiTestScripts,
 } from "@/lib/tools/claude-ai";
+import type { FsdType } from "@/lib/types";
 import {
   getModuleData,
   isModuleSupported,
@@ -44,6 +46,7 @@ export interface FSDInput {
   module?: string; // Optional override — if not provided, auto-classify
   language?: string; // Output language — defaults to "English"
   documentDepth?: "standard" | "comprehensive"; // Document detail level
+  fsdType?: FsdType; // RICEFW type — standard, enhancement, interface, report, form, conversion, workflow
   includeAllSections?: boolean;
   feedbackContext?: string; // Injected feedback rules context
   fewShotContext?: string; // Injected few-shot examples context
@@ -125,6 +128,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
       // Call Claude AI for all empty sections in parallel
       const language = input.language || "English";
       const depth = input.documentDepth || "standard";
+      const fsdType = input.fsdType || "standard";
       const [
         executiveSummary,
         proposedSolution,
@@ -133,14 +137,16 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
         dataMigration,
         cutoverPlan,
         processFlowDiagram,
+        testScripts,
       ] = await Promise.all([
-        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth),
-        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth),
-        aiOutputManagement(primaryModule, processArea, input.requirements, language, extraContext, depth),
-        aiErrorHandling(primaryModule, processArea, input.requirements, language, extraContext, depth),
-        aiDataMigration(primaryModule, processArea, tableNames, language, extraContext, depth),
-        aiCutoverPlan(primaryModule, processArea, language, extraContext, depth),
-        aiProcessFlowDiagram(primaryModule, input.requirements, processArea, language, extraContext, depth),
+        aiExecutiveSummary(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, fsdType),
+        aiProposedSolution(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, fsdType),
+        aiOutputManagement(primaryModule, processArea, input.requirements, language, extraContext, depth, fsdType),
+        aiErrorHandling(primaryModule, processArea, input.requirements, language, extraContext, depth, fsdType),
+        aiDataMigration(primaryModule, processArea, tableNames, language, extraContext, depth, fsdType),
+        aiCutoverPlan(primaryModule, processArea, language, extraContext, depth, fsdType),
+        aiProcessFlowDiagram(primaryModule, input.requirements, processArea, language, extraContext, depth, fsdType),
+        aiTestScripts(primaryModule, input.requirements, processArea, fsdType, language, extraContext, depth),
       ]);
 
       // Inject AI content into sections
@@ -152,12 +158,13 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
       sections["error_handling"] = { content: errorHandling };
       sections["data_migration"] = { content: dataMigration };
       sections["cutover"] = { content: cutoverPlan };
+      sections["testing"] = { content: testScripts };
 
     } catch (err: any) {
       warnings.push(`AI enhancement partially failed: ${err.message}. Some sections use templates.`);
     }
   } else {
-    warnings.push("ANTHROPIC_API_KEY not set. Sections 2, 4, 9, 10, 11, 13 will use placeholder templates.");
+    warnings.push("ANTHROPIC_API_KEY not set. Sections 2, 4, 9, 10, 11, 12, 13 will use placeholder templates.");
   }
 
   // Step 6: Generate markdown

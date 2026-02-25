@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       warnings,
       aiEnabled,
       language,
+      fsdType,
     } = body;
 
     if (!title || !projectName || !author || !primaryModule || !markdown) {
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
           : warnings || "[]",
         aiEnabled: aiEnabled ?? false,
         language: language || "English",
+        fsdType: fsdType || "standard",
       },
     });
 

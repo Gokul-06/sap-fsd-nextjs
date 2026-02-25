@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 // ─── Standard Generation (unchanged) ───
 
 async function handleStandardGeneration(body: Record<string, unknown>) {
-  const { title, projectName, author, requirements, module, language, documentDepth } = body as {
+  const { title, projectName, author, requirements, module, language, documentDepth, fsdType } = body as {
     title: string;
     projectName: string;
     author: string;
@@ -48,6 +48,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
     module?: string;
     language?: string;
     documentDepth?: string;
+    fsdType?: string;
   };
 
   if (!title || !projectName || !author || !requirements) {
@@ -88,6 +89,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
     module: module as string | undefined,
     language: (language as string) || "English",
     documentDepth: (documentDepth as "standard" | "comprehensive") || "standard",
+    fsdType: ((fsdType as string) || "standard") as import("@/lib/types").FsdType,
     feedbackContext: feedbackContext || undefined,
     fewShotContext: fewShotContext || undefined,
   });
@@ -114,7 +116,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
 // ─── Agent Teams Generation (SSE streaming) ───
 
 async function handleAgentTeamGeneration(body: Record<string, unknown>) {
-  const { title, projectName, author, requirements, module, language, documentDepth } = body as {
+  const { title, projectName, author, requirements, module, language, documentDepth, fsdType } = body as {
     title: string;
     projectName: string;
     author: string;
@@ -122,6 +124,7 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
     module?: string;
     language?: string;
     documentDepth?: string;
+    fsdType?: string;
   };
 
   if (!title || !projectName || !author || !requirements) {
@@ -176,6 +179,7 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
             module: module as string | undefined,
             language: (language as string) || "English",
             documentDepth: (documentDepth as "standard" | "comprehensive") || "standard",
+            fsdType: ((fsdType as string) || "standard") as import("@/lib/types").FsdType,
             feedbackContext: feedbackContext || undefined,
             fewShotContext: fewShotContext || undefined,
           },

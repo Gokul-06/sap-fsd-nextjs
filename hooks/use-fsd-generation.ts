@@ -28,6 +28,7 @@ interface GenerationInput {
   language?: string;
   documentDepth?: "standard" | "comprehensive";
   generationMode?: "standard" | "agent-team";
+  fsdType?: string;
 }
 
 export function useFsdGeneration() {
@@ -212,6 +213,7 @@ export function useFsdGeneration() {
           warnings: result.warnings,
           aiEnabled: result.aiEnabled,
           language: input.language || "English",
+          fsdType: input.fsdType || "standard",
         }),
       });
 

@@ -26,6 +26,7 @@ model Fsd {
   usedFeedbackRuleIds String    @default("[]") // JSON array of rule IDs used in generation
   usedFewShotFsdIds   String    @default("[]") // JSON array of FSD IDs used as few-shot examples
   language            String    @default("English")
+  fsdType             String    @default("standard") // standard | enhancement | interface | report | form | conversion | workflow
   isTemplate          Boolean   @default(false)
   industry            String?   // "Manufacturing" | "Pharma" | "Retail" | "Automotive" | "Utilities" | "Public Sector"
   createdAt           DateTime  @default(now())

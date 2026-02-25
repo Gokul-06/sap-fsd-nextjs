@@ -2,7 +2,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Globe, Star } from "lucide-react";
+import { FileText, Globe, Star, Wrench } from "lucide-react";
+import { FSD_TYPE_LABELS } from "@/lib/types";
+import type { FsdType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +21,7 @@ async function getFsds() {
         aiEnabled: true,
         rating: true,
         language: true,
+        fsdType: true,
         createdAt: true,
         author: true,
         _count: { select: { comments: true } },
@@ -74,6 +77,12 @@ export default async function HistoryPage() {
                           <Badge className="bg-violet-100 text-violet-700 text-xs flex-shrink-0">
                             <Globe className="h-3 w-3 mr-1" />
                             {fsd.language}
+                          </Badge>
+                        )}
+                        {fsd.fsdType && fsd.fsdType !== "standard" && (
+                          <Badge className="bg-orange-100 text-orange-700 text-xs flex-shrink-0">
+                            <Wrench className="h-3 w-3 mr-1" />
+                            {FSD_TYPE_LABELS[fsd.fsdType as FsdType] || fsd.fsdType}
                           </Badge>
                         )}
                       </div>

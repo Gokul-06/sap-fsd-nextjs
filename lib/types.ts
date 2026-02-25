@@ -48,6 +48,29 @@ export interface CommentItem {
 }
 
 // ─────────────────────────────────────────────
+// FSD Type (RICEFW)
+// ─────────────────────────────────────────────
+
+export type FsdType =
+  | "standard"
+  | "enhancement"
+  | "interface"
+  | "report"
+  | "form"
+  | "conversion"
+  | "workflow";
+
+export const FSD_TYPE_LABELS: Record<FsdType, string> = {
+  standard: "Standard",
+  enhancement: "Enhancement (BADIs, User Exits)",
+  interface: "Interface (IDocs, APIs, RFC)",
+  report: "Report (ALV, Selection Screens)",
+  form: "Form (SmartForms, Adobe Forms)",
+  conversion: "Conversion (Data Migration)",
+  workflow: "Workflow (Approvals, Events)",
+};
+
+// ─────────────────────────────────────────────
 // Agent Teams Types
 // ─────────────────────────────────────────────
 

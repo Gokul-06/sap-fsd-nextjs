@@ -6,7 +6,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { TeamLeadContext } from '@/lib/types';
+import type { TeamLeadContext, FsdType } from '@/lib/types';
 
 let client: Anthropic | null = null;
 
@@ -88,6 +88,70 @@ function buildLanguageInstruction(language: string): string {
 All descriptive and business-context text must be written in ${language}.\n`;
 }
 
+/** Build an FSD type instruction to inject into AI prompts (RICEFW) */
+function buildFsdTypeInstruction(fsdType?: FsdType): string {
+  if (!fsdType || fsdType === "standard") return "";
+
+  const typeInstructions: Record<string, string> = {
+    enhancement: `\nFSD TYPE: ENHANCEMENT (BADI / User Exit / Enhancement Spot)
+- Focus on identifying specific BADIs, Enhancement Spots, and User Exits
+- Detail the custom ABAP logic required (pseudo-code or logic description)
+- Specify the enhancement implementation class/method names
+- Include before/after behavior comparison
+- Reference specific enhancement framework components (BAdI definitions, filter values)
+- Detail which standard SAP processes need modification and why
+- Include fallback/default behavior when enhancement is not active\n`,
+
+    interface: `\nFSD TYPE: INTERFACE (IDoc / BAPI / RFC / API)
+- Focus on interface specifications: source system, target system, protocol, direction
+- Include detailed field mapping tables (source field -> target field -> transformation rules)
+- Specify message types, IDoc types, segments, and segment fields
+- Detail error handling for interface failures (retry logic, alerting, dead-letter queue)
+- Include interface monitoring and reconciliation approach
+- Specify data volume estimates, frequency, and scheduling
+- Detail middleware configuration (PI/PO, CPI, AIF) if applicable\n`,
+
+    report: `\nFSD TYPE: REPORT (ALV / Selection Screen / Dashboard)
+- Focus on selection screen parameters (field, type, default, mandatory)
+- Detail the ALV output layout: columns, sorting, subtotals, filters
+- Specify data sources (tables, CDS views, function modules)
+- Include authorization checks for report execution
+- Detail drill-down capabilities and interactive features
+- Include output format options (PDF, Excel, email, spool)
+- Specify performance considerations for large data volumes\n`,
+
+    form: `\nFSD TYPE: FORM (SmartForm / Adobe Form / Print Program)
+- Focus on form layout specifications: header, body, footer sections
+- Detail the form output type, print program, and driver program
+- Specify dynamic text elements and their data sources
+- Include page break logic and multi-page handling
+- Detail barcode, QR code, and logo placement requirements
+- Specify the form trigger events (output determination, manual print)
+- Detail multi-language and multi-format considerations\n`,
+
+    conversion: `\nFSD TYPE: CONVERSION (Data Migration / LSMW / LTMC)
+- Focus on source-to-target field mapping with transformation rules
+- Detail data cleansing rules and validation criteria per field
+- Specify the migration tool (LSMW, LTMC, custom BAPI program) for each object
+- Include data volume estimates and load sequence dependencies
+- Detail the reconciliation approach (count, value, hash comparisons)
+- Include dry-run / mock migration strategy
+- Specify error handling: rejection criteria, reprocessing approach\n`,
+
+    workflow: `\nFSD TYPE: WORKFLOW (SAP Business Workflow / Approval Chains)
+- Focus on workflow definition: triggering events, tasks, agents, deadlines
+- Detail the approval chain logic: levels, conditions, escalation paths
+- Specify agent determination rules (organizational, rule-based, custom)
+- Include workflow container elements and their bindings
+- Detail email/notification templates for each workflow step
+- Specify parallel vs sequential approval patterns
+- Include substitution and delegation rules
+- Detail monitoring, restart, and admin override capabilities\n`,
+  };
+
+  return typeInstructions[fsdType] || "";
+}
+
 // ─────────────────────────────────────────────
 // Section Generators — Each returns markdown
 // ─────────────────────────────────────────────
@@ -100,12 +164,14 @@ export async function aiExecutiveSummary(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const wordLimit = depth === "comprehensive" ? 400 : 200;
   const prompt = `You are a senior SAP functional consultant at a top consulting firm. Write a professional executive summary for a Functional Specification Document (FSD).
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Title: ${title}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -136,11 +202,13 @@ export async function aiProposedSolution(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are a senior SAP ${module} solution architect. Design the proposed solution for this FSD.
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Requirements: ${requirements}
 Process Area: ${processArea}
 Available SAP Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
@@ -175,11 +243,13 @@ export async function aiOutputManagement(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are an SAP ${module} consultant. Define the output management requirements for this FSD.
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -209,11 +279,13 @@ export async function aiErrorHandling(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are an SAP ${module} consultant. Define error handling and validations for this FSD.
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -247,11 +319,13 @@ export async function aiDataMigration(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are an SAP ${module} data migration specialist. Define the data migration plan for this FSD.
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Key Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
 
@@ -284,11 +358,13 @@ export async function aiCutoverPlan(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are an SAP ${module} cutover manager. Define the cutover and go-live plan for this FSD.
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 
 Write in markdown format:
@@ -324,12 +400,14 @@ export async function aiProcessFlowDiagram(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const nodeCount = depth === "comprehensive" ? "12-18" : "8-12";
   const prompt = `You are an SAP ${module} process analyst. Generate a Mermaid.js process flow diagram for this business process.
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -357,6 +435,66 @@ graph TD
 \`\`\``;
 
   const maxTokens = depth === "comprehensive" ? 4096 : 2048;
+  return await callClaude(withExtraContext(prompt, extraContext), maxTokens);
+}
+
+// ─────────────────────────────────────────────
+// AI Test Scripts Generator
+// ─────────────────────────────────────────────
+
+export async function aiTestScripts(
+  module: string,
+  requirements: string,
+  processArea: string,
+  fsdType: FsdType = "standard",
+  language: string = "English",
+  extraContext?: string,
+  depth: "standard" | "comprehensive" = "standard",
+): Promise<string> {
+  const langInstruction = buildLanguageInstruction(language);
+  const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+
+  const prompt = `You are a senior SAP ${module} test manager. Generate detailed test scripts for a Functional Specification Document.
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
+SAP Module: ${module}
+Process Area: ${processArea}
+Business Requirements: ${requirements}
+
+Write the following in markdown format:
+
+### 12.1 Test Scenarios
+
+A markdown table with columns: # | Test Case | Type | Priority | Expected Result
+Include ${depth === "comprehensive" ? "10-14" : "6-8"} test cases specific to ${processArea}.
+Types: Unit, Integration, UAT
+Each test case must be specific to the business requirements above with measurable expected results.
+
+### 12.2 Integration Test Scenarios
+
+A markdown table with columns: Test ID | Source Module | Target Module | Scenario | Expected Result
+Include ${depth === "comprehensive" ? "8-10" : "4-6"} cross-module integration tests.
+Focus on data flow between ${module} and related modules.
+Test IDs should follow pattern: IT-001, IT-002, etc.
+
+### 12.3 Negative / Edge Case Tests
+
+A markdown table with columns: Test ID | Scenario | Expected Error | Module
+Include ${depth === "comprehensive" ? "8-10" : "5-7"} negative/edge case tests covering:
+- Missing mandatory fields
+- Invalid data combinations
+- Boundary conditions (max values, zero quantities)
+- Authorization failures
+- Concurrent processing conflicts
+Test IDs should follow pattern: NT-001, NT-002, etc.
+
+Rules:
+- Be specific to SAP ${module} ${processArea}
+- Include realistic test data references
+- Reference actual SAP transactions and Fiori apps
+- All test cases must be traceable to the business requirements`;
+
+  const maxTokens = depth === "comprehensive" ? 6144 : 4096;
   return await callClaude(withExtraContext(prompt, extraContext), maxTokens);
 }
 
@@ -407,10 +545,12 @@ export async function aiTeamLeadAnalysis(
   language: string = "English",
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
+  fsdType?: FsdType,
 ): Promise<TeamLeadContext> {
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are a Senior SAP Program Manager leading a team of 4 specialist consultants who will collaboratively write a Functional Specification Document (FSD). Your job is to deeply analyze the business requirements and create a comprehensive brief that all specialists will reference to ensure consistency.
-${depthInstruction}
+${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
 Business Requirements:
@@ -489,15 +629,17 @@ export async function aiBusinessAnalyst(
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
   teamLeadBrief: string = "",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const wordLimit = depth === "comprehensive" ? 500 : 250;
   const prompt = `You are a Senior SAP Business Analyst on an Agent Team writing a Functional Specification Document. Your Team Lead has analyzed the requirements and provided a brief below. You MUST align your output with the Team Lead's analysis — use the same terminology, reference the same process steps, and follow the design decisions.
 
 ${teamLeadBrief}
 
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Title: ${title}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -538,15 +680,17 @@ export async function aiSolutionArchitect(
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
   teamLeadBrief: string = "",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const nodeCount = depth === "comprehensive" ? "12-18" : "8-12";
   const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Team Lead has analyzed the requirements and provided a brief below. You MUST align your solution with the Team Lead's process steps and design decisions.
 
 ${teamLeadBrief}
 
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Requirements: ${requirements}
 Process Area: ${processArea}
 Available SAP Tables: ${tables.slice(0, 15).join(", ") || "Standard " + module + " tables"}
@@ -599,14 +743,16 @@ export async function aiTechnicalConsultant(
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
   teamLeadBrief: string = "",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are a Senior SAP ${module} Technical Consultant on an Agent Team. Your Team Lead has provided a brief below. Align your specifications with the Team Lead's process steps, design decisions, and risk areas.
 
 ${teamLeadBrief}
 
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -657,14 +803,16 @@ export async function aiProjectManager(
   extraContext?: string,
   depth: "standard" | "comprehensive" = "standard",
   teamLeadBrief: string = "",
+  fsdType?: FsdType,
 ): Promise<string> {
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const prompt = `You are a Senior SAP ${module} Project Manager on an Agent Team. Your Team Lead has provided a brief below. Align your plans with the Team Lead's process steps, risk areas, and scope boundaries.
 
 ${teamLeadBrief}
 
-${langInstruction}${depthInstruction}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Key Tables: ${tables.slice(0, 15).join(", ") || "Standard " + module + " tables"}
 

@@ -4,7 +4,7 @@
  * Produces higher-quality FSDs through shared context and cross-agent review.
  */
 
-import type { AgentProgressEvent, AgentStatus, TeamLeadContext } from "@/lib/types";
+import type { AgentProgressEvent, AgentStatus, TeamLeadContext, FsdType } from "@/lib/types";
 import type { FSDInput, FSDOutput } from "@/lib/tools/generate-fsd";
 import { generateFSDMarkdown } from "@/lib/templates/fsd-template";
 import { classifyModules, identifyProcessArea } from "@/lib/tools/classify-module";
@@ -17,6 +17,7 @@ import {
   aiProjectManager,
   aiQualityReviewer,
   serializeTeamLeadContext,
+  aiTestScripts,
 } from "@/lib/tools/claude-ai";
 import {
   isModuleSupported,
@@ -76,6 +77,7 @@ export async function orchestrateAgentTeam(
 
   const language = input.language || "English";
   const depth = input.documentDepth || "standard";
+  const fsdType: FsdType = (input.fsdType as FsdType) || "standard";
   const extraContext = [input.feedbackContext || "", input.fewShotContext || ""]
     .filter(Boolean)
     .join("\n\n");
@@ -108,7 +110,7 @@ export async function orchestrateAgentTeam(
     teamLeadCtx = await aiTeamLeadAnalysis(
       primaryModule, input.requirements, processArea,
       tableNames, tcodeNames, appNames,
-      language, extraContext, depth,
+      language, extraContext, depth, fsdType,
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
@@ -136,7 +138,7 @@ export async function orchestrateAgentTeam(
   onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
 
   const [ba, sa, tc, pm] = await Promise.all([
-    aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief)
+    aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType)
       .then((r) => {
         specialistAgents[0].status = "completed";
         onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Business Analyst completed" });
@@ -150,7 +152,7 @@ export async function orchestrateAgentTeam(
         return "";
       }),
 
-    aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief)
+    aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief, fsdType)
       .then((r) => {
         specialistAgents[1].status = "completed";
         onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Solution Architect completed" });
@@ -164,7 +166,7 @@ export async function orchestrateAgentTeam(
         return "";
       }),
 
-    aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief)
+    aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief, fsdType)
       .then((r) => {
         specialistAgents[2].status = "completed";
         onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Technical Consultant completed" });
@@ -178,7 +180,7 @@ export async function orchestrateAgentTeam(
         return "";
       }),
 
-    aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief)
+    aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief, fsdType)
       .then((r) => {
         specialistAgents[3].status = "completed";
         onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Project Manager completed" });
@@ -204,11 +206,11 @@ export async function orchestrateAgentTeam(
 
   onProgress({ phase: "specialists", status: "completed", agents: specialistAgents });
 
-  // ─── Phase 3: Quality Review ───
+  // ─── Phase 3: Quality Review + AI Test Scripts (parallel) ───
   onProgress({
     phase: "quality-review",
     status: "running",
-    message: "Quality Reviewer checking consistency across all sections...",
+    message: "Quality Reviewer checking consistency + generating test scripts...",
   });
 
   let reviewResult: {
@@ -223,12 +225,25 @@ export async function orchestrateAgentTeam(
     };
   };
 
+  // Run quality review and test scripts in parallel (test scripts don't depend on review)
+  let testScriptsResult = "";
   try {
-    reviewResult = await aiQualityReviewer(
-      primaryModule, processArea, language, depth,
-      { businessAnalyst: ba, solutionArchitect: sa, technicalConsultant: tc, projectManager: pm },
-      teamLeadBrief,
-    );
+    const [qrResult, tsResult] = await Promise.all([
+      aiQualityReviewer(
+        primaryModule, processArea, language, depth,
+        { businessAnalyst: ba, solutionArchitect: sa, technicalConsultant: tc, projectManager: pm },
+        teamLeadBrief,
+      ),
+      aiTestScripts(primaryModule, input.requirements, processArea, fsdType, language, extraContext, depth)
+        .catch((tsErr: unknown) => {
+          const tsMsg = tsErr instanceof Error ? tsErr.message : "Unknown";
+          warnings.push(`AI test scripts failed: ${tsMsg}. Using static test scenarios.`);
+          return "";
+        }),
+    ]);
+
+    reviewResult = qrResult;
+    testScriptsResult = tsResult;
 
     if (reviewResult.corrections.length > 0) {
       warnings.push(`Quality Review applied ${reviewResult.corrections.length} corrections for consistency.`);
@@ -272,6 +287,11 @@ export async function orchestrateAgentTeam(
   }
   if (reviewResult.finalSections.cutoverPlan) {
     sections["cutover"] = { content: reviewResult.finalSections.cutoverPlan };
+  }
+
+  // Inject AI test scripts (replaces static Section 12)
+  if (testScriptsResult) {
+    sections["testing"] = { content: testScriptsResult };
   }
 
   const today = new Date().toISOString().split("T")[0];
