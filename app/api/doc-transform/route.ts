@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { callClaude } from "@/lib/tools/claude-ai";
+import { safeErrorResponse } from "@/lib/api-error";
 
 export const maxDuration = 300;
 
@@ -294,9 +295,8 @@ export async function POST(request: NextRequest) {
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Doc transform error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to transform document" },
+      { error: safeErrorResponse(error, "Doc transform") },
       { status: 500 }
     );
   }

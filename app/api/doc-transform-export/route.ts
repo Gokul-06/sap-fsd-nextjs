@@ -2,6 +2,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { generateSOPWord } from "@/lib/tools/generate-sop-word";
+import { safeErrorResponse } from "@/lib/api-error";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,9 +35,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("SOP Word export failed:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to generate Word document" },
+      { error: safeErrorResponse(error, "SOP Word export") },
       { status: 500 }
     );
   }

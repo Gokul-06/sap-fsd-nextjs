@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
 
 export async function GET(
   request: Request,
@@ -22,9 +24,8 @@ export async function GET(
 
     return NextResponse.json(fsd);
   } catch (error) {
-    console.error("Failed to fetch FSD:", error);
     return NextResponse.json(
-      { error: "Failed to fetch FSD" },
+      { error: safeErrorResponse(error, "Fetch FSD") },
       { status: 500 }
     );
   }
@@ -48,11 +49,12 @@ export async function DELETE(
 
     await prisma.fsd.delete({ where: { id } });
 
+    logAudit("DELETE_FSD", "Fsd", id, request, `Deleted: ${existing.title}`);
+
     return NextResponse.json({ message: "FSD deleted successfully" });
   } catch (error) {
-    console.error("Failed to delete FSD:", error);
     return NextResponse.json(
-      { error: "Failed to delete FSD" },
+      { error: safeErrorResponse(error, "Delete FSD") },
       { status: 500 }
     );
   }

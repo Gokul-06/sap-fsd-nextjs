@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse, stripHtmlTags } from "@/lib/api-error";
+import { commentSchema, validateBody } from "@/lib/validations";
 
 export async function GET(
   request: Request,
@@ -24,9 +27,8 @@ export async function GET(
 
     return NextResponse.json(comments);
   } catch (error) {
-    console.error("Failed to fetch comments:", error);
     return NextResponse.json(
-      { error: "Failed to fetch comments" },
+      { error: safeErrorResponse(error, "Fetch comments") },
       { status: 500 }
     );
   }
@@ -39,14 +41,14 @@ export async function POST(
   try {
     const { id } = params;
     const body = await request.json();
-    const { authorName, content } = body;
 
-    if (!content || typeof content !== "string" || content.trim() === "") {
-      return NextResponse.json(
-        { error: "Missing or empty 'content' field" },
-        { status: 400 }
-      );
+    // Zod validation
+    const validated = validateBody(commentSchema, body);
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
     }
+
+    const { authorName, content } = validated.data;
 
     const fsd = await prisma.fsd.findUnique({ where: { id } });
 
@@ -57,19 +59,23 @@ export async function POST(
       );
     }
 
+    // Strip HTML tags to prevent stored XSS
+    const sanitizedContent = stripHtmlTags(content);
+
     const comment = await prisma.comment.create({
       data: {
         fsdId: id,
-        authorName: authorName || "Anonymous",
-        content: content.trim(),
+        authorName: stripHtmlTags(authorName),
+        content: sanitizedContent,
       },
     });
 
+    logAudit("CREATE_COMMENT", "Comment", comment.id, request, `On FSD ${id}`);
+
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
-    console.error("Failed to add comment:", error);
     return NextResponse.json(
-      { error: "Failed to add comment" },
+      { error: safeErrorResponse(error, "Add comment") },
       { status: 500 }
     );
   }

@@ -7,6 +7,7 @@ import {
   parseMarkdownToSections,
 } from "@/lib/tools/generate-word";
 import { getAffectedModules } from "@/lib/knowledge/cross-module-map";
+import { safeErrorResponse } from "@/lib/api-error";
 
 export async function POST(request: Request) {
   try {
@@ -76,14 +77,8 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Word generation failed:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate Word document",
-      },
+      { error: safeErrorResponse(error, "Word generation") },
       { status: 500 }
     );
   }

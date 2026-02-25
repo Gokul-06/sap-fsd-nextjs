@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
 import crypto from "crypto";
 
 export async function POST(
@@ -43,15 +45,16 @@ export async function POST(
 
     const shareUrl = `${new URL(request.url).origin}/share/${shareId}`;
 
+    logAudit("SHARE_FSD", "Fsd", id, request, `Share link created, expires ${shareExpiresAt.toISOString()}`);
+
     return NextResponse.json({
       shareId,
       shareUrl,
       expiresAt: shareExpiresAt,
     });
   } catch (error) {
-    console.error("Failed to generate share link:", error);
     return NextResponse.json(
-      { error: "Failed to generate share link" },
+      { error: safeErrorResponse(error, "Generate share link") },
       { status: 500 }
     );
   }

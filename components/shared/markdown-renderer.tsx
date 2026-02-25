@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import DOMPurify from "isomorphic-dompurify";
 import type { BpmnProcessDiagram } from "@/lib/types/bpmn";
 
 // Lazy-load MermaidDiagram so mermaid.js only loads when a diagram actually renders.
@@ -196,7 +197,7 @@ export function MarkdownRenderer({ markdown }: MarkdownRendererProps) {
 
   // No special blocks — fast path (identical to previous behavior)
   if (parts.length === 1 && parts[0].type === "text") {
-    const html = convertMarkdownToHtml(parts[0].content);
+    const html = DOMPurify.sanitize(convertMarkdownToHtml(parts[0].content));
     return (
       <div
         className="fsd-preview"
@@ -227,7 +228,7 @@ export function MarkdownRenderer({ markdown }: MarkdownRendererProps) {
             );
           }
         }
-        const html = convertMarkdownToHtml(part.content);
+        const html = DOMPurify.sanitize(convertMarkdownToHtml(part.content));
         return (
           <div
             key={`text-${i}`}

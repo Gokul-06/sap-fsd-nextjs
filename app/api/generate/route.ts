@@ -11,12 +11,22 @@ import {
   buildFeedbackContext,
 } from "@/lib/tools/few-shot-retrieval";
 import { identifyProcessArea } from "@/lib/tools/classify-module";
+import { logAudit } from "@/lib/audit";
+import { generateFsdSchema, validateBody } from "@/lib/validations";
 import type { AgentProgressEvent } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { generationMode } = body;
+
+    // Zod validation (applies to both modes)
+    const validated = validateBody(generateFsdSchema, body);
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
+    }
+
+    logAudit("GENERATE_FSD", "Fsd", undefined, request, `Mode: ${generationMode || "standard"}, Title: ${body.title}`);
 
     if (generationMode === "agent-team") {
       return handleAgentTeamGeneration(body);
@@ -25,15 +35,10 @@ export async function POST(request: Request) {
     return handleStandardGeneration(body);
   } catch (error) {
     console.error("FSD generation failed:", error);
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate FSD",
-      },
-      { status: 500 },
-    );
+    const message = error instanceof Error ? error.message : "Failed to generate FSD";
+    // Strip internal file paths for safety but keep useful error info
+    const safeMessage = message.replace(/\/[^\s]+\//g, "").substring(0, 200);
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }
 
@@ -199,12 +204,13 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
           },
         });
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : "Agent team generation failed";
-        console.error("[AgentTeam] FAILED:", errorMsg);
+        console.error("[AgentTeam] FAILED:", error);
+        const message = error instanceof Error ? error.message : "Agent team generation failed";
+        const safeMessage = message.replace(/\/[^\s]+\//g, "").substring(0, 200);
         sendEvent({
           phase: "error",
           status: "failed",
-          error: errorMsg,
+          error: safeMessage,
         });
       } finally {
         // Increment feedback counts (fire-and-forget)

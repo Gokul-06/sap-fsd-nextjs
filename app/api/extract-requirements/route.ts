@@ -2,6 +2,7 @@ export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { safeErrorResponse } from "@/lib/api-error";
 
 export async function POST(request: Request) {
   try {
@@ -89,14 +90,8 @@ If the document doesn't contain SAP-specific requirements, extract general busin
       },
     });
   } catch (error) {
-    console.error("PDF extraction failed:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to extract requirements from document",
-      },
+      { error: safeErrorResponse(error, "PDF extraction") },
       { status: 500 }
     );
   }

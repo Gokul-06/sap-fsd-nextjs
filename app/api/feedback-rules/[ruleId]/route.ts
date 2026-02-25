@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
 
 // PATCH /api/feedback-rules/[ruleId] — toggle active, update content
 export async function PATCH(
@@ -26,11 +28,12 @@ export async function PATCH(
       data: updateData,
     });
 
+    logAudit("UPDATE_RULE", "FeedbackRule", ruleId, request, `Updated fields: ${Object.keys(updateData).join(", ")}`);
+
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Failed to update feedback rule:", error);
     return NextResponse.json(
-      { error: "Failed to update feedback rule" },
+      { error: safeErrorResponse(error, "Update feedback rule") },
       { status: 500 }
     );
   }
@@ -38,7 +41,7 @@ export async function PATCH(
 
 // DELETE /api/feedback-rules/[ruleId]
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: { ruleId: string } }
 ) {
   try {
@@ -50,11 +53,13 @@ export async function DELETE(
     }
 
     await prisma.feedbackRule.delete({ where: { id: ruleId } });
+
+    logAudit("DELETE_RULE", "FeedbackRule", ruleId, request, `Deleted rule: ${rule.module}/${rule.ruleType}`);
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete feedback rule:", error);
     return NextResponse.json(
-      { error: "Failed to delete feedback rule" },
+      { error: safeErrorResponse(error, "Delete feedback rule") },
       { status: 500 }
     );
   }

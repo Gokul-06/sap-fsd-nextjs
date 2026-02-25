@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
 
 export async function GET(request: Request) {
   try {
@@ -34,9 +36,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ fsds, total });
   } catch (error) {
-    console.error("Failed to list FSDs:", error);
     return NextResponse.json(
-      { error: "Failed to list FSDs" },
+      { error: safeErrorResponse(error, "List FSDs") },
       { status: 500 }
     );
   }
@@ -91,11 +92,12 @@ export async function POST(request: Request) {
       },
     });
 
+    logAudit("CREATE_FSD", "Fsd", fsd.id, request, `Created: ${title}`);
+
     return NextResponse.json(fsd, { status: 201 });
   } catch (error) {
-    console.error("Failed to save FSD:", error);
     return NextResponse.json(
-      { error: "Failed to save FSD" },
+      { error: safeErrorResponse(error, "Save FSD") },
       { status: 500 }
     );
   }

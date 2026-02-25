@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
+import { feedbackRuleSchema, validateBody } from "@/lib/validations";
 
 // GET /api/feedback-rules — list rules with optional filters
 export async function GET(request: Request) {
@@ -24,9 +27,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json(rules);
   } catch (error) {
-    console.error("Failed to fetch feedback rules:", error);
     return NextResponse.json(
-      { error: "Failed to fetch feedback rules" },
+      { error: safeErrorResponse(error, "Fetch feedback rules") },
       { status: 500 }
     );
   }
@@ -36,22 +38,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { module: ruleModule, processArea, ruleType, content } = body;
 
-    if (!ruleModule || !ruleType || !content) {
-      return NextResponse.json(
-        { error: "Missing required fields: module, ruleType, content" },
-        { status: 400 }
-      );
+    // Zod validation
+    const validated = validateBody(feedbackRuleSchema, body);
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const validTypes = ["content_improvement", "structure", "validation", "terminology"];
-    if (!validTypes.includes(ruleType)) {
-      return NextResponse.json(
-        { error: `ruleType must be one of: ${validTypes.join(", ")}` },
-        { status: 400 }
-      );
-    }
+    const { module: ruleModule, processArea, ruleType, content } = validated.data;
 
     const rule = await prisma.feedbackRule.create({
       data: {
@@ -64,11 +58,12 @@ export async function POST(request: Request) {
       },
     });
 
+    logAudit("CREATE_RULE", "FeedbackRule", rule.id, request, `Module: ${ruleModule}, Type: ${ruleType}`);
+
     return NextResponse.json(rule, { status: 201 });
   } catch (error) {
-    console.error("Failed to create feedback rule:", error);
     return NextResponse.json(
-      { error: "Failed to create feedback rule" },
+      { error: safeErrorResponse(error, "Create feedback rule") },
       { status: 500 }
     );
   }

@@ -36,7 +36,39 @@ function cleanupRateLimitMap() {
 }
 
 export function middleware(request: NextRequest) {
+  // ── CORS Preflight Handler ────────────────────────────────
+  if (request.method === "OPTIONS" && request.nextUrl.pathname.startsWith("/api/")) {
+    const origin = request.headers.get("origin") || "";
+    const allowedOrigins = getAllowedOrigins(request);
+
+    if (!allowedOrigins.includes(origin) && allowedOrigins[0] !== "*") {
+      return new NextResponse(null, { status: 403 });
+    }
+
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin || allowedOrigins[0],
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
   const response = NextResponse.next();
+
+  // ── CORS Headers for API routes ─────────────────────────
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    const origin = request.headers.get("origin") || "";
+    const allowedOrigins = getAllowedOrigins(request);
+
+    if (allowedOrigins.includes(origin) || allowedOrigins[0] === "*") {
+      response.headers.set("Access-Control-Allow-Origin", origin || allowedOrigins[0]);
+    }
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  }
 
   // ── Security Headers ────────────────────────────────────
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -79,6 +111,28 @@ export function middleware(request: NextRequest) {
   }
 
   return response;
+}
+
+/** Build allowed origins list from request host + env */
+function getAllowedOrigins(request: NextRequest): string[] {
+  const host = request.headers.get("host") || "";
+  const origins: string[] = [];
+
+  // Allow same-origin (both http for dev and https for prod)
+  if (host) {
+    origins.push(`https://${host}`);
+    if (host.includes("localhost")) {
+      origins.push(`http://${host}`);
+    }
+  }
+
+  // Allow Vercel preview URLs
+  if (host.endsWith(".vercel.app")) {
+    origins.push(`https://${host}`);
+  }
+
+  // Fallback: if no origins detected, allow same-origin only
+  return origins.length > 0 ? origins : ["*"];
 }
 
 export const config = {

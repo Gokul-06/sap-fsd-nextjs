@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { safeErrorResponse } from "@/lib/api-error";
 
 // PATCH /api/fsd/[id]/template — Toggle template status and set industry
 export async function PATCH(
@@ -32,9 +33,8 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Failed to update template status:", error);
     return NextResponse.json(
-      { error: "Failed to update template status" },
+      { error: safeErrorResponse(error, "Update template status") },
       { status: 500 }
     );
   }

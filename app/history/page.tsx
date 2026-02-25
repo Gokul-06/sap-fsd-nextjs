@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Globe, Star, Wrench } from "lucide-react";
 import { FSD_TYPE_LABELS } from "@/lib/types";
 import type { FsdType } from "@/lib/types";
+import { ExportDataButton } from "@/components/shared/export-data-button";
 
 export const dynamic = "force-dynamic";
 
@@ -45,12 +46,15 @@ export default async function HistoryPage() {
             {fsds.length} document{fsds.length !== 1 ? "s" : ""} generated
           </p>
         </div>
-        <Link
-          href="/generate"
-          className="bg-navy text-white px-5 py-2.5 rounded-lg font-medium hover:bg-navy-light transition-colors text-sm"
-        >
-          + New FSD
-        </Link>
+        <div className="flex items-center gap-3">
+          <ExportDataButton />
+          <Link
+            href="/generate"
+            className="bg-navy text-white px-5 py-2.5 rounded-lg font-medium hover:bg-navy-light transition-colors text-sm"
+          >
+            + New FSD
+          </Link>
+        </div>
       </div>
 
       {fsds.length > 0 ? (

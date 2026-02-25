@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
+import { ratingSchema, validateBody } from "@/lib/validations";
 
 export async function POST(
   request: Request,
@@ -8,14 +11,14 @@ export async function POST(
   try {
     const { id } = params;
     const body = await request.json();
-    const { rating } = body;
 
-    if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: "Rating must be a number between 1 and 5" },
-        { status: 400 }
-      );
+    // Zod validation
+    const validated = validateBody(ratingSchema, body);
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
     }
+
+    const { rating } = validated.data;
 
     const fsd = await prisma.fsd.findUnique({ where: { id } });
     if (!fsd) {
@@ -28,11 +31,12 @@ export async function POST(
       select: { id: true, rating: true },
     });
 
+    logAudit("RATE_FSD", "Fsd", id, request, `Rated ${rating}/5`);
+
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("Rating update failed:", error);
     return NextResponse.json(
-      { error: "Failed to update rating" },
+      { error: safeErrorResponse(error, "Update rating") },
       { status: 500 }
     );
   }

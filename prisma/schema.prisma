@@ -62,3 +62,16 @@ model FeedbackRule {
   @@index([module, processArea])
   @@index([active])
 }
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String   // CREATE_FSD, DELETE_FSD, EXPORT_DATA, SHARE_FSD, RATE_FSD, CREATE_COMMENT, etc.
+  resource   String   // Fsd, Comment, FeedbackRule
+  resourceId String?
+  details    String?  @db.Text
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+
+  @@index([action, timestamp])
+}

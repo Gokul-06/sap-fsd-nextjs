@@ -2,6 +2,8 @@ export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { callClaude, isAIEnabled } from "@/lib/tools/claude-ai";
+import { safeErrorResponse } from "@/lib/api-error";
+import { refineSchema, validateBody } from "@/lib/validations";
 
 /**
  * Smart FSD refinement endpoint.
@@ -19,21 +21,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { markdown, instruction } = body;
 
-    if (!markdown || !instruction) {
-      return NextResponse.json(
-        { error: "Missing required fields: markdown, instruction" },
-        { status: 400 }
-      );
+    // Zod validation
+    const validated = validateBody(refineSchema, body);
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    if (instruction.trim().length < 3) {
-      return NextResponse.json(
-        { error: "Instruction too short. Please provide more detail." },
-        { status: 400 }
-      );
-    }
+    const { markdown, instruction } = validated.data;
 
     // Step 1: Ask Claude for specific replacements (fast, small output)
     const prompt = `You are an SAP FSD document editor. Given the user's instruction and the current document, identify the EXACT text changes needed.
@@ -156,10 +151,8 @@ Apply the requested changes and return ONLY the modified portion of the document
 
     return NextResponse.json({ markdown: updatedMarkdown });
   } catch (error) {
-    console.error("FSD refinement failed:", error);
-    const message = error instanceof Error ? error.message : "Failed to refine FSD";
     return NextResponse.json(
-      { error: message },
+      { error: safeErrorResponse(error, "FSD refinement") },
       { status: 500 }
     );
   }

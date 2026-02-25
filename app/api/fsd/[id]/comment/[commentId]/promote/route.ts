@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { callClaude, isAIEnabled } from "@/lib/tools/claude-ai";
+import { logAudit } from "@/lib/audit";
+import { safeErrorResponse } from "@/lib/api-error";
 
 // POST /api/fsd/[id]/comment/[commentId]/promote — promote a comment to a feedback rule
 export async function POST(
@@ -73,11 +75,12 @@ Return ONLY a single, clear instruction that can be applied when generating futu
       },
     });
 
+    logAudit("CREATE_RULE", "FeedbackRule", rule.id, request, `Promoted from comment ${commentId}`);
+
     return NextResponse.json(rule, { status: 201 });
   } catch (error) {
-    console.error("Failed to promote comment:", error);
     return NextResponse.json(
-      { error: "Failed to promote comment to feedback rule" },
+      { error: safeErrorResponse(error, "Promote comment") },
       { status: 500 }
     );
   }
