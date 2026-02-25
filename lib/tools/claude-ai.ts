@@ -7,6 +7,8 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { TeamLeadContext, FsdType } from '@/lib/types';
+import { prisma } from '@/lib/db';
+import type { AgentRole } from '@/lib/agent-training-questions';
 
 let client: Anthropic | null = null;
 
@@ -23,6 +25,22 @@ function getClient(): Anthropic {
 
 export function isAIEnabled(): boolean {
   return !!process.env.ANTHROPIC_API_KEY;
+}
+
+// ─── Agent Training Injection ───
+
+async function getAgentTraining(agentRole: AgentRole): Promise<string> {
+  try {
+    const training = await prisma.agentTraining.findFirst({
+      where: { agentRole, isActive: true },
+    });
+    if (training?.personalityPrompt) {
+      return `\n\nPERSONALITY TRAINING (based on expert "${training.expertName}"):\n${training.personalityPrompt}\n\nApply this personality consistently in all your outputs.\n`;
+    }
+  } catch {
+    // Silently fail — training is optional
+  }
+  return "";
 }
 
 export async function callClaude(prompt: string, maxTokens: number = 2048, timeoutMs: number = 120000): Promise<string> {
@@ -480,8 +498,9 @@ export async function aiBpmnProcessDiagram(
   const nodeCount = depth === "comprehensive" ? "16-22" : "12-16";
   const laneCount = depth === "comprehensive" ? "4-6" : "3-4";
 
+  const personalityTraining = await getAgentTraining("bpmn-architect");
   const prompt = `You are an SAP ${module} process architect creating a BPMN 2.0 process diagram for SAP Signavio.
-${langInstruction}${depthInstruction}${fsdTypeInstruction}
+${personalityTraining}${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -685,8 +704,9 @@ export async function aiTeamLeadAnalysis(
 ): Promise<TeamLeadContext> {
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const personalityTraining = await getAgentTraining("project-director");
   const prompt = `You are a Senior SAP Project Director leading a team of 5 specialist consultants who will collaboratively write a Functional Specification Document (FSD). Your job is to deeply analyze the business requirements and create a comprehensive brief that all specialists will reference to ensure consistency.
-${depthInstruction}${fsdTypeInstruction}
+${personalityTraining}${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
 Business Requirements:
@@ -770,8 +790,10 @@ export async function aiBusinessAnalyst(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const personalityTraining = await getAgentTraining("business-analyst");
   const wordLimit = depth === "comprehensive" ? 500 : 250;
   const prompt = `You are a Senior SAP Business Analyst on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your output with the Project Director's analysis — use the same terminology, reference the same process steps, and follow the design decisions.
+${personalityTraining}
 
 ${teamLeadBrief}
 
@@ -822,7 +844,9 @@ export async function aiSolutionArchitect(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const nodeCount = depth === "comprehensive" ? "16-22" : "12-16";
+  const personalityTraining = await getAgentTraining("solution-architect");
   const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your solution with the Project Director's process steps and design decisions.
+${personalityTraining}
 
 ${teamLeadBrief}
 
@@ -896,7 +920,9 @@ export async function aiTechnicalConsultant(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const personalityTraining = await getAgentTraining("technical-consultant");
   const prompt = `You are a Senior SAP ${module} Technical Consultant on an Agent Team. Your Project Director has provided a brief below. Align your specifications with the Project Director's process steps, design decisions, and risk areas.
+${personalityTraining}
 
 ${teamLeadBrief}
 
@@ -956,7 +982,9 @@ export async function aiProjectManager(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const personalityTraining = await getAgentTraining("project-manager");
   const prompt = `You are a Senior SAP ${module} Project Manager on an Agent Team. Your Project Director has provided a brief below. Align your plans with the Project Director's process steps, risk areas, and scope boundaries.
+${personalityTraining}
 
 ${teamLeadBrief}
 

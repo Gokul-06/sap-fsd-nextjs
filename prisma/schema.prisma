@@ -63,6 +63,19 @@ model FeedbackRule {
   @@index([active])
 }
 
+model AgentTraining {
+  id                String   @id @default(cuid())
+  agentRole         String   @unique // "project-director" | "business-analyst" | "solution-architect" | "technical-consultant" | "project-manager" | "bpmn-architect"
+  expertName        String   // Name of the real person this is based on
+  questionnaire     String   @db.Text  // JSON: { question: answer } pairs
+  personalityPrompt String   @db.Text  // AI-compiled personality instruction
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([agentRole, isActive])
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   action     String   // CREATE_FSD, DELETE_FSD, EXPORT_DATA, SHARE_FSD, RATE_FSD, CREATE_COMMENT, etc.
