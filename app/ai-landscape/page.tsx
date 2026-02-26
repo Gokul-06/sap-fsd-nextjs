@@ -69,6 +69,99 @@ export default function AILandscapePage() {
           </table>
         </div>
         <p className="mt-4 text-xs text-gray-500">Market share (Enterprise): Anthropic 32% | OpenAI 25% | Google 14% | Others 29% (2025 data)</p>
+
+        {/* Ownership & Investment */}
+        <h3 className="text-xl font-bold mt-12 mb-4">Ownership, Investors &amp; Valuation</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-800">
+                <th className="py-3 px-4 text-gray-400 font-medium text-sm">Company</th>
+                <th className="py-3 px-4 text-gray-400 font-medium text-sm">Structure</th>
+                <th className="py-3 px-4 text-gray-400 font-medium text-sm">Valuation</th>
+                <th className="py-3 px-4 text-gray-400 font-medium text-sm">Key Investors / Owners</th>
+                <th className="py-3 px-4 text-gray-400 font-medium text-sm">Stock / Ticker</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800/50">
+              {[
+                {
+                  company: "OpenAI",
+                  structure: "Private (transitioning to for-profit)",
+                  valuation: "$500B+ (seeking $750-830B)",
+                  investors: "Microsoft (~27%), Thrive Capital, Khosla Ventures, Softbank, a16z",
+                  stock: "Private — No public ticker. Exposure via MSFT (Microsoft)",
+                },
+                {
+                  company: "Anthropic",
+                  structure: "Private (Public Benefit Corp)",
+                  valuation: "$61.5B (Mar 2025) → $350B (Nov 2025)",
+                  investors: "Amazon ($8B, <33%), Google (14%, $3B+), ICONIQ Capital, Spark Capital, Salesforce",
+                  stock: "Private — Exposure via AMZN (Amazon), GOOGL (Alphabet)",
+                },
+                {
+                  company: "Google DeepMind",
+                  structure: "Division of Alphabet Inc.",
+                  valuation: "Part of Alphabet ($2.3T market cap)",
+                  investors: "100% owned by Alphabet (public)",
+                  stock: "GOOGL / GOOG (Nasdaq)",
+                },
+                {
+                  company: "Meta AI",
+                  structure: "Division of Meta Platforms",
+                  valuation: "Part of Meta ($1.8T market cap)",
+                  investors: "100% owned by Meta (public). Mark Zuckerberg ~13% ownership",
+                  stock: "META (Nasdaq)",
+                },
+                {
+                  company: "Mistral AI",
+                  structure: "Private (French)",
+                  valuation: "$14B (2025, doubled from $6B)",
+                  investors: "ASML (\u20ac2B), a16z, Lightspeed, General Catalyst, Nvidia, Microsoft",
+                  stock: "Private — EU sovereign AI play",
+                },
+                {
+                  company: "xAI",
+                  structure: "Private",
+                  valuation: "$230B+ (Dec 2025)",
+                  investors: "Elon Musk (founder), a16z, Sequoia, Valor Equity, Nvidia, Lightspeed. Total raised: $42.7B",
+                  stock: "Private — Exposure via TSLA (Tesla, Musk-related)",
+                },
+                {
+                  company: "DeepSeek",
+                  structure: "Private (Chinese)",
+                  valuation: "Undisclosed",
+                  investors: "Backed by High-Flyer (Huanfang Quantitative) — Chinese quant hedge fund",
+                  stock: "Private — No public exposure",
+                },
+                {
+                  company: "Alibaba (Qwen)",
+                  structure: "Division of Alibaba Group",
+                  valuation: "Part of Alibaba ($320B market cap)",
+                  investors: "100% owned by Alibaba (public). Softbank major shareholder",
+                  stock: "BABA (NYSE) / 9988 (HKEX)",
+                },
+              ].map((row, i) => (
+                <tr key={i} className="hover:bg-gray-800/30 transition-colors">
+                  <td className="py-3 px-4 font-semibold text-sm">{row.company}</td>
+                  <td className="py-3 px-4 text-sm text-gray-300">{row.structure}</td>
+                  <td className="py-3 px-4 text-sm text-green-400 font-mono">{row.valuation}</td>
+                  <td className="py-3 px-4 text-sm text-gray-400">{row.investors}</td>
+                  <td className="py-3 px-4 text-sm">
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${row.stock.startsWith("Private") ? "bg-gray-500/10 text-gray-400" : "bg-green-500/10 text-green-400"}`}>
+                      {row.stock}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 p-4 rounded-lg bg-gray-800/30 border border-gray-700/50">
+          <p className="text-sm text-gray-300">
+            <span className="text-yellow-400 font-semibold">Investment Note:</span> Global AI investment reached <strong>$202.3 billion in 2025</strong> &mdash; representing 50% of all venture capital deployed worldwide. For public market exposure to private AI companies: <strong>MSFT</strong> (OpenAI), <strong>AMZN</strong> (Anthropic), <strong>GOOGL</strong> (Anthropic + DeepMind), <strong>META</strong> (Llama).
+          </p>
+        </div>
       </section>
 
       {/* Which AI For What? */}
