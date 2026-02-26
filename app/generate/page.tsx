@@ -25,7 +25,9 @@ import { QuickTemplates, TemplateData } from "@/components/fsd/quick-templates";
 import { MethodologyTips } from "@/components/fsd/methodology-tips";
 import { PdfUpload } from "@/components/fsd/pdf-upload";
 import { TeamProgress } from "@/components/fsd/team-progress";
+import { CalmImport } from "@/components/fsd/calm-import";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
+import { useCalm } from "@/hooks/use-calm";
 import { useModuleClassification } from "@/hooks/use-module-classification";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -63,8 +65,16 @@ function GeneratePageContent() {
   const [templateApplied, setTemplateApplied] = useState(false);
 
   // Inline editor state
+  // CALM integration state
+  const [calmProjectId, setCalmProjectId] = useState("");
+  const [calmProjectName, setCalmProjectName] = useState("");
+  const [calmRequirementIds, setCalmRequirementIds] = useState<string[]>([]);
+
+  // Inline editor state
   const [isEditing, setIsEditing] = useState(false);
   const [editBuffer, setEditBuffer] = useState("");
+
+  const { status: calmStatus, pushFsd, loading: calmLoading } = useCalm();
 
   const { result: classificationResult, isLoading: isClassifying } =
     useModuleClassification(requirements);
@@ -464,6 +474,23 @@ function GeneratePageContent() {
 
                   <Separator className="bg-[#0091DA]/10" />
 
+                  {/* CALM Import */}
+                  <CalmImport
+                    onImport={(text, projectId, projectName, reqIds) => {
+                      setRequirements((prev) =>
+                        prev.trim() ? `${prev}\n\n${text}` : text
+                      );
+                      setCalmProjectId(projectId);
+                      setCalmProjectName(projectName);
+                      setCalmRequirementIds(reqIds);
+                      if (projectName) setProjectName(projectName);
+                      toast({
+                        title: "Requirements imported from CALM!",
+                        description: `${reqIds.length} requirement(s) from ${projectName}`,
+                      });
+                    }}
+                  />
+
                   {/* PDF Upload for Requirements Extraction */}
                   <PdfUpload
                     onRequirementsExtracted={(extracted) => {
@@ -707,6 +734,34 @@ Example (SAP Activate — Explore Phase):
                   <Plus className="h-4 w-4 mr-2" />
                   New FSD
                 </Button>
+                {calmStatus.configured && savedId && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    disabled={calmLoading}
+                    onClick={async () => {
+                      try {
+                        await pushFsd(savedId, calmProjectId, calmProjectName || projectName);
+                        toast({
+                          title: "Pushed to SAP Cloud ALM!",
+                          description: "FSD document is now available in CALM.",
+                        });
+                      } catch {
+                        toast({
+                          title: "Push to CALM failed",
+                          description: "Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    {calmLoading ? "Pushing..." : "Push to CALM"}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

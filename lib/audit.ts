@@ -10,7 +10,10 @@ export type AuditAction =
   | "UPDATE_RULE"
   | "DELETE_RULE"
   | "EXPORT_DATA"
-  | "GENERATE_FSD";
+  | "GENERATE_FSD"
+  | "CALM_CONNECTION_TEST"
+  | "CALM_PULL_REQUIREMENTS"
+  | "CALM_PUSH_FSD";
 
 /**
  * Log an audit trail entry (GDPR compliance).

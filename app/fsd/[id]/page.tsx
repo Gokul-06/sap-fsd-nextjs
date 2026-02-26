@@ -31,7 +31,9 @@ import {
   BookmarkPlus,
   BookmarkCheck,
   Globe,
+  CloudUpload,
 } from "lucide-react";
+import { useCalm } from "@/hooks/use-calm";
 
 interface FsdData {
   id: string;
@@ -72,6 +74,7 @@ export default function FsdDetailPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showIndustryPicker, setShowIndustryPicker] = useState(false);
   const [selectedIndustry, setSelectedIndustry] = useState("");
+  const { status: calmStatus, pushFsd, loading: calmLoading } = useCalm();
 
   useEffect(() => {
     fetch(`/api/fsd/${id}`)
@@ -295,6 +298,33 @@ export default function FsdDetailPage() {
               </>
             )}
           </Button>
+
+          {/* Push to CALM */}
+          {calmStatus.configured && (
+            <Button
+              variant="outline"
+              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              disabled={calmLoading}
+              onClick={async () => {
+                try {
+                  await pushFsd(id, "", fsd.projectName);
+                  toast({
+                    title: "Pushed to SAP Cloud ALM!",
+                    description: "FSD document is now available in CALM.",
+                  });
+                } catch {
+                  toast({
+                    title: "Push to CALM failed",
+                    description: "Please try again.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              <CloudUpload className="h-4 w-4 mr-2" />
+              {calmLoading ? "Pushing..." : "Push to CALM"}
+            </Button>
+          )}
 
           {/* Template toggle */}
           {fsd.isTemplate ? (

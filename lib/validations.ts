@@ -57,6 +57,17 @@ export const feedbackRuleSchema = z.object({
   source: z.enum(["comment", "manual", "ai_extracted"]).default("manual"),
 });
 
+// ── CALM Integration ─────────────────────────────────────
+export const calmProjectIdSchema = z.object({
+  projectId: z.string().min(1).max(100),
+});
+
+export const calmPushFsdSchema = z.object({
+  fsdId: z.string().min(1).max(50),
+  projectId: z.string().min(1).max(100),
+  projectName: z.string().min(1).max(200),
+});
+
 // Helper to validate and return typed data or error response
 export function validateBody<T>(schema: z.ZodSchema<T>, body: unknown): { data: T } | { error: string } {
   const result = schema.safeParse(body);

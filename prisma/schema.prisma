@@ -30,6 +30,10 @@ model Fsd {
   fsdType             String    @default("standard") // standard | enhancement | interface | report | form | conversion | workflow
   isTemplate          Boolean   @default(false)
   industry            String?   // "Manufacturing" | "Pharma" | "Retail" | "Automotive" | "Utilities" | "Public Sector"
+  calmProjectId       String?
+  calmProjectName     String?
+  calmRequirementIds  String    @default("[]")
+  calmDocumentId      String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   comments            Comment[]
