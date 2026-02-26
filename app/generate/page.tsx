@@ -64,11 +64,10 @@ function GeneratePageContent() {
   const [currentMarkdown, setCurrentMarkdown] = useState("");
   const [templateApplied, setTemplateApplied] = useState(false);
 
-  // Inline editor state
   // CALM integration state
   const [calmProjectId, setCalmProjectId] = useState("");
   const [calmProjectName, setCalmProjectName] = useState("");
-  const [calmRequirementIds, setCalmRequirementIds] = useState<string[]>([]);
+  const [_calmRequirementIds, setCalmRequirementIds] = useState<string[]>([]);
 
   // Inline editor state
   const [isEditing, setIsEditing] = useState(false);
