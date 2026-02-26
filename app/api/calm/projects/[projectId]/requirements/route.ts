@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { isCalmConfigured } from "@/lib/services/calm-client";
+import { isCalmConfigured, isCalmDemoMode } from "@/lib/services/calm-client";
 import { listCalmRequirements } from "@/lib/services/calm-projects";
+import { getMockRequirements } from "@/lib/services/calm-mock-data";
 import { logAudit } from "@/lib/audit";
 import { safeErrorResponse } from "@/lib/api-error";
 
@@ -16,6 +17,12 @@ export async function GET(
 
   if (!projectId || projectId.length > 100) {
     return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+  }
+
+  // Demo mode — return mock data
+  if (isCalmDemoMode()) {
+    const requirements = getMockRequirements(projectId);
+    return NextResponse.json({ requirements, demoMode: true });
   }
 
   try {

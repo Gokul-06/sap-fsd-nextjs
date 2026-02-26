@@ -102,7 +102,12 @@ export function CalmImport({ onImport }: CalmImportProps) {
             />
           </svg>
           <span className="font-medium text-gray-900">Import from SAP Cloud ALM</span>
-          {!status.connected && (
+          {status.demoMode && (
+            <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded font-medium">
+              Demo
+            </span>
+          )}
+          {!status.connected && !status.demoMode && (
             <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
               Not connected
             </span>

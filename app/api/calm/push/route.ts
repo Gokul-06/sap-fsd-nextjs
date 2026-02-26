@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isCalmConfigured, calmFetch } from "@/lib/services/calm-client";
+import { isCalmConfigured, isCalmDemoMode, calmFetch } from "@/lib/services/calm-client";
 import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { safeErrorResponse } from "@/lib/api-error";
@@ -30,6 +30,35 @@ export async function POST(request: Request) {
     const fsd = await prisma.fsd.findUnique({ where: { id: fsdId } });
     if (!fsd) {
       return NextResponse.json({ error: "FSD not found" }, { status: 404 });
+    }
+
+    // Demo mode — simulate push without real API call
+    if (isCalmDemoMode()) {
+      const mockDocId = `DEMO-DOC-${Date.now()}`;
+
+      await prisma.fsd.update({
+        where: { id: fsdId },
+        data: {
+          calmProjectId: projectId,
+          calmProjectName: projectName,
+          calmDocumentId: mockDocId,
+        },
+      });
+
+      logAudit(
+        "CALM_PUSH_FSD",
+        "Fsd",
+        fsdId,
+        request,
+        `[DEMO] Pushed to CALM project ${projectName} (doc: ${mockDocId})`
+      );
+
+      return NextResponse.json({
+        success: true,
+        calmDocumentId: mockDocId,
+        demoMode: true,
+        message: "FSD pushed to CALM (demo mode)",
+      });
     }
 
     const documentName = `FSD: ${fsd.title}`;

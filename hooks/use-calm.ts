@@ -19,6 +19,7 @@ interface CalmRequirement {
 interface CalmStatus {
   configured: boolean;
   connected: boolean;
+  demoMode?: boolean;
   error?: string;
 }
 

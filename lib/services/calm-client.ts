@@ -8,7 +8,14 @@ import type { CalmTokenResponse, CalmApiError } from "./calm-types";
 
 // ─── Configuration ───────────────────────────────────────
 
+/** True when CALM_DEMO_MODE=true (mock data, no real API) */
+export function isCalmDemoMode(): boolean {
+  return process.env.CALM_DEMO_MODE === "true";
+}
+
+/** True when real credentials are set OR demo mode is on */
 export function isCalmConfigured(): boolean {
+  if (isCalmDemoMode()) return true;
   return !!(
     process.env.CALM_CLIENT_ID &&
     process.env.CALM_CLIENT_SECRET &&
