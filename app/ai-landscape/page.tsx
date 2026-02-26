@@ -1,6 +1,81 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { computeRecommendation, type RecommenderFormData, type Recommendation } from "./recommender-logic";
+
+const useCaseOptions = [
+  { value: "coding", label: "Coding & Development", icon: "💻" },
+  { value: "writing", label: "Creative Writing & Content", icon: "✍️" },
+  { value: "config", label: "Configuration & Large Codebases", icon: "⚙️" },
+  { value: "reasoning", label: "Reasoning & Analysis", icon: "🧠" },
+  { value: "security", label: "Security & Compliance", icon: "🛡️" },
+  { value: "general", label: "General Enterprise Tasks", icon: "🏢" },
+];
+
+const budgetOptions = [
+  { value: "enterprise", label: "Enterprise Budget", icon: "💎" },
+  { value: "moderate", label: "Moderate / Cost-Effective", icon: "⚖️" },
+  { value: "free", label: "Free / Open-Source", icon: "🆓" },
+];
+
+const privacyOptions = [
+  { value: "eu_sovereignty", label: "EU Data Sovereignty", icon: "🇪🇺" },
+  { value: "on_premise", label: "On-Premise Only", icon: "🏠" },
+  { value: "cloud_ok", label: "Cloud APIs Acceptable", icon: "☁️" },
+  { value: "no_preference", label: "No Special Requirements", icon: "✅" },
+];
+
+const scaleOptions = [
+  { value: "individual", label: "Individual / Small Team", icon: "👤" },
+  { value: "department", label: "Department-Wide", icon: "👥" },
+  { value: "enterprise_wide", label: "Enterprise-Wide Rollout", icon: "🌐" },
+];
+
+const sapOptions = [
+  { value: "yes_deep", label: "Yes, Deep Integration (Joule, BTP)", icon: "🔗" },
+  { value: "yes_light", label: "Yes, Light (Code Gen, Docs)", icon: "📝" },
+  { value: "no_sap", label: "No SAP Requirement", icon: "➖" },
+];
+
 export default function AILandscapePage() {
+  const [recommenderStep, setRecommenderStep] = useState<"form" | "result">("form");
+  const [formData, setFormData] = useState<RecommenderFormData>({
+    useCase: "",
+    budget: "",
+    privacy: "",
+    scale: "",
+    sapIntegration: "",
+  });
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const [animatedRunnerScore, setAnimatedRunnerScore] = useState(0);
+
+  const isFormComplete = formData.useCase && formData.budget && formData.privacy && formData.scale && formData.sapIntegration;
+
+  const handleRecommend = () => {
+    const result = computeRecommendation(formData);
+    setRecommendation(result);
+    setAnimatedScore(0);
+    setAnimatedRunnerScore(0);
+    setRecommenderStep("result");
+  };
+
+  const handleStartOver = () => {
+    setRecommenderStep("form");
+    setRecommendation(null);
+    setFormData({ useCase: "", budget: "", privacy: "", scale: "", sapIntegration: "" });
+    setAnimatedScore(0);
+    setAnimatedRunnerScore(0);
+  };
+
+  useEffect(() => {
+    if (recommendation && recommenderStep === "result") {
+      const t1 = setTimeout(() => setAnimatedScore(recommendation.primary.score), 150);
+      const t2 = setTimeout(() => setAnimatedRunnerScore(recommendation.runnerUp.score), 300);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [recommendation, recommenderStep]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-white">
       {/* Hero */}
@@ -259,6 +334,182 @@ export default function AILandscapePage() {
           <p className="text-sm text-gray-300">
             <span className="text-yellow-400 font-semibold">Pro Tip:</span> The most productive enterprise teams in 2026 aren&apos;t choosing one model &mdash; they&apos;re using the <strong>right model for each task</strong>. Multi-model strategies are now the standard for AI-mature organizations.
           </p>
+        </div>
+      </section>
+
+      {/* ─── AI Model Recommender ─── */}
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="relative">
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative text-center mb-12">
+            <p className="text-blue-400 font-mono text-sm tracking-widest uppercase mb-4">Interactive Tool</p>
+            <h2 className="text-3xl font-bold mb-2">Find Your Ideal AI Model</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Answer five quick questions and we&apos;ll recommend the best AI model for your needs — with reasons.
+            </p>
+          </div>
+
+          {recommenderStep === "form" ? (
+            <div className="max-w-4xl mx-auto p-6 md:p-8 rounded-2xl border border-gray-800/50 bg-gray-900/50 backdrop-blur-sm">
+              {/* Q1 — Use Case */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold">1</span>
+                  <h3 className="text-lg font-semibold">What will AI primarily help you with?</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {useCaseOptions.map((o) => (
+                    <button key={o.value} onClick={() => setFormData((p) => ({ ...p, useCase: o.value }))}
+                      className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${formData.useCase === o.value ? "border-blue-500 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-500/10" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-gray-600 hover:text-gray-300"}`}>
+                      <span className="mr-2">{o.icon}</span>{o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Q2 — Budget */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold">2</span>
+                  <h3 className="text-lg font-semibold">What is your budget model?</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {budgetOptions.map((o) => (
+                    <button key={o.value} onClick={() => setFormData((p) => ({ ...p, budget: o.value }))}
+                      className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${formData.budget === o.value ? "border-blue-500 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-500/10" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-gray-600 hover:text-gray-300"}`}>
+                      <span className="mr-2">{o.icon}</span>{o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Q3 — Privacy */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold">3</span>
+                  <h3 className="text-lg font-semibold">What are your data privacy requirements?</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {privacyOptions.map((o) => (
+                    <button key={o.value} onClick={() => setFormData((p) => ({ ...p, privacy: o.value }))}
+                      className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${formData.privacy === o.value ? "border-blue-500 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-500/10" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-gray-600 hover:text-gray-300"}`}>
+                      <span className="mr-2">{o.icon}</span>{o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Q4 — Scale */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold">4</span>
+                  <h3 className="text-lg font-semibold">How will you deploy AI?</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {scaleOptions.map((o) => (
+                    <button key={o.value} onClick={() => setFormData((p) => ({ ...p, scale: o.value }))}
+                      className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${formData.scale === o.value ? "border-blue-500 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-500/10" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-gray-600 hover:text-gray-300"}`}>
+                      <span className="mr-2">{o.icon}</span>{o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Q5 — SAP */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold">5</span>
+                  <h3 className="text-lg font-semibold">Do you need SAP integration?</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {sapOptions.map((o) => (
+                    <button key={o.value} onClick={() => setFormData((p) => ({ ...p, sapIntegration: o.value }))}
+                      className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${formData.sapIntegration === o.value ? "border-blue-500 bg-blue-500/10 text-blue-300 shadow-lg shadow-blue-500/10" : "border-gray-700/50 bg-gray-800/30 text-gray-400 hover:border-gray-600 hover:text-gray-300"}`}>
+                      <span className="mr-2">{o.icon}</span>{o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button onClick={handleRecommend} disabled={!isFormComplete}
+                className={`mt-4 w-full py-4 rounded-xl font-semibold text-lg transition-all ${isFormComplete ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-blue-400 shadow-lg shadow-blue-500/25 cursor-pointer" : "bg-gray-800 text-gray-600 cursor-not-allowed"}`}>
+                🚀 Get My Recommendation
+              </button>
+            </div>
+          ) : recommendation ? (
+            <div className="max-w-4xl mx-auto">
+              {/* Primary Recommendation */}
+              <div className="p-6 md:p-8 rounded-2xl border border-blue-500/30 bg-blue-500/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl" />
+                <div className="relative">
+                  <span className="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 font-mono uppercase tracking-wider border border-blue-500/20">
+                    ⭐ Best Match
+                  </span>
+                  <h3 className="text-2xl md:text-3xl font-bold mt-4 mb-1">{recommendation.primary.model}</h3>
+                  <p className="text-gray-400 text-sm mb-1">by {recommendation.primary.company}</p>
+                  <p className="text-gray-500 text-sm mb-6">{recommendation.primary.tagline}</p>
+
+                  {/* Score Bar */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-sm text-gray-500 whitespace-nowrap">Match Score</span>
+                    <div className="flex-1 h-2.5 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${animatedScore}%` }} />
+                    </div>
+                    <span className="text-blue-400 font-mono font-bold text-lg">{animatedScore}%</span>
+                  </div>
+
+                  {/* Reasons */}
+                  <div className="space-y-3">
+                    <p className="text-xs text-gray-500 font-mono uppercase tracking-wider mb-2">Why this model</p>
+                    {recommendation.reasons.map((reason, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="mt-0.5 w-5 h-5 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center text-xs flex-shrink-0">✓</span>
+                        <p className="text-sm text-gray-300">{reason}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Warnings */}
+                  {recommendation.warnings.length > 0 && (
+                    <div className="mt-6 p-4 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+                      <p className="text-sm text-yellow-400 font-semibold mb-2">⚠️ Things to consider</p>
+                      {recommendation.warnings.map((w, i) => (
+                        <p key={i} className="text-sm text-gray-400 mb-1">{w}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Runner-up */}
+              <div className="mt-4 p-5 md:p-6 rounded-xl border border-gray-700/50 bg-gray-800/20">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-xs text-gray-500 font-mono uppercase tracking-wider">Runner-up</span>
+                    <h4 className="text-lg font-bold mt-1">{recommendation.runnerUp.model}</h4>
+                    <p className="text-sm text-gray-400">by {recommendation.runnerUp.company} — {recommendation.runnerUp.tagline}</p>
+                  </div>
+                  <div className="flex items-center gap-3 md:min-w-[200px]">
+                    <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-gray-500 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${animatedRunnerScore}%` }} />
+                    </div>
+                    <span className="text-gray-400 font-mono font-bold">{animatedRunnerScore}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Start Over */}
+              <div className="mt-6 text-center">
+                <button onClick={handleStartOver}
+                  className="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-4 transition-colors">
+                  ← Start over with different answers
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
