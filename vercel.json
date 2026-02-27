@@ -4,7 +4,7 @@
   "regions": ["iad1", "fra1", "hnd1"],
   "functions": {
     "app/api/generate/route.ts": {
-      "maxDuration": 300
+      "maxDuration": 600
     },
     "app/api/generate-word/route.ts": {
       "maxDuration": 60
