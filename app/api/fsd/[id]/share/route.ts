@@ -6,10 +6,10 @@ import crypto from "crypto";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const fsd = await prisma.fsd.findUnique({ where: { id } });
 
