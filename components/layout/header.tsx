@@ -54,9 +54,6 @@ export function Header() {
               );
             })}
           </nav>
-          <span className="rounded-full bg-gradient-to-r from-[#0091DA]/10 to-[#0091DA]/5 px-3.5 py-1 text-xs font-semibold text-[#0091DA] border border-[#0091DA]/10">
-            Consulting
-          </span>
         </div>
       </div>
     </header>
