@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -114,10 +115,10 @@ export default function DocTransformPage() {
       <header className="bg-white border-b border-slate-200 px-8 py-3.5 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <a href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <span className="text-base font-bold text-[#1B2A4A]">Westernacher</span>
               <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em]">Nonstop Innovation</span>
-            </a>
+            </Link>
             <div className="h-4 w-px bg-slate-200" />
             <span className="text-sm font-medium text-[#1B2A4A]">Document Transformer</span>
           </div>
