@@ -1,7 +1,9 @@
 /**
  * Agent Teams Orchestration Engine
- * Coordinates a 3-phase pipeline: Project Director → Specialists → Quality Review
- * Produces higher-quality FSDs through shared context and cross-agent review.
+ * Coordinates a 4-phase pipeline:
+ *   Phase 1: Project Director → Phase 2: Specialists → Phase 2.5: Cross-Critique → Phase 3: Quality Review
+ * Uses Multi-Agent Reflexion (MAR) for cross-critique: specialists peer-review each
+ * other's work from different perspectives to eliminate confirmation bias.
  */
 
 import type { AgentProgressEvent, AgentStatus, TeamLeadContext, FsdType } from "@/lib/types";
@@ -16,6 +18,7 @@ import {
   aiTechnicalConsultant,
   aiProjectManager,
   aiBpmnProcessDiagram,
+  aiCrossCritique,
   aiQualityReviewer,
   serializeTeamLeadContext,
   aiTestScripts,
@@ -42,20 +45,22 @@ import {
 // ─── Timeout budgets ───
 // Dynamic based on document depth. Comprehensive mode generates 2x more tokens
 // per Claude call, so each phase needs more time.
-// Standard:      60 + 90 + 90  = 240s (60s safety margin before 300s Vercel limit)
-// Comprehensive: 90 + 150 + 120 = 360s (needs maxDuration ≥ 400s or graceful degradation)
+// Standard:      60 + 90 + 60 + 90  = 300s (within 600s Vercel limit)
+// Comprehensive: 90 + 150 + 90 + 120 = 450s (within 600s Vercel limit)
 function getTimeoutBudgets(depth: string) {
   if (depth === "comprehensive") {
     return {
-      phase1: 90_000,    // Project Director: 90s (comprehensive analysis is larger)
-      phase2: 150_000,   // Specialists (staggered): 150s (5 calls × 4096 tokens each)
-      phase3: 120_000,   // Quality Review + Test Scripts: 120s (reviewer sees all outputs)
+      phase1: 90_000,      // Project Director: 90s
+      phase2: 150_000,     // Specialists (staggered): 150s
+      phase2_5: 90_000,    // Cross-Critique Reflexion: 90s (3 parallel critique+revise)
+      phase3: 120_000,     // Quality Review + Test Scripts: 120s
     };
   }
   return {
-    phase1: 60_000,    // Project Director: 60s
-    phase2: 90_000,    // Specialists (parallel): 90s
-    phase3: 90_000,    // Quality Review + Test Scripts: 90s
+    phase1: 60_000,      // Project Director: 60s
+    phase2: 90_000,      // Specialists (parallel): 90s
+    phase2_5: 60_000,    // Cross-Critique Reflexion: 60s (3 parallel critique+revise)
+    phase3: 90_000,      // Quality Review + Test Scripts: 90s
   };
 }
 
@@ -78,7 +83,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 
 /**
  * Main orchestration function for Agent Teams mode.
- * Runs 3 sequential phases with SSE progress events.
+ * Runs 4 sequential phases with SSE progress events:
+ *   Phase 1: Project Director Analysis
+ *   Phase 2: Specialist Agents (staggered batches)
+ *   Phase 2.5: Cross-Critique Reflexion (MAR — peer review)
+ *   Phase 3: Quality Review + Test Scripts
  */
 export async function orchestrateAgentTeam(
   input: FSDInput,
@@ -261,6 +270,139 @@ export async function orchestrateAgentTeam(
   }
 
   onProgress({ phase: "specialists", status: "completed", agents: specialistAgents });
+
+  // ─── Phase 2.5: Cross-Critique Reflexion (MAR Paper) ───
+  // Each specialist reviews a DIFFERENT specialist's output from their unique perspective.
+  // This eliminates confirmation bias — the key insight from Multi-Agent Reflexion.
+  //
+  // Critique pairs (reviewer → reviews → author's section):
+  //   1. Solution Architect → reviews → Business Analyst's Executive Summary
+  //      (SA knows the technical solution, verifies the summary matches implementation)
+  //   2. Business Analyst → reviews → Technical Consultant's Error Handling + Output
+  //      (BA knows business needs, verifies error messages are user-friendly)
+  //   3. Project Manager → reviews → Solution Architect's Proposed Solution
+  //      (PM manages timelines/feasibility, checks if solution is realistic)
+  //
+  // Only run if we have at least 3 successful specialist outputs
+  const completedCount = specialistAgents.filter(a => a.status === "completed").length;
+  if (completedCount >= 3 && ba && sa && tc) {
+    onProgress({
+      phase: "cross-critique",
+      status: "running",
+      message: "Specialists peer-reviewing each other's work (MAR Reflexion)...",
+      agents: [
+        { name: "Solution Architect", role: "Reviewing Executive Summary", status: "running" },
+        { name: "Business Analyst", role: "Reviewing Error Handling & Output", status: "running" },
+        { name: "Project Manager", role: "Reviewing Proposed Solution", status: "running" },
+      ],
+    });
+
+    try {
+      const critiqueResults = await withTimeout(Promise.all([
+        // SA critiques BA's Executive Summary
+        aiCrossCritique(
+          primaryModule, processArea, language, depth as "standard" | "comprehensive",
+          "Solution Architect",
+          "technical solution design and SAP architecture",
+          "Business Analyst",
+          "Executive Summary (Section 2)",
+          ba,
+          teamLeadBrief,
+          fsdType,
+        ).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Unknown";
+          warnings.push(`Cross-critique (SA→BA) failed: ${msg}`);
+          return null;
+        }),
+
+        // BA critiques TC's Error Handling + Output Management
+        aiCrossCritique(
+          primaryModule, processArea, language, depth as "standard" | "comprehensive",
+          "Business Analyst",
+          "business requirements and end-user experience",
+          "Technical Consultant",
+          "Error Handling & Output Management (Sections 9-10)",
+          tc,
+          teamLeadBrief,
+          fsdType,
+        ).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Unknown";
+          warnings.push(`Cross-critique (BA→TC) failed: ${msg}`);
+          return null;
+        }),
+
+        // PM critiques SA's Proposed Solution
+        aiCrossCritique(
+          primaryModule, processArea, language, depth as "standard" | "comprehensive",
+          "Project Manager",
+          "project feasibility, timelines, and implementation risk",
+          "Solution Architect",
+          "Proposed Solution (Section 4)",
+          sa,
+          teamLeadBrief,
+          fsdType,
+        ).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : "Unknown";
+          warnings.push(`Cross-critique (PM→SA) failed: ${msg}`);
+          return null;
+        }),
+      ]), timeouts.phase2_5, "Phase 2.5 (Cross-Critique)");
+
+      // Apply improved sections
+      let critiqueCount = 0;
+      const allCritiques: string[] = [];
+
+      if (critiqueResults[0]) {
+        ba = critiqueResults[0].revisedContent;
+        allCritiques.push(...critiqueResults[0].critique);
+        critiqueCount++;
+      }
+      if (critiqueResults[1]) {
+        tc = critiqueResults[1].revisedContent;
+        allCritiques.push(...critiqueResults[1].critique);
+        critiqueCount++;
+      }
+      if (critiqueResults[2]) {
+        sa = critiqueResults[2].revisedContent;
+        allCritiques.push(...critiqueResults[2].critique);
+        critiqueCount++;
+      }
+
+      if (allCritiques.length > 0) {
+        warnings.push(`MAR Cross-Critique applied ${allCritiques.length} improvements from ${critiqueCount} peer reviews.`);
+      }
+
+      onProgress({
+        phase: "cross-critique",
+        status: "completed",
+        message: `Peer review complete — ${allCritiques.length} improvements applied`,
+        agents: [
+          { name: "Solution Architect", role: "Reviewed Executive Summary", status: critiqueResults[0] ? "completed" : "failed" },
+          { name: "Business Analyst", role: "Reviewed Error Handling & Output", status: critiqueResults[1] ? "completed" : "failed" },
+          { name: "Project Manager", role: "Reviewed Proposed Solution", status: critiqueResults[2] ? "completed" : "failed" },
+        ],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown";
+      warnings.push(`Cross-critique phase timed out: ${msg}. Continuing with original specialist outputs.`);
+      onProgress({
+        phase: "cross-critique",
+        status: "completed",
+        message: "Cross-critique timed out, using original specialist outputs",
+      });
+      // Don't throw — original specialist outputs are already good quality
+    }
+  } else {
+    // Skip cross-critique if too many specialists failed
+    onProgress({
+      phase: "cross-critique",
+      status: "completed",
+      message: "Skipped — not enough specialist outputs for peer review",
+    });
+    if (completedCount < 3) {
+      warnings.push("Cross-critique skipped: fewer than 3 specialists completed successfully.");
+    }
+  }
 
   // ─── Phase 3: Quality Review + AI Test Scripts (parallel) ───
   onProgress({

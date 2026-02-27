@@ -1144,6 +1144,108 @@ Then output each corrected section with these markers:
   };
 }
 
+// ─────────────────────────────────────────────
+// Phase 2.5: Cross-Critique Reflexion (MAR Paper)
+// Each specialist reviews a DIFFERENT specialist's output
+// from their unique perspective, eliminating confirmation bias.
+// ─────────────────────────────────────────────
+
+/**
+ * Phase 2.5: Cross-Critique Reflexion
+ * A reviewer specialist critiques another specialist's section from their
+ * unique domain perspective, then produces a REVISED version.
+ *
+ * Based on Multi-Agent Reflexion (MAR, Dec 2025) — cross-agent critique
+ * eliminates confirmation bias that single-agent self-review cannot.
+ *
+ * @returns Object with critique findings and the improved section content
+ */
+export async function aiCrossCritique(
+  module: string,
+  processArea: string,
+  language: string,
+  depth: "standard" | "comprehensive",
+  reviewerRole: string,
+  reviewerExpertise: string,
+  authorRole: string,
+  sectionName: string,
+  originalContent: string,
+  teamLeadBrief: string,
+  fsdType?: FsdType,
+): Promise<{ critique: string[]; revisedContent: string }> {
+  const langInstruction = buildLanguageInstruction(language);
+  const depthInstruction = buildDepthInstruction(depth);
+  const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+
+  const prompt = `You are a Senior SAP ${module} ${reviewerRole} performing a CROSS-CRITIQUE review. You are reviewing the work of the ${authorRole} from YOUR unique perspective as a ${reviewerRole}.
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
+
+PROJECT DIRECTOR BRIEF (shared context):
+${teamLeadBrief}
+
+SAP Module: ${module}
+Process Area: ${processArea}
+
+=== SECTION UNDER REVIEW: ${sectionName} (written by ${authorRole}) ===
+${originalContent}
+=== END SECTION ===
+
+YOUR TASK: Review this section through the lens of a ${reviewerRole} (${reviewerExpertise}).
+
+CRITIQUE CHECKLIST — identify issues in these areas:
+1. ACCURACY: Are SAP transaction codes, table names, and technical references correct?
+2. COMPLETENESS: Are there missing scenarios, edge cases, or steps the ${authorRole} overlooked?
+3. CONSISTENCY: Does terminology match the Project Director's glossary? Are cross-references valid?
+4. FEASIBILITY: From your ${reviewerRole} perspective, is everything practically implementable?
+5. GAPS: What would YOU add that the ${authorRole} might not know about?
+
+OUTPUT FORMAT:
+First line — list critique findings separated by |:
+CRITIQUE: finding1 | finding2 | finding3
+
+Then output the IMPROVED version of the section with your fixes applied:
+<<<REVISED>>>
+(full improved section content — preserve ALL markdown formatting, tables, and code blocks)
+<<<END>>>
+
+Rules:
+- Make targeted improvements, don't rewrite from scratch
+- ADD missing content rather than just criticizing
+- If the section is already excellent, make minor enhancements and state that
+- Preserve all markdown tables, bpmn-process blocks, and mermaid diagrams
+- Keep the same section structure (### headers)`;
+
+  const maxTokens = depth === "comprehensive" ? 6144 : 4096;
+  const raw = await callClaude(withExtraContext(prompt, ""), maxTokens);
+
+  // Parse critique findings
+  const critique: string[] = [];
+  const critiqueMatch = raw.match(/CRITIQUE:\s*(.+?)(?:\n|<<<)/);
+  if (critiqueMatch) {
+    critique.push(...critiqueMatch[1].split("|").map(c => c.trim()).filter(Boolean));
+  }
+
+  // Parse revised content
+  const revisedStart = raw.indexOf("<<<REVISED>>>");
+  const revisedEnd = raw.indexOf("<<<END>>>");
+  let revisedContent = originalContent; // fallback to original if parsing fails
+
+  if (revisedStart !== -1 && revisedEnd !== -1) {
+    revisedContent = raw.substring(revisedStart + "<<<REVISED>>>".length, revisedEnd).trim();
+  } else if (revisedStart !== -1) {
+    // No END marker — take everything after REVISED
+    revisedContent = raw.substring(revisedStart + "<<<REVISED>>>".length).trim();
+  }
+
+  // Safety: if revised content is suspiciously short (< 30% of original), keep original
+  if (revisedContent.length < originalContent.length * 0.3) {
+    console.warn(`[CrossCritique] ${reviewerRole} review of ${sectionName}: revised content too short (${revisedContent.length} vs ${originalContent.length}), keeping original`);
+    revisedContent = originalContent;
+  }
+
+  return { critique, revisedContent };
+}
+
 /** Extract a subsection from combined specialist output using === markers */
 function extractSection(combinedOutput: string, sectionName: string): string {
   const marker = `=== ${sectionName} ===`;

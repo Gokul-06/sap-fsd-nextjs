@@ -74,7 +74,7 @@ export const FSD_TYPE_LABELS: Record<FsdType, string> = {
 // Agent Teams Types
 // ─────────────────────────────────────────────
 
-export type AgentPhase = "team-lead" | "specialists" | "quality-review" | "complete" | "error";
+export type AgentPhase = "team-lead" | "specialists" | "cross-critique" | "quality-review" | "complete" | "error";
 export type AgentStatus = "pending" | "running" | "completed" | "failed";
 
 export interface AgentInfo {
