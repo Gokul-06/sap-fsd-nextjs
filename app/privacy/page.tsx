@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
 
             <h2 className="text-lg font-semibold text-[#1B2A4A] mt-0">1. Introduction</h2>
             <p>
-              Westernacher Digital Core NA (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the SAP Functional Specification Document (FSD) Generator
+              Westernacher Consulting (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the SAP Functional Specification Document (FSD) Generator
               (&quot;the Service&quot;). This Privacy Policy explains how we collect, use, disclose, and safeguard your information
               when you use our Service. We are committed to protecting your privacy in accordance with the EU General Data
               Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA), and other applicable data protection laws.
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
 
             <h2 className="text-lg font-semibold text-[#1B2A4A]">2. Data Controller</h2>
             <p>
-              Westernacher Digital Core NA is the data controller for the personal data processed through this Service.
+              Westernacher Consulting is the data controller for the personal data processed through this Service.
               For any privacy-related inquiries, please contact us at: <strong>privacy@westernacher.com</strong>
             </p>
 
@@ -167,7 +167,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-semibold text-[#1B2A4A]">13. Contact</h2>
             <p>
               For questions about this Privacy Policy or to exercise your data protection rights:<br />
-              <strong>Westernacher Digital Core NA</strong><br />
+              <strong>Westernacher Consulting</strong><br />
               Email: privacy@westernacher.com
             </p>
 

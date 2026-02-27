@@ -37,7 +37,7 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-[#1B2A4A] mt-0">1. Acceptance of Terms</h2>
             <p>
               By accessing or using the SAP Functional Specification Document (FSD) Generator (&quot;the Service&quot;)
-              operated by Westernacher Digital Core NA (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by these
+              operated by Westernacher Consulting (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by these
               Terms of Service. If you do not agree, please do not use the Service.
             </p>
 
@@ -76,7 +76,7 @@ export default function TermsPage() {
             <h3 className="text-base font-medium text-[#1B2A4A]">4.3 Our IP</h3>
             <p>
               The Service, including its design, AI prompts, templates, and underlying technology, remains
-              the intellectual property of Westernacher Digital Core NA.
+              the intellectual property of Westernacher Consulting.
             </p>
 
             <h2 className="text-lg font-semibold text-[#1B2A4A]">5. AI-Generated Content Disclaimer</h2>
@@ -117,14 +117,14 @@ export default function TermsPage() {
 
             <h2 className="text-lg font-semibold text-[#1B2A4A]">9. Indemnification</h2>
             <p>
-              You agree to indemnify and hold harmless Westernacher Digital Core NA from any claims,
+              You agree to indemnify and hold harmless Westernacher Consulting from any claims,
               damages, or expenses arising from your use of the Service, your violation of these Terms,
               or your violation of any third-party rights.
             </p>
 
             <h2 className="text-lg font-semibold text-[#1B2A4A]">10. Governing Law</h2>
             <p>
-              These Terms are governed by the laws of the jurisdiction in which Westernacher Digital Core NA
+              These Terms are governed by the laws of the jurisdiction in which Westernacher Consulting
               is incorporated, without regard to conflict of law principles. For EU users, mandatory
               consumer protection laws of your country of residence apply.
             </p>
@@ -139,7 +139,7 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-[#1B2A4A]">12. Contact</h2>
             <p>
               For questions about these Terms of Service:<br />
-              <strong>Westernacher Digital Core NA</strong><br />
+              <strong>Westernacher Consulting</strong><br />
               Email: legal@westernacher.com
             </p>
 
