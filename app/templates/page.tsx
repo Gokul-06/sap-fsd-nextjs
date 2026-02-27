@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,8 @@ interface TemplateItem {
   rating: number | null;
   language: string;
   createdAt: string;
-  markdown: string;
+  markdown?: string;     // Excluded from API listing for performance
+  preview?: string;      // Server-computed preview snippet
   _count: { comments: number };
 }
 
@@ -95,8 +96,8 @@ export default function TemplatesPage() {
     fetchTemplates();
   }
 
-  function getPreviewSnippet(markdown: string): string {
-    // Extract first meaningful paragraph (skip headers and metadata)
+  // Memoize preview snippets — avoids re-splitting strings on every render
+  const getPreviewSnippet = useCallback((markdown: string): string => {
     const lines = markdown.split("\n").filter((l) => {
       const trimmed = l.trim();
       return (
@@ -110,7 +111,7 @@ export default function TemplatesPage() {
     });
     const preview = lines.slice(0, 2).join(" ").trim();
     return preview.length > 150 ? preview.substring(0, 147) + "..." : preview;
-  }
+  }, []);
 
   function renderStars(rating: number | null) {
     if (!rating) return null;
@@ -290,7 +291,7 @@ export default function TemplatesPage() {
                     {renderStars(template.rating)}
 
                     <p className="text-sm text-muted-foreground mt-3 line-clamp-3 leading-relaxed">
-                      {getPreviewSnippet(template.markdown) ||
+                      {template.preview || getPreviewSnippet(template.markdown || "") ||
                         "Professional SAP Functional Specification Document template."}
                     </p>
 

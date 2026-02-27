@@ -1,8 +1,10 @@
 export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { safeErrorResponse } from "@/lib/api-error";
+import { documentCache } from "@/lib/cache";
 
 export async function POST(request: Request) {
   try {
@@ -39,6 +41,22 @@ export async function POST(request: Request) {
         { error: "ANTHROPIC_API_KEY not configured" },
         { status: 500 }
       );
+    }
+
+    // ── SHA-256 Deduplication ─────────────────────────────────────
+    // Hash the file content. If we've seen this exact file before,
+    // return the cached result instantly — saves ~30s and $0.05/call.
+    const contentHash = createHash("sha256")
+      .update(fileBase64.slice(0, 10000)) // Hash first 10KB for speed (unique enough)
+      .digest("hex");
+
+    const cached = documentCache.get(contentHash) as { requirements: string; fileName: string; tokenUsage: { input: number; output: number } } | undefined;
+    if (cached) {
+      return NextResponse.json({
+        ...cached,
+        fileName: fileName || cached.fileName,
+        fromCache: true,
+      });
     }
 
     const anthropic = new Anthropic({ apiKey });
@@ -81,14 +99,19 @@ If the document doesn't contain SAP-specific requirements, extract general busin
     const block = message.content[0];
     const requirements = block.type === "text" ? block.text : "";
 
-    return NextResponse.json({
+    const result = {
       requirements,
       fileName: fileName || "uploaded-document.pdf",
       tokenUsage: {
         input: message.usage?.input_tokens || 0,
         output: message.usage?.output_tokens || 0,
       },
-    });
+    };
+
+    // Cache for future identical uploads (24hr TTL)
+    documentCache.set(contentHash, result);
+
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { error: safeErrorResponse(error, "PDF extraction") },

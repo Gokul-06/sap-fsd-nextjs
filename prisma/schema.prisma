@@ -39,6 +39,9 @@ model Fsd {
   comments            Comment[]
 
   @@index([isTemplate, primaryModule])
+  @@index([createdAt])                   // History sorting — avoids full scan
+  @@index([primaryModule, createdAt])    // Module-filtered lists — composite index
+  @@index([rating])                      // "Best rated" queries
 }
 
 model Comment {
@@ -65,6 +68,7 @@ model FeedbackRule {
 
   @@index([module, processArea])
   @@index([active])
+  @@index([appliedCount])                // Hot rule ranking — most-used first
 }
 
 model AgentTraining {

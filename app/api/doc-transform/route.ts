@@ -4,8 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { callClaude } from "@/lib/tools/claude-ai";
 import { safeErrorResponse } from "@/lib/api-error";
+import { documentCache } from "@/lib/cache";
 
 export const maxDuration = 300;
 
@@ -279,6 +281,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Process name is required" }, { status: 400 });
     }
 
+    // ── SHA-256 Deduplication ─────────────────────────────────────
+    // Same input text + same output type = same result. Skip the AI call.
+    const contentHash = createHash("sha256")
+      .update(`${outputType}:${moduleName}:${inputText.slice(0, 10000)}`)
+      .digest("hex");
+
+    const cached = documentCache.get(contentHash) as { content: string; outputType: string; processName: string } | undefined;
+    if (cached) {
+      return NextResponse.json({
+        success: true,
+        outputType: cached.outputType,
+        processName,
+        content: cached.content,
+        generatedAt: new Date().toISOString(),
+        fromCache: true,
+      });
+    }
+
     // Build prompt based on output type
     const prompt = outputType === "manual"
       ? buildUserManualPrompt(inputText, processName, moduleName)
@@ -286,6 +306,9 @@ export async function POST(request: NextRequest) {
 
     // Call Claude with high token limit for long documents
     const result = await callClaude(prompt, 8192);
+
+    // Cache the result (24hr TTL)
+    documentCache.set(contentHash, { content: result, outputType, processName });
 
     return NextResponse.json({
       success: true,

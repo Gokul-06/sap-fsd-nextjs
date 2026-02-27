@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -204,6 +204,13 @@ export default function FsdDetailPage() {
     }
   }
 
+  // Memoize JSON parsing — avoids re-parsing on every render cycle
+  // Must be called before early returns (React hooks rules)
+  const relatedModules = useMemo(
+    () => JSON.parse(fsd?.relatedModules || "[]") as string[],
+    [fsd?.relatedModules]
+  );
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center text-muted-foreground">
@@ -222,8 +229,6 @@ export default function FsdDetailPage() {
       </div>
     );
   }
-
-  const relatedModules = JSON.parse(fsd.relatedModules || "[]") as string[];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
