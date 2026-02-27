@@ -106,6 +106,131 @@ function buildLanguageInstruction(language: string): string {
 All descriptive and business-context text must be written in ${language}.\n`;
 }
 
+// ─── Consulting Quality Frameworks (McKinsey / BCG / Deloitte) ───
+
+type ConsultingRole =
+  | "project-director"
+  | "business-analyst"
+  | "solution-architect"
+  | "technical-consultant"
+  | "project-manager"
+  | "bpmn-architect"
+  | "quality-reviewer"
+  | "cross-critique"
+  | "general";
+
+/**
+ * Build consulting framework instructions tailored per specialist role.
+ * Injects Pyramid Principle, MECE, and SCR into every prompt.
+ */
+function buildConsultingFramework(role: ConsultingRole): string {
+  // ── Core frameworks all agents share ──
+  const core = `
+CONSULTING QUALITY FRAMEWORK — Apply these principles from top-tier management consulting:
+
+1. PYRAMID PRINCIPLE (Barbara Minto / McKinsey):
+   - Lead with the answer FIRST, then provide supporting evidence
+   - Every paragraph opens with its conclusion or recommendation
+   - Supporting points are grouped logically under the main point
+   - Never build up to a conclusion — state it immediately, then justify
+
+2. MECE (Mutually Exclusive, Collectively Exhaustive):
+   - All lists, categories, and table rows must have ZERO overlap (Mutually Exclusive)
+   - Together they must cover ALL possible cases with NO gaps (Collectively Exhaustive)
+   - When listing process steps: every step is distinct, and together they cover the full end-to-end flow
+   - When listing error scenarios: every scenario is unique, and together they cover all failure modes
+
+3. SCR (Situation-Complication-Resolution):
+   - Situation: What is the current state? (factual, concise)
+   - Complication: Why must this change? (pain point, gap, risk, regulation)
+   - Resolution: What does this specification deliver? (the solution)
+`;
+
+  // ── Role-specific consulting instructions ──
+  const roleSpecific: Record<ConsultingRole, string> = {
+    "project-director": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Project Director):
+- Frame moduleStrategy using SCR: current state → why change → approach
+- Process steps MUST be MECE: each step is distinct, together they cover the full process with no gaps
+- Design decisions MUST follow Pyramid: state the decision first, then the rationale
+- Risk areas MUST be MECE: no overlapping risks, all major risk categories covered
+- Terminology glossary enforces consistency — define every ambiguous term ONCE
+- Scope boundaries MUST clearly separate in-scope vs out-of-scope (MECE partitioning)`,
+
+    "business-analyst": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Business Analyst — Executive Summary):
+- Structure the entire summary using SCR: Situation (1st paragraph) → Complication (2nd paragraph) → Resolution (remaining paragraphs)
+- First sentence of EVERY paragraph states its key point (Pyramid Principle)
+- Benefits MUST be quantified with specific metrics: "reduce cycle time by X%", "eliminate Y manual steps", "save Z hours/month"
+- Scope coverage MUST be MECE: list what IS covered and what is NOT — no ambiguity
+- Use active voice: "This specification defines..." not "It is the purpose of this document to..."
+- Avoid hedge words: write "will" not "should", "requires" not "may need"`,
+
+    "solution-architect": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Solution Architect — Proposed Solution):
+- Solution Overview: lead with the architectural approach (Pyramid), then detail why
+- Process Flow steps MUST be MECE: each step is a distinct action, together they cover start-to-finish
+- Every step MUST specify WHO does it, WHAT they do, and WHICH SAP transaction/app they use
+- Design Decisions table: Decision column states the choice made (Pyramid — answer first), Rationale column justifies it
+- Design Decisions MUST be MECE: cover all key architectural areas (data model, workflow, integration, authorization, reporting, performance) with no overlap
+- Prefer standard SAP over custom: if using custom code, explicitly justify WHY standard SAP is insufficient`,
+
+    "technical-consultant": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Technical Consultant — Error Handling & Output):
+- Validation rules MUST be MECE: cover all input fields (no gaps), each rule is distinct (no overlap)
+- Error scenarios MUST be MECE: cover all failure modes — validation errors, system errors, authorization errors, data errors, integration errors
+- Error messages MUST be actionable: tell the user WHAT went wrong and HOW to fix it
+  BAD: "Error in processing"
+  GOOD: "Purchase Order quantity exceeds approved budget limit of $50,000. Reduce quantity or request budget increase via transaction FMBB."
+- Output types MUST be MECE: cover all output channels (print, email, workflow, API, dashboard)
+- Each error scenario: state the root cause first (Pyramid), then system behavior, then user action`,
+
+    "project-manager": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Project Manager — Migration & Cutover):
+- Migration objects MUST be MECE: cover ALL data categories (master data, transactional data, configuration, hierarchies) with no overlap
+- Load sequence must respect dependencies: define the dependency chain explicitly
+- Cutover tasks MUST be MECE: cover all cutover activities (technical prep, data freeze, migration, validation, go/no-go, hypercare) chronologically
+- Every task has a clear owner, duration estimate, and dependencies (Pyramid — state what, who, when)
+- Rollback plan: lead with the trigger criteria (Pyramid — when do we rollback?), then the procedure
+- Include specific data volume estimates and performance implications for each migration object`,
+
+    "bpmn-architect": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (BPMN Process Architect):
+- Process flow MUST be MECE: every process path (happy path + all exception paths) is covered
+- Every decision gateway MUST show ALL possible outcomes — never leave an unhandled branch
+- Swim lanes represent MECE organizational roles: each role is distinct, together they cover all actors
+- Node labels use Pyramid: start with a verb describing the action ("Create PO", "Verify Invoice")
+- Include timing annotations: waiting states, batch processing windows, SLA expectations`,
+
+    "quality-reviewer": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Quality Reviewer):
+- CHECK that the Executive Summary follows SCR structure (Situation → Complication → Resolution)
+- CHECK that every section's first sentence states the key point (Pyramid Principle)
+- CHECK MECE compliance: process steps cover full flow, error scenarios cover all failure modes, migration objects cover all data
+- CHECK that benefits are quantified with specific metrics, not vague ("improved efficiency")
+- CHECK that error messages are actionable, not generic
+- FIX any violations of these frameworks — don't just flag them, CORRECT them in the output
+- ADD quantified metrics where the specialist left vague statements`,
+
+    "cross-critique": `
+ROLE-SPECIFIC CONSULTING GUIDANCE (Cross-Critique Reviewer):
+- Evaluate MECE compliance: are there gaps or overlaps in the reviewed section?
+- Check Pyramid Principle: does each paragraph/row lead with its key point?
+- Verify quantified claims: are benefits specific ("30% reduction") or vague ("improved")?
+- Check actionability: can a developer/consultant implement directly from this spec without guessing?
+- ADD missing content that makes the section consulting-grade, don't just criticize`,
+
+    general: `
+ROLE-SPECIFIC CONSULTING GUIDANCE:
+- Apply SCR to frame business context
+- Apply MECE to all lists and categories
+- Lead every section with its conclusion (Pyramid Principle)
+- Quantify all benefits and impacts with specific metrics`,
+  };
+
+  return core + (roleSpecific[role] || roleSpecific.general);
+}
+
 /** Build an FSD type instruction to inject into AI prompts (RICEFW) */
 function buildFsdTypeInstruction(fsdType?: FsdType): string {
   if (!fsdType || fsdType === "standard") return "";
@@ -188,7 +313,9 @@ export async function aiExecutiveSummary(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const wordLimit = depth === "comprehensive" ? 400 : 200;
+  const consultingFramework = buildConsultingFramework("business-analyst");
   const prompt = `You are a senior SAP functional consultant at a top consulting firm. Write a professional executive summary for a Functional Specification Document (FSD).
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Title: ${title}
 SAP Module: ${module}
@@ -225,7 +352,9 @@ export async function aiProposedSolution(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const consultingFramework = buildConsultingFramework("solution-architect");
   const prompt = `You are a senior SAP ${module} solution architect. Design the proposed solution for this FSD.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Requirements: ${requirements}
 Process Area: ${processArea}
@@ -266,7 +395,9 @@ export async function aiOutputManagement(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const consultingFramework = buildConsultingFramework("technical-consultant");
   const prompt = `You are an SAP ${module} consultant. Define the output management requirements for this FSD.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
@@ -302,7 +433,9 @@ export async function aiErrorHandling(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const consultingFramework = buildConsultingFramework("technical-consultant");
   const prompt = `You are an SAP ${module} consultant. Define error handling and validations for this FSD.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
@@ -342,7 +475,9 @@ export async function aiDataMigration(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const consultingFramework = buildConsultingFramework("project-manager");
   const prompt = `You are an SAP ${module} data migration specialist. Define the data migration plan for this FSD.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Key Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
@@ -381,7 +516,9 @@ export async function aiCutoverPlan(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const consultingFramework = buildConsultingFramework("project-manager");
   const prompt = `You are an SAP ${module} cutover manager. Define the cutover and go-live plan for this FSD.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 
@@ -499,8 +636,10 @@ export async function aiBpmnProcessDiagram(
   const laneCount = depth === "comprehensive" ? "4-6" : "3-4";
 
   const personalityTraining = await getAgentTraining("bpmn-architect");
+  const consultingFramework = buildConsultingFramework("bpmn-architect");
   const prompt = `You are an SAP ${module} process architect creating a BPMN 2.0 process diagram for SAP Signavio.
-${personalityTraining}${langInstruction}${depthInstruction}${fsdTypeInstruction}
+${personalityTraining}${consultingFramework}
+${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
 
@@ -610,7 +749,9 @@ export async function aiTestScripts(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
 
+  const consultingFramework = buildConsultingFramework("general");
   const prompt = `You are a senior SAP ${module} test manager. Generate detailed test scripts for a Functional Specification Document.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -705,8 +846,10 @@ export async function aiTeamLeadAnalysis(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("project-director");
+  const consultingFramework = buildConsultingFramework("project-director");
   const prompt = `You are a Senior SAP Project Director leading a team of 5 specialist consultants who will collaboratively write a Functional Specification Document (FSD). Your job is to deeply analyze the business requirements and create a comprehensive brief that all specialists will reference to ensure consistency.
-${personalityTraining}${depthInstruction}${fsdTypeInstruction}
+${personalityTraining}${consultingFramework}
+${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
 Business Requirements:
@@ -791,9 +934,10 @@ export async function aiBusinessAnalyst(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("business-analyst");
+  const consultingFramework = buildConsultingFramework("business-analyst");
   const wordLimit = depth === "comprehensive" ? 500 : 250;
   const prompt = `You are a Senior SAP Business Analyst on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your output with the Project Director's analysis — use the same terminology, reference the same process steps, and follow the design decisions.
-${personalityTraining}
+${personalityTraining}${consultingFramework}
 
 ${teamLeadBrief}
 
@@ -845,8 +989,9 @@ export async function aiSolutionArchitect(
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const nodeCount = depth === "comprehensive" ? "16-22" : "12-16";
   const personalityTraining = await getAgentTraining("solution-architect");
+  const consultingFramework = buildConsultingFramework("solution-architect");
   const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your solution with the Project Director's process steps and design decisions.
-${personalityTraining}
+${personalityTraining}${consultingFramework}
 
 ${teamLeadBrief}
 
@@ -921,8 +1066,9 @@ export async function aiTechnicalConsultant(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("technical-consultant");
+  const consultingFramework = buildConsultingFramework("technical-consultant");
   const prompt = `You are a Senior SAP ${module} Technical Consultant on an Agent Team. Your Project Director has provided a brief below. Align your specifications with the Project Director's process steps, design decisions, and risk areas.
-${personalityTraining}
+${personalityTraining}${consultingFramework}
 
 ${teamLeadBrief}
 
@@ -983,8 +1129,9 @@ export async function aiProjectManager(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("project-manager");
+  const consultingFramework = buildConsultingFramework("project-manager");
   const prompt = `You are a Senior SAP ${module} Project Manager on an Agent Team. Your Project Director has provided a brief below. Align your plans with the Project Director's process steps, risk areas, and scope boundaries.
-${personalityTraining}
+${personalityTraining}${consultingFramework}
 
 ${teamLeadBrief}
 
@@ -1054,7 +1201,9 @@ export async function aiQualityReviewer(
   // ROBUST APPROACH: Instead of asking Claude to return full sections in JSON
   // (which breaks on newlines/special chars), ask it to return corrections list
   // and then use SECTION MARKERS to separate corrected outputs.
-  const prompt = `You are a Senior SAP Quality Reviewer. Five specialists wrote sections of an FSD. Review ALL outputs for consistency and alignment with the Project Director's brief, then return CORRECTED versions.
+  const consultingFramework = buildConsultingFramework("quality-reviewer");
+  const prompt = `You are a Senior SAP Quality Reviewer. Five specialists wrote sections of an FSD. Review ALL outputs for consistency, alignment with the Project Director's brief, and consulting-grade quality, then return CORRECTED versions.
+${consultingFramework}
 
 ${teamLeadBrief}
 
@@ -1078,6 +1227,10 @@ Review for:
 3. CONTRADICTIONS between sections
 4. COMPLETENESS (all Project Director's process steps, decisions, and risks addressed)
 5. QUALITY (fix vague statements, add missing SAP details)
+6. PYRAMID PRINCIPLE compliance (every section leads with its conclusion)
+7. MECE compliance (lists and tables have no overlaps, no gaps)
+8. SCR structure in Executive Summary (Situation → Complication → Resolution)
+9. QUANTIFIED BENEFITS (replace vague "improved efficiency" with specific metrics)
 
 OUTPUT FORMAT: Return corrected sections separated by these EXACT markers. Write the FULL corrected content for each section. If a section is already good, return it as-is. Preserve all markdown tables, mermaid diagrams, and bpmn-process code blocks exactly as they are.
 
@@ -1177,7 +1330,9 @@ export async function aiCrossCritique(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
 
+  const consultingFramework = buildConsultingFramework("cross-critique");
   const prompt = `You are a Senior SAP ${module} ${reviewerRole} performing a CROSS-CRITIQUE review. You are reviewing the work of the ${authorRole} from YOUR unique perspective as a ${reviewerRole}.
+${consultingFramework}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 
 PROJECT DIRECTOR BRIEF (shared context):
