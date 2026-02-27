@@ -39,11 +39,25 @@ import {
   getAffectedModules,
 } from "@/lib/knowledge/cross-module-map";
 
-// ─── Timeout budgets (must sum to < 300s Vercel limit) ───
-const PHASE1_TIMEOUT_MS = 60_000;   // Project Director: 60s
-const PHASE2_TIMEOUT_MS = 90_000;   // Specialists (parallel): 90s
-const PHASE3_TIMEOUT_MS = 90_000;   // Quality Review + Test Scripts (parallel): 90s
-// Total worst-case: 240s → 60s safety margin before 300s Vercel limit
+// ─── Timeout budgets ───
+// Dynamic based on document depth. Comprehensive mode generates 2x more tokens
+// per Claude call, so each phase needs more time.
+// Standard:      60 + 90 + 90  = 240s (60s safety margin before 300s Vercel limit)
+// Comprehensive: 90 + 150 + 120 = 360s (needs maxDuration ≥ 400s or graceful degradation)
+function getTimeoutBudgets(depth: string) {
+  if (depth === "comprehensive") {
+    return {
+      phase1: 90_000,    // Project Director: 90s (comprehensive analysis is larger)
+      phase2: 150_000,   // Specialists (staggered): 150s (5 calls × 4096 tokens each)
+      phase3: 120_000,   // Quality Review + Test Scripts: 120s (reviewer sees all outputs)
+    };
+  }
+  return {
+    phase1: 60_000,    // Project Director: 60s
+    phase2: 90_000,    // Specialists (parallel): 90s
+    phase3: 90_000,    // Quality Review + Test Scripts: 90s
+  };
+}
 
 /**
  * Wraps a promise with an orchestration-level timeout.
@@ -122,6 +136,9 @@ export async function orchestrateAgentTeam(
     return { markdown, classifiedModules, primaryModule, processArea, language, crossModuleImpacts, warnings };
   }
 
+  // Get dynamic timeout budgets based on document depth
+  const timeouts = getTimeoutBudgets(depth);
+
   // ─── Phase 1: Project Director Analysis ───
   onProgress({
     phase: "team-lead",
@@ -137,7 +154,7 @@ export async function orchestrateAgentTeam(
         tableNames, tcodeNames, appNames,
         language, extraContext, depth, fsdType,
       ),
-      PHASE1_TIMEOUT_MS,
+      timeouts.phase1,
       "Phase 1 (Project Director)",
     );
   } catch (err: unknown) {
@@ -155,97 +172,92 @@ export async function orchestrateAgentTeam(
 
   const teamLeadBrief = serializeTeamLeadContext(teamLeadCtx);
 
-  // ─── Phase 2: Specialist Agents (parallel) ───
+  // ─── Phase 2: Specialist Agents (staggered to avoid rate limits) ───
+  // Instead of firing all 5 at once (which causes rate-limit serialization),
+  // run in 2 batches: Batch A (3 specialists) → Batch B (2 specialists).
+  // This reduces concurrent API calls while keeping total time manageable.
   const specialistAgents = [
-    { name: "Business Analyst", role: "Executive Summary & Requirements", status: "running" as AgentStatus },
-    { name: "Solution Architect", role: "Solution Design & Process Flows", status: "running" as AgentStatus },
-    { name: "Technical Consultant", role: "Error Handling & Output Management", status: "running" as AgentStatus },
-    { name: "Project Manager", role: "Migration, Cutover & Testing", status: "running" as AgentStatus },
-    { name: "BPMN Process Architect", role: "Signavio Process Flow & BPMN XML", status: "running" as AgentStatus },
+    { name: "Business Analyst", role: "Executive Summary & Requirements", status: "pending" as AgentStatus },
+    { name: "Solution Architect", role: "Solution Design & Process Flows", status: "pending" as AgentStatus },
+    { name: "Technical Consultant", role: "Error Handling & Output Management", status: "pending" as AgentStatus },
+    { name: "Project Manager", role: "Migration, Cutover & Testing", status: "pending" as AgentStatus },
+    { name: "BPMN Process Architect", role: "Signavio Process Flow & BPMN XML", status: "pending" as AgentStatus },
   ];
 
   onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
 
-  const [ba, sa, tc, pm, bpmn] = await withTimeout(Promise.all([
-    aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType)
-      .then((r) => {
-        specialistAgents[0].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Business Analyst completed" });
-        return r;
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Unknown";
-        specialistAgents[0].status = "failed";
-        warnings.push(`Business Analyst failed: ${msg}`);
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Business Analyst failed: ${msg}` });
-        return "";
-      }),
+  /** Run a single specialist with retry-once-on-failure */
+  async function runSpecialist(
+    index: number,
+    fn: () => Promise<string>,
+    name: string,
+  ): Promise<string> {
+    specialistAgents[index].status = "running";
+    onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `${name} working...` });
 
-    aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief, fsdType)
-      .then((r) => {
-        specialistAgents[1].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Solution Architect completed" });
-        return r;
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Unknown";
-        specialistAgents[1].status = "failed";
-        warnings.push(`Solution Architect failed: ${msg}`);
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Solution Architect failed: ${msg}` });
-        return "";
-      }),
+    try {
+      const result = await fn();
+      specialistAgents[index].status = "completed";
+      onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `${name} completed` });
+      return result;
+    } catch (firstErr: unknown) {
+      // Retry once — transient API errors are common with parallel calls
+      const firstMsg = firstErr instanceof Error ? firstErr.message : "Unknown";
+      console.warn(`[AgentTeam] ${name} failed (attempt 1): ${firstMsg}. Retrying...`);
+      onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `${name} retrying...` });
 
-    aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief, fsdType)
-      .then((r) => {
-        specialistAgents[2].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Technical Consultant completed" });
-        return r;
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Unknown";
-        specialistAgents[2].status = "failed";
-        warnings.push(`Technical Consultant failed: ${msg}`);
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Technical Consultant failed: ${msg}` });
+      try {
+        const result = await fn();
+        specialistAgents[index].status = "completed";
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `${name} completed (retry)` });
+        return result;
+      } catch (retryErr: unknown) {
+        const retryMsg = retryErr instanceof Error ? retryErr.message : "Unknown";
+        specialistAgents[index].status = "failed";
+        warnings.push(`${name} failed after retry: ${retryMsg}`);
+        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `${name} failed: ${retryMsg}` });
         return "";
-      }),
+      }
+    }
+  }
 
-    aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief, fsdType)
-      .then((r) => {
-        specialistAgents[3].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Project Manager completed" });
-        return r;
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Unknown";
-        specialistAgents[3].status = "failed";
-        warnings.push(`Project Manager failed: ${msg}`);
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Project Manager failed: ${msg}` });
-        return "";
-      }),
+  let ba = "", sa = "", tc = "", pm = "", bpmn = "";
 
-    aiBpmnProcessDiagram(primaryModule, input.requirements, processArea, language,
-      [extraContext, teamLeadBrief].filter(Boolean).join("\n\n"), depth, fsdType)
-      .then((r) => {
-        specialistAgents[4].status = "completed";
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "BPMN Process Architect completed" });
-        return r;
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Unknown";
-        specialistAgents[4].status = "failed";
-        warnings.push(`BPMN Process Architect failed: ${msg}`);
-        onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `BPMN Process Architect failed: ${msg}` });
-        return "";
-      }),
-  ]), PHASE2_TIMEOUT_MS, "Phase 2 (Specialists)");
+  try {
+    // Batch A: Business Analyst + Solution Architect + Technical Consultant (3 parallel)
+    onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Starting Batch 1 (3 specialists)..." });
+    const [baResult, saResult, tcResult] = await withTimeout(Promise.all([
+      runSpecialist(0, () => aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType), "Business Analyst"),
+      runSpecialist(1, () => aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief, fsdType), "Solution Architect"),
+      runSpecialist(2, () => aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief, fsdType), "Technical Consultant"),
+    ]), timeouts.phase2, "Phase 2 Batch A (BA + SA + TC)");
+    ba = baResult;
+    sa = saResult;
+    tc = tcResult;
+
+    // Batch B: Project Manager + BPMN Architect (2 parallel)
+    onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Starting Batch 2 (2 specialists)..." });
+    const [pmResult, bpmnResult] = await withTimeout(Promise.all([
+      runSpecialist(3, () => aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief, fsdType), "Project Manager"),
+      runSpecialist(4, () => aiBpmnProcessDiagram(primaryModule, input.requirements, processArea, language, [extraContext, teamLeadBrief].filter(Boolean).join("\n\n"), depth, fsdType), "BPMN Process Architect"),
+    ]), timeouts.phase2, "Phase 2 Batch B (PM + BPMN)");
+    pm = pmResult;
+    bpmn = bpmnResult;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown";
+    warnings.push(`Specialist phase had issues: ${msg}. Continuing with available outputs.`);
+    onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: `Some specialists timed out, continuing with available work` });
+    // Don't throw — use whatever specialists completed successfully
+  }
 
   // Check if ALL specialists failed — that's a critical failure
   const failedCount = specialistAgents.filter(a => a.status === "failed").length;
-  if (failedCount === 5) {
-    throw new Error("All 5 specialist agents failed. Please check your API key and try again.");
+  const pendingCount = specialistAgents.filter(a => a.status === "pending" || a.status === "running").length;
+  if (failedCount + pendingCount === 5) {
+    throw new Error("All 5 specialist agents failed or timed out. Please check your API key and try again, or use Standard mode.");
   }
-  if (failedCount >= 4) {
-    warnings.push(`WARNING: ${failedCount} of 5 specialists failed. Output quality will be significantly reduced.`);
+  if (failedCount + pendingCount >= 4) {
+    warnings.push(`WARNING: ${failedCount + pendingCount} of 5 specialists failed/timed out. Output quality will be reduced.`);
   }
 
   onProgress({ phase: "specialists", status: "completed", agents: specialistAgents });
@@ -284,7 +296,7 @@ export async function orchestrateAgentTeam(
           warnings.push(`AI test scripts failed: ${tsMsg}. Using static test scenarios.`);
           return "";
         }),
-    ]), PHASE3_TIMEOUT_MS, "Phase 3 (Quality Review)");
+    ]), timeouts.phase3, "Phase 3 (Quality Review)");
 
     reviewResult = qrResult;
     testScriptsResult = tsResult;

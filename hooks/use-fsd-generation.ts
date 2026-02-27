@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { AgentProgressEvent } from "@/lib/types";
 
 interface FSDResult {
@@ -40,12 +40,15 @@ export function useFsdGeneration() {
 
   // Agent Teams state
   const [agentProgress, setAgentProgress] = useState<AgentProgressEvent | null>(null);
+  // Ref tracks latest progress to avoid stale closure reads in async functions
+  const agentProgressRef = useRef<AgentProgressEvent | null>(null);
 
   async function generate(input: GenerationInput) {
     setIsGenerating(true);
     setError(null);
     setResult(null);
     setAgentProgress(null);
+    agentProgressRef.current = null;
 
     const mode = input.generationMode || "standard";
 
@@ -113,6 +116,7 @@ export function useFsdGeneration() {
             try {
               const event: AgentProgressEvent = JSON.parse(json);
               setAgentProgress(event);
+              agentProgressRef.current = event; // Keep ref in sync for closure reads
 
               if (event.phase === "complete" && event.result) {
                 const fsdResult = event.result as unknown as FSDResult;
@@ -169,10 +173,11 @@ export function useFsdGeneration() {
 
       // If stream ended without a complete event, it likely timed out
       if (!finalResult) {
-        // Check if we have any progress to help diagnose
-        const lastPhase = agentProgress?.phase || "unknown";
-        const lastStatus = agentProgress?.status || "unknown";
-        const lastMsg = agentProgress?.message || "";
+        // Read from ref (not state) to avoid stale closure — state may not have updated yet
+        const lastProgress = agentProgressRef.current;
+        const lastPhase = lastProgress?.phase || "unknown";
+        const lastStatus = lastProgress?.status || "unknown";
+        const lastMsg = lastProgress?.message || "";
         throw new Error(
           `Agent Team generation did not complete. ` +
           `Last phase: ${lastPhase} (${lastStatus})${lastMsg ? ` — ${lastMsg}` : ""}. ` +
@@ -269,6 +274,7 @@ export function useFsdGeneration() {
     setError(null);
     setSavedId(null);
     setAgentProgress(null);
+    agentProgressRef.current = null;
   }
 
   return {

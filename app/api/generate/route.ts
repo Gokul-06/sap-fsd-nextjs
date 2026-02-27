@@ -1,4 +1,5 @@
-export const maxDuration = 300;
+// Vercel Pro allows up to 900s. Agent Team + Comprehensive needs ~360s worst-case.
+export const maxDuration = 600;
 
 import { NextResponse } from "next/server";
 import { generateFSD } from "@/lib/tools/generate-fsd";
