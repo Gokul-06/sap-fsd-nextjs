@@ -483,6 +483,10 @@ function GeneratePageContent() {
                       setCalmProjectName(projectName);
                       setCalmRequirementIds(reqIds);
                       if (projectName) setProjectName(projectName);
+                      // Auto-set title from CALM project if empty
+                      if (!title.trim() && projectName) {
+                        setTitle(`${projectName} — FSD`);
+                      }
                       toast({
                         title: "Requirements imported from CALM!",
                         description: `${reqIds.length} requirement(s) from ${projectName}`,
