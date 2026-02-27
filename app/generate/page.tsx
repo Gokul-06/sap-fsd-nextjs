@@ -737,13 +737,20 @@ Example (SAP Activate — Explore Phase):
                   <Plus className="h-4 w-4 mr-2" />
                   New FSD
                 </Button>
-                {calmStatus.configured && savedId && (
+                {calmStatus.configured && (
                   <Button
                     size="lg"
                     variant="outline"
                     className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                    disabled={calmLoading}
+                    disabled={calmLoading || !savedId}
                     onClick={async () => {
+                      if (!savedId) {
+                        toast({
+                          title: "Save first",
+                          description: "Please save the FSD to history before pushing to CALM.",
+                        });
+                        return;
+                      }
                       try {
                         await pushFsd(savedId, calmProjectId, calmProjectName || projectName);
                         toast({
@@ -762,7 +769,7 @@ Example (SAP Activate — Explore Phase):
                     <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    {calmLoading ? "Pushing..." : "Push to CALM"}
+                    {calmLoading ? "Pushing..." : savedId ? "Push to CALM" : "Push to CALM (Save first)"}
                   </Button>
                 )}
               </div>
