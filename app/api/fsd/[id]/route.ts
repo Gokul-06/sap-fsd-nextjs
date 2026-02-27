@@ -5,10 +5,10 @@ import { safeErrorResponse } from "@/lib/api-error";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const fsd = await prisma.fsd.findUnique({
       where: { id },
@@ -33,10 +33,10 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const existing = await prisma.fsd.findUnique({ where: { id } });
 
