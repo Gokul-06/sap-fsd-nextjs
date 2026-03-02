@@ -1,5 +1,23 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+// ── Public routes that don't require authentication ─────────
+const publicRoutes = [
+  "/",               // Landing page
+  "/auth",           // Login pages
+  "/api/auth",       // NextAuth API endpoints
+  "/shared",         // Shared FSD links (public)
+  "/features",       // Features page
+  "/privacy",        // Privacy policy
+  "/terms",          // Terms of service
+];
+
+function isPublicRoute(pathname: string): boolean {
+  return publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
+}
 
 // Simple in-memory rate limiter (per serverless instance)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -35,9 +53,33 @@ function cleanupRateLimitMap() {
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // ── Auth Check (for protected routes) ───────────────────────
+  if (!isPublicRoute(pathname)) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
+      // Not authenticated — redirect to login (for pages) or return 401 (for API)
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // ── CORS Preflight Handler ────────────────────────────────
-  if (request.method === "OPTIONS" && request.nextUrl.pathname.startsWith("/api/")) {
+  if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {
     const origin = request.headers.get("origin") || "";
     const allowedOrigins = getAllowedOrigins(request);
 
@@ -59,7 +101,7 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // ── CORS Headers for API routes ─────────────────────────
-  if (request.nextUrl.pathname.startsWith("/api/")) {
+  if (pathname.startsWith("/api/")) {
     const origin = request.headers.get("origin") || "";
     const allowedOrigins = getAllowedOrigins(request);
 
@@ -89,7 +131,7 @@ export function middleware(request: NextRequest) {
   );
 
   // ── Rate Limiting for API routes ────────────────────────
-  if (request.nextUrl.pathname.startsWith("/api/")) {
+  if (pathname.startsWith("/api/")) {
     cleanupRateLimitMap();
 
     const ip =
@@ -99,7 +141,7 @@ export function middleware(request: NextRequest) {
 
     // Stricter limits for heavy endpoints
     const heavyEndpoints = ["/api/generate", "/api/extract-requirements", "/api/doc-transform"];
-    const isHeavy = heavyEndpoints.some((ep) => request.nextUrl.pathname.startsWith(ep));
+    const isHeavy = heavyEndpoints.some((ep) => pathname.startsWith(ep));
     const limit = isHeavy ? 5 : 30; // 5 per minute for AI endpoints, 30 for others
 
     if (!rateLimit(ip, limit)) {
