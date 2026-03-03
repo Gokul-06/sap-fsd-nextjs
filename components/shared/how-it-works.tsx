@@ -36,7 +36,7 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section className="py-20 px-4 bg-gradient-to-b from-sky-50/30 to-white">
+    <section className="py-20 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <motion.div

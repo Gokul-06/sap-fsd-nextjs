@@ -48,7 +48,7 @@ function TypewriterHeadline() {
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/80 to-sky-100/60 px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/50 to-white px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Soft radial glows */}

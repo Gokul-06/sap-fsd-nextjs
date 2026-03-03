@@ -15,7 +15,7 @@ const stats = [
 
 export function AlreadyKnewSection() {
   return (
-    <section className="py-16 px-4 bg-gradient-to-b from-white to-sky-50/30">
+    <section className="py-16 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header row */}
         <motion.div

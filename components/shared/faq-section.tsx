@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "How does the AI generate specifications?",
     answer:
-      "Our 6-agent AI team analyzes your business requirements using McKinsey consulting frameworks. Each agent specializes in a different aspect — scope analysis, process mapping, data modeling, authorization, testing, and integration points — then synthesizes everything into a comprehensive FSD.",
+      "Our 6-agent AI team analyzes your business requirements using enterprise consulting frameworks. Each agent specializes in a different aspect — scope analysis, process mapping, data modeling, authorization, testing, and integration points — then synthesizes everything into a comprehensive FSD.",
   },
   {
     question: "Can I customize the generated documents?",
@@ -84,7 +84,7 @@ export function FaqSection() {
 
   return (
     <ScrollReveal>
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-12">
             Frequently asked questions

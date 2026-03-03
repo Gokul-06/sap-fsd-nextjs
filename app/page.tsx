@@ -42,9 +42,6 @@ export default async function HomePage() {
     <div className="overflow-hidden">
       <HeroSection />
 
-      {/* Gradient transition */}
-      <div className="h-16 bg-gradient-to-b from-sky-100/60 to-sky-50/30" />
-
       {/* Already Knew? Stats */}
       <AlreadyKnewSection />
 
