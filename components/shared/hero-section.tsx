@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const stats = [
   { value: "14", label: "FSD Sections" },
@@ -9,6 +10,17 @@ const stats = [
   { value: "10", label: "SAP Modules" },
   { value: "<30s", label: "Generation Time" },
 ];
+
+const easeOut = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (delay: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, delay, ease: easeOut },
+  }),
+};
 
 export function HeroSection() {
   return (
@@ -65,47 +77,87 @@ export function HeroSection() {
       </div>
 
       <div className="relative mx-auto max-w-5xl text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 backdrop-blur-sm border border-white/10 animate-fade-in-up">
+        {/* Badge */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          custom={0}
+          variants={fadeUp}
+          className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 backdrop-blur-sm border border-white/10"
+        >
           <Sparkles className="h-3.5 w-3.5 text-[#0091DA]" />
           <span className="text-xs font-medium text-white/80 tracking-wide">
             Powered by WE-AI
           </span>
-        </div>
+        </motion.div>
 
-        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-in-up animation-delay-100">
+        {/* Headline */}
+        <motion.h1
+          initial="hidden"
+          animate="visible"
+          custom={0.15}
+          variants={fadeUp}
+          className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl"
+        >
           Generate SAP Specifications
           <span className="block mt-2 bg-gradient-to-r from-[#0091DA] to-[#33A7E4] bg-clip-text text-transparent">
             in Seconds
           </span>
-        </h1>
+        </motion.h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed animate-fade-in-up animation-delay-200">
+        {/* Subheading */}
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          custom={0.3}
+          variants={fadeUp}
+          className="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed"
+        >
           Enterprise-grade functional specification documents for SAP S/4HANA
           implementations — powered by WE-AI intelligence
-        </p>
+        </motion.p>
 
+        {/* Stats Grid */}
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map((stat, i) => (
-            <div
+            <motion.div
               key={stat.label}
-              className="group relative rounded-xl bg-white/[0.07] px-4 py-6 backdrop-blur-sm border border-white/[0.08] transition-all duration-300 hover:bg-white/[0.12] hover:border-white/[0.15] hover:scale-105 hover:shadow-lg hover:shadow-[#0091DA]/10 animate-fade-in-up"
-              style={{ animationDelay: `${300 + i * 100}ms` }}
+              initial="hidden"
+              animate="visible"
+              custom={0.4 + i * 0.1}
+              variants={fadeUp}
+              whileHover={{
+                scale: 1.06,
+                y: -4,
+                transition: { type: "spring", stiffness: 400, damping: 15 },
+              }}
+              className="group relative rounded-xl bg-white/[0.07] px-4 py-6 backdrop-blur-md border border-white/[0.08] transition-colors duration-300 hover:bg-white/[0.14] hover:border-white/[0.2] cursor-default"
             >
-              <p className="text-3xl font-bold text-white sm:text-4xl group-hover:text-[#0091DA] transition-colors">
+              <p className="text-3xl font-bold text-white sm:text-4xl group-hover:text-[#0091DA] transition-colors duration-300">
                 {stat.value}
               </p>
               <p className="mt-1.5 text-xs font-medium text-white/50 uppercase tracking-wider">
                 {stat.label}
               </p>
-              <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-[#0091DA]/0 to-transparent group-hover:via-[#0091DA]/50 transition-all duration-500" />
-            </div>
+              {/* Animated bottom border on hover */}
+              <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-[#0091DA]/0 to-transparent group-hover:via-[#0091DA]/60 transition-all duration-500" />
+              {/* Glow effect on hover */}
+              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[#0091DA]/[0.04] pointer-events-none" />
+            </motion.div>
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center animate-fade-in-up animation-delay-700">
+        {/* CTA Buttons */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          custom={0.8}
+          variants={fadeUp}
+          className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
+        >
           <Link
             href="/generate"
-            className="group inline-flex items-center rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-[#1B2A4A] shadow-lg shadow-black/20 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-[#0091DA]/20 hover:scale-105"
+            className="group relative inline-flex items-center rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-[#1B2A4A] shadow-lg shadow-black/20 transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/20 hover:scale-[1.04] overflow-hidden btn-shimmer"
           >
             Generate New FSD
             <svg
@@ -120,12 +172,15 @@ export function HeroSection() {
           </Link>
           <Link
             href="/history"
-            className="inline-flex items-center rounded-xl border border-white/20 px-8 py-3.5 text-sm font-medium text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-white/30"
+            className="inline-flex items-center rounded-xl border border-white/20 px-8 py-3.5 text-sm font-medium text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-white/30 hover:scale-[1.02]"
           >
             View Documents
           </Link>
-        </div>
+        </motion.div>
       </div>
+
+      {/* Bottom gradient divider — smooth transition to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white pointer-events-none" />
     </section>
   );
 }

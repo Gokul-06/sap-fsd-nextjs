@@ -2,20 +2,29 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { Counter } from "@/components/animations/counter";
+import { StaggerContainer, StaggerItem } from "@/components/animations/stagger-container";
 
 const stats = [
-  { value: "14", sub: "sections", label: "Complete FSD Coverage" },
-  { value: "6+", sub: "SAP modules", label: "MM · SD · FI · CO · PP · QM" },
-  { value: "<30s", sub: "generation", label: "Enterprise-Grade Speed" },
-  { value: "100%", sub: "AI-powered", label: "WE-AI Intelligence" },
+  { value: 14, suffix: "", sub: "sections", label: "Complete FSD Coverage" },
+  { value: 6, suffix: "+", sub: "SAP modules", label: "MM · SD · FI · CO · PP · QM" },
+  { value: 30, prefix: "<", suffix: "s", sub: "generation", label: "Enterprise-Grade Speed" },
+  { value: 100, suffix: "%", sub: "AI-powered", label: "WE-AI Intelligence" },
 ];
 
 export function AlreadyKnewSection() {
   return (
-    <section className="py-16 px-4 bg-white">
+    <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50/50">
       <div className="max-w-6xl mx-auto">
         {/* Header row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4"
+        >
           <h2 className="text-4xl sm:text-5xl font-black text-[#1B2A4A] leading-tight">
             Already knew<span className="text-[#0091DA]">?</span>
           </h2>
@@ -26,32 +35,39 @@ export function AlreadyKnewSection() {
             Try it now
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Link>
-        </div>
+        </motion.div>
 
         {/* Stats grid with blue vertical separators */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0">
-          {stats.map((stat, i) => (
-            <div
-              key={stat.value}
-              className="relative animate-fade-in-up"
-              style={{ animationDelay: `${i * 150}ms` }}
-            >
-              {/* Blue vertical line — Westernacher style */}
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-full bg-[#0091DA]" />
-              <div className="pl-5">
-                <p className="text-3xl sm:text-4xl font-black text-[#1B2A4A]">
-                  {stat.value}
-                </p>
-                <p className="text-sm font-medium text-[#1B2A4A]/70 mt-0.5">
-                  {stat.sub}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2 hidden sm:block">
-                  {stat.label}
-                </p>
-              </div>
-            </div>
+        <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0" staggerDelay={0.15}>
+          {stats.map((stat) => (
+            <StaggerItem key={stat.sub}>
+              <motion.div
+                whileHover={{ x: 4 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="relative group cursor-default"
+              >
+                {/* Blue vertical line — grows on hover */}
+                <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-full bg-[#0091DA] transition-all duration-300 group-hover:w-[5px] group-hover:bg-[#0091DA]" />
+                <div className="pl-5">
+                  <p className="text-3xl sm:text-4xl font-black text-[#1B2A4A]">
+                    <Counter
+                      target={stat.value}
+                      prefix={stat.prefix || ""}
+                      suffix={stat.suffix}
+                      duration={1.5}
+                    />
+                  </p>
+                  <p className="text-sm font-medium text-[#1B2A4A]/70 mt-0.5">
+                    {stat.sub}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2 hidden sm:block">
+                    {stat.label}
+                  </p>
+                </div>
+              </motion.div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );

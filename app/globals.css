@@ -425,3 +425,46 @@ body > [data-mermaid-error] {
   opacity: 1;
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* ────────────────────────────────────────────── */
+/* Cluely-Inspired Premium Effects                 */
+/* ────────────────────────────────────────────── */
+
+/* Smooth scroll for the whole page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Glassmorphism card — Cluely style */
+.glass-card {
+  @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg;
+  @apply hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500;
+}
+
+/* Button shimmer sweep on hover */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.btn-shimmer:hover::after {
+  transform: translateX(100%);
+  transition: transform 0.6s ease;
+}
