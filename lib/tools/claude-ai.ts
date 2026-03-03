@@ -43,7 +43,7 @@ async function getAgentTraining(agentRole: AgentRole): Promise<string> {
   return "";
 }
 
-export async function callClaude(prompt: string, maxTokens: number = 2048, timeoutMs: number = 120000): Promise<string> {
+export async function callClaude(prompt: string, maxTokens: number = 2048, timeoutMs: number = 55000): Promise<string> {
   const anthropic = getClient();
 
   // Wrap with a timeout to prevent single calls from hanging
