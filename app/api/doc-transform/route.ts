@@ -9,7 +9,7 @@ import { callClaude } from "@/lib/tools/claude-ai";
 import { safeErrorResponse } from "@/lib/api-error";
 import { documentCache } from "@/lib/cache";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /* ── Prompt: QRG → SOP ── */
 function buildSOPPrompt(qrgText: string, processName: string, moduleName: string): string {

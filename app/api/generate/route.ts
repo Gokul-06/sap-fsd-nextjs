@@ -1,5 +1,5 @@
-// Vercel Hobby: max 60s. Upgrade to Pro for Agent Teams mode (needs 300-600s).
-export const maxDuration = 60;
+// Agent Team + Comprehensive needs ~360s worst-case.
+export const maxDuration = 600;
 
 import { NextResponse } from "next/server";
 import { generateFSD } from "@/lib/tools/generate-fsd";

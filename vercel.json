@@ -4,13 +4,13 @@
   "regions": ["iad1", "fra1", "hnd1"],
   "functions": {
     "app/api/generate/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 600
     },
     "app/api/generate-word/route.ts": {
       "maxDuration": 60
     },
     "app/api/doc-transform/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "app/api/doc-transform-export/route.ts": {
       "maxDuration": 60
