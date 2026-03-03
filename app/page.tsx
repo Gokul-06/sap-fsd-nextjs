@@ -51,13 +51,13 @@ export default async function HomePage() {
       </ScrollReveal>
 
       {/* Gradient transition */}
-      <div className="h-16 bg-gradient-to-b from-white to-slate-50/30" />
+      <div className="h-16 bg-gradient-to-b from-white to-sky-50/30" />
 
       {/* Already Knew? Stats */}
       <AlreadyKnewSection />
 
       {/* Gradient transition */}
-      <div className="h-8 bg-gradient-to-b from-slate-50/50 to-slate-50/30" />
+      <div className="h-8 bg-gradient-to-b from-sky-50/40 to-sky-50/20" />
 
       {/* How It Works — NEW */}
       <HowItWorksSection />
@@ -75,7 +75,7 @@ export default async function HomePage() {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-50 mb-6">
                 <FileText className="h-10 w-10 text-muted-foreground/30" />
               </div>
-              <h3 className="text-lg font-semibold text-navy mb-2">
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">
                 No documents yet
               </h3>
               <p className="text-muted-foreground mb-8">
@@ -83,7 +83,7 @@ export default async function HomePage() {
               </p>
               <Link
                 href="/generate"
-                className="bg-navy text-white px-8 py-3.5 rounded-xl font-medium hover:bg-navy-light transition-all hover:shadow-lg hover:shadow-navy/20 inline-block btn-shimmer overflow-hidden relative"
+                className="bg-sky-500 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-sky-600 transition-all hover:shadow-lg hover:shadow-sky-500/20 inline-block btn-shimmer overflow-hidden relative"
               >
                 Generate New FSD
               </Link>

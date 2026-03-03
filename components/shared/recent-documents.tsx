@@ -28,12 +28,12 @@ export function RecentDocuments({ fsds }: RecentDocumentsProps) {
       <div>
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-navy">Recent Documents</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Recent Documents</h2>
             <p className="text-sm text-muted-foreground mt-1">Your latest generated specifications</p>
           </div>
           <Link
             href="/history"
-            className="text-sm text-wc-blue hover:text-wc-blue/80 font-medium inline-flex items-center gap-1 transition-colors group"
+            className="text-sm text-sky-500 hover:text-sky-600 font-medium inline-flex items-center gap-1 transition-colors group"
           >
             View all
             <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -49,22 +49,22 @@ export function RecentDocuments({ fsds }: RecentDocumentsProps) {
                     transition: { type: "spring", stiffness: 400, damping: 15 },
                   }}
                 >
-                  <Card className="border-none shadow-sm hover:shadow-xl hover:shadow-navy/10 transition-shadow duration-500 cursor-pointer h-full group">
+                  <Card className="border-none bg-white/60 backdrop-blur-xl shadow-lg shadow-sky-100/30 hover:shadow-xl hover:shadow-sky-200/40 transition-all duration-500 cursor-pointer h-full group">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <Badge
                           variant="secondary"
-                          className="bg-navy/10 text-navy font-semibold"
+                          className="bg-sky-100/80 text-sky-700 font-semibold"
                         >
                           {fsd.primaryModule}
                         </Badge>
                         {fsd.aiEnabled && (
-                          <Badge className="bg-wc-blue/10 text-wc-blue text-xs border-0">
+                          <Badge className="bg-blue-50 text-blue-500 text-xs border-0">
                             WE-AI
                           </Badge>
                         )}
                       </div>
-                      <h3 className="font-semibold text-navy line-clamp-2 mb-2 group-hover:text-wc-blue transition-colors duration-300">
+                      <h3 className="font-semibold text-slate-800 line-clamp-2 mb-2 group-hover:text-sky-500 transition-colors duration-300">
                         {fsd.title}
                       </h3>
                       <p className="text-xs text-muted-foreground">
@@ -78,7 +78,7 @@ export function RecentDocuments({ fsds }: RecentDocumentsProps) {
                         })}
                       </p>
                       {/* Hover accent line */}
-                      <div className="h-0.5 mt-4 rounded-full bg-transparent group-hover:bg-gradient-to-r group-hover:from-wc-blue/40 group-hover:to-transparent transition-all duration-500" />
+                      <div className="h-0.5 mt-4 rounded-full bg-transparent group-hover:bg-gradient-to-r group-hover:from-sky-400/40 group-hover:to-transparent transition-all duration-500" />
                     </CardContent>
                   </Card>
                 </motion.div>

@@ -15,7 +15,7 @@ const stats = [
 
 export function AlreadyKnewSection() {
   return (
-    <section className="py-16 px-4 bg-gradient-to-b from-white to-slate-50/50">
+    <section className="py-16 px-4 bg-gradient-to-b from-white to-sky-50/30">
       <div className="max-w-6xl mx-auto">
         {/* Header row */}
         <motion.div
@@ -25,12 +25,12 @@ export function AlreadyKnewSection() {
           transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
           className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4"
         >
-          <h2 className="text-4xl sm:text-5xl font-black text-[#1B2A4A] leading-tight">
-            Already knew<span className="text-[#0091DA]">?</span>
+          <h2 className="text-4xl sm:text-5xl font-black text-slate-800 leading-tight">
+            Already knew<span className="text-sky-500">?</span>
           </h2>
           <Link
             href="/generate"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#1B2A4A] hover:text-[#0091DA] transition-colors group"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-sky-500 transition-colors group"
           >
             Try it now
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -46,10 +46,10 @@ export function AlreadyKnewSection() {
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 className="relative group cursor-default"
               >
-                {/* Blue vertical line — grows on hover */}
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-full bg-[#0091DA] transition-all duration-300 group-hover:w-[5px] group-hover:bg-[#0091DA]" />
+                {/* Sky blue vertical line — grows on hover */}
+                <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-full bg-sky-400 transition-all duration-300 group-hover:w-[5px] group-hover:bg-sky-500" />
                 <div className="pl-5">
-                  <p className="text-3xl sm:text-4xl font-black text-[#1B2A4A]">
+                  <p className="text-3xl sm:text-4xl font-black text-slate-800">
                     <Counter
                       target={stat.value}
                       prefix={stat.prefix || ""}
@@ -57,7 +57,7 @@ export function AlreadyKnewSection() {
                       duration={1.5}
                     />
                   </p>
-                  <p className="text-sm font-medium text-[#1B2A4A]/70 mt-0.5">
+                  <p className="text-sm font-medium text-slate-500 mt-0.5">
                     {stat.sub}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2 hidden sm:block">

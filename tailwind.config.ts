@@ -43,15 +43,15 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Westernacher brand colors
+        // Westernacher brand colors — Sky Blue Glassmorphic theme
         navy: {
-          DEFAULT: "#1B2A4A",
-          light: "#2A3F6E",
-          dark: "#0F1A2E",
+          DEFAULT: "#1E293B",
+          light: "#334155",
+          dark: "#0F172A",
         },
         wc: {
-          blue: "#0091DA",
-          "blue-light": "#33A7E4",
+          blue: "#0EA5E9",
+          "blue-light": "#38BDF8",
           orange: "#E8491D",
           success: "#10B981",
           warning: "#F59E0B",

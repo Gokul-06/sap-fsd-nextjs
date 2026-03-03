@@ -22,51 +22,81 @@ const fadeUp = {
   }),
 };
 
+/* ───── Cloud SVG paths ───── */
+function Cloud({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+      <path
+        d="M160 60H40c-11 0-20-9-20-20s9-20 20-20c1.5 0 3 .15 4.4.45C49.5 10.2 59 3 70 3c8 0 15 3.8 19.5 9.6C93 7.5 99 4 106 4c13.3 0 24 10.7 24 24 0 1.2-.1 2.3-.3 3.4C135.5 33 140 37.7 140 43.5c0 .5 0 1-.1 1.5h20c11 0 20 9 20 20s-9 15-20 15Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/* ───── Floating cloud with Framer Motion ───── */
+function FloatingCloud({
+  size,
+  top,
+  left,
+  right,
+  opacity,
+  duration,
+  delay,
+}: {
+  size: number;
+  top: string;
+  left?: string;
+  right?: string;
+  opacity: number;
+  duration: number;
+  delay: number;
+}) {
+  return (
+    <motion.div
+      className="absolute pointer-events-none text-sky-200"
+      style={{ top, left, right, width: size, opacity }}
+      animate={{
+        x: [0, 25, -15, 0],
+        y: [0, -10, 5, 0],
+      }}
+      transition={{
+        duration,
+        delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <Cloud />
+    </motion.div>
+  );
+}
+
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#1B2A4A] via-[#1E3258] to-[#2A3F6E] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-      {/* Animated background patterns */}
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/80 to-sky-100/60 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+      {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <svg
-          className="absolute inset-0 h-full w-full"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <pattern
-              id="hero-grid"
-              width="60"
-              height="60"
-              patternUnits="userSpaceOnUse"
-            >
-              <path d="M 60 0 L 30 30 L 60 60" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-              <path d="M 0 0 L 30 30 L 0 60" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#hero-grid)" />
-        </svg>
+        {/* Soft radial glows */}
+        <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-sky-200/25 blur-3xl animate-float-slow" />
+        <div className="absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-sky-100/40 blur-3xl animate-float-medium" />
+        <div className="absolute left-1/3 top-1/2 h-48 w-48 rounded-full bg-blue-100/20 blur-2xl animate-float-fast" />
 
-        <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-[#0091DA]/10 blur-3xl animate-float-slow" />
-        <div className="absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-[#0091DA]/8 blur-3xl animate-float-medium" />
-        <div className="absolute left-1/3 top-1/2 h-48 w-48 rounded-full bg-white/5 blur-2xl animate-float-fast" />
+        {/* Floating clouds */}
+        <FloatingCloud size={220} top="8%" left="3%" opacity={0.25} duration={22} delay={0} />
+        <FloatingCloud size={160} top="15%" right="5%" opacity={0.18} duration={18} delay={2} />
+        <FloatingCloud size={280} top="55%" left="60%" opacity={0.12} duration={25} delay={4} />
+        <FloatingCloud size={140} top="70%" left="8%" opacity={0.2} duration={20} delay={1} />
+        <FloatingCloud size={180} top="35%" right="15%" opacity={0.15} duration={23} delay={3} />
 
-        <div className="absolute -left-4 top-0 h-full w-[600px] rotate-12 opacity-[0.04]">
-          <div className="flex h-full flex-col justify-between">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-px w-full bg-gradient-to-r from-transparent via-white to-transparent"
-              />
-            ))}
-          </div>
-        </div>
-
+        {/* Subtle drifting dots */}
         <div className="absolute right-0 top-0 h-full w-1/2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
-              className="absolute h-1 w-1 rounded-full bg-white/20 animate-drift"
+              className="absolute h-1.5 w-1.5 rounded-full bg-sky-300/30 animate-drift"
               style={{
-                top: `${15 + i * 15}%`,
+                top: `${15 + i * 16}%`,
                 right: `${10 + i * 12}%`,
                 animationDelay: `${i * 1.5}s`,
                 animationDuration: `${8 + i * 2}s`,
@@ -83,10 +113,10 @@ export function HeroSection() {
           animate="visible"
           custom={0}
           variants={fadeUp}
-          className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 backdrop-blur-sm border border-white/10"
+          className="mb-6 inline-flex items-center gap-2 rounded-full bg-sky-100/80 px-4 py-1.5 backdrop-blur-sm border border-sky-200/60"
         >
-          <Sparkles className="h-3.5 w-3.5 text-[#0091DA]" />
-          <span className="text-xs font-medium text-white/80 tracking-wide">
+          <Sparkles className="h-3.5 w-3.5 text-sky-500" />
+          <span className="text-xs font-medium text-slate-600 tracking-wide">
             Powered by WE-AI
           </span>
         </motion.div>
@@ -97,10 +127,10 @@ export function HeroSection() {
           animate="visible"
           custom={0.15}
           variants={fadeUp}
-          className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl"
+          className="text-4xl font-bold tracking-tight text-slate-800 sm:text-5xl lg:text-6xl"
         >
           Generate SAP Specifications
-          <span className="block mt-2 bg-gradient-to-r from-[#0091DA] to-[#33A7E4] bg-clip-text text-transparent">
+          <span className="block mt-2 bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
             in Seconds
           </span>
         </motion.h1>
@@ -111,13 +141,13 @@ export function HeroSection() {
           animate="visible"
           custom={0.3}
           variants={fadeUp}
-          className="mx-auto mt-6 max-w-2xl text-lg text-white/60 leading-relaxed"
+          className="mx-auto mt-6 max-w-2xl text-lg text-slate-500 leading-relaxed"
         >
           Enterprise-grade functional specification documents for SAP S/4HANA
           implementations — powered by WE-AI intelligence
         </motion.p>
 
-        {/* Stats Grid */}
+        {/* Stats Grid — Glassmorphic cards */}
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map((stat, i) => (
             <motion.div
@@ -131,18 +161,16 @@ export function HeroSection() {
                 y: -4,
                 transition: { type: "spring", stiffness: 400, damping: 15 },
               }}
-              className="group relative rounded-xl bg-white/[0.07] px-4 py-6 backdrop-blur-md border border-white/[0.08] transition-colors duration-300 hover:bg-white/[0.14] hover:border-white/[0.2] cursor-default"
+              className="group relative rounded-xl bg-white/60 px-4 py-6 backdrop-blur-xl border border-white/70 shadow-lg shadow-sky-100/40 transition-all duration-300 hover:bg-white/80 hover:shadow-xl hover:shadow-sky-200/50 hover:border-sky-200/50 cursor-default"
             >
-              <p className="text-3xl font-bold text-white sm:text-4xl group-hover:text-[#0091DA] transition-colors duration-300">
+              <p className="text-3xl font-bold text-slate-800 sm:text-4xl group-hover:text-sky-500 transition-colors duration-300">
                 {stat.value}
               </p>
-              <p className="mt-1.5 text-xs font-medium text-white/50 uppercase tracking-wider">
+              <p className="mt-1.5 text-xs font-medium text-slate-400 uppercase tracking-wider">
                 {stat.label}
               </p>
               {/* Animated bottom border on hover */}
-              <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-[#0091DA]/0 to-transparent group-hover:via-[#0091DA]/60 transition-all duration-500" />
-              {/* Glow effect on hover */}
-              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[#0091DA]/[0.04] pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-sky-400/0 to-transparent group-hover:via-sky-400/60 transition-all duration-500" />
             </motion.div>
           ))}
         </div>
@@ -157,7 +185,7 @@ export function HeroSection() {
         >
           <Link
             href="/generate"
-            className="group relative inline-flex items-center rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-[#1B2A4A] shadow-lg shadow-black/20 transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/20 hover:scale-[1.04] overflow-hidden btn-shimmer"
+            className="group relative inline-flex items-center rounded-xl bg-sky-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition-all duration-300 hover:bg-sky-600 hover:shadow-xl hover:shadow-sky-500/30 hover:scale-[1.04] overflow-hidden btn-shimmer"
           >
             Generate New FSD
             <svg
@@ -172,15 +200,12 @@ export function HeroSection() {
           </Link>
           <Link
             href="/history"
-            className="inline-flex items-center rounded-xl border border-white/20 px-8 py-3.5 text-sm font-medium text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white hover:border-white/30 hover:scale-[1.02]"
+            className="inline-flex items-center rounded-xl border border-sky-200 px-8 py-3.5 text-sm font-medium text-slate-600 transition-all duration-300 hover:bg-sky-50 hover:text-slate-800 hover:border-sky-300 hover:scale-[1.02]"
           >
             View Documents
           </Link>
         </motion.div>
       </div>
-
-      {/* Bottom gradient divider — smooth transition to next section */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white pointer-events-none" />
     </section>
   );
 }

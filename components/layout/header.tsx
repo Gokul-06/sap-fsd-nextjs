@@ -52,7 +52,7 @@ export function Header() {
         {/* Left side: Branding */}
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3 group">
-            <span className="text-xl font-bold text-[#1B2A4A] group-hover:text-[#0091DA] transition-colors">
+            <span className="text-xl font-bold text-slate-800 group-hover:text-sky-500 transition-colors">
               Westernacher
             </span>
             <span className="hidden text-border/60 sm:inline">|</span>
@@ -73,13 +73,13 @@ export function Header() {
                   href={item.href}
                   className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     isActive
-                      ? "text-[#1B2A4A] bg-[#0091DA]/10"
-                      : "text-muted-foreground hover:text-[#1B2A4A] hover:bg-slate-50"
+                      ? "text-sky-600 bg-sky-50"
+                      : "text-muted-foreground hover:text-slate-800 hover:bg-sky-50/50"
                   }`}
                 >
                   {item.label}
                   {isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#0091DA] rounded-full" />
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-sky-500 rounded-full" />
                   )}
                 </Link>
               );
@@ -104,11 +104,11 @@ export function Header() {
                     className="h-8 w-8 rounded-full border border-border/50"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1B2A4A] text-xs font-semibold text-white">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-xs font-semibold text-white">
                     {userInitials}
                   </div>
                 )}
-                <span className="hidden text-sm font-medium text-[#1B2A4A] sm:inline max-w-[120px] truncate">
+                <span className="hidden text-sm font-medium text-slate-800 sm:inline max-w-[120px] truncate">
                   {session.user.name || "User"}
                 </span>
                 {isDemo && (
@@ -123,7 +123,7 @@ export function Header() {
               {showUserMenu && (
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border/50 bg-white py-2 shadow-lg shadow-black/5 animate-fade-in-up">
                   <div className="px-4 py-2 border-b border-border/50">
-                    <p className="text-sm font-medium text-[#1B2A4A] truncate">
+                    <p className="text-sm font-medium text-slate-800 truncate">
                       {session.user.name}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
@@ -147,7 +147,7 @@ export function Header() {
             /* Not logged in — Sign In Button */
             <Link
               href="/auth/login"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#0091DA] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#007bbd] hover:shadow-md hover:shadow-[#0091DA]/20"
+              className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-sky-600 hover:shadow-md hover:shadow-sky-500/20"
             >
               <LogIn className="h-4 w-4" />
               Sign In

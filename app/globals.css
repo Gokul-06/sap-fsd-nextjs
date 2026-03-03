@@ -25,13 +25,13 @@
     --ring: 200 100% 43%;
     --radius: 0.75rem;
 
-    /* Westernacher custom tokens */
-    --wc-navy: #1B2A4A;
-    --wc-navy-light: #2A3F6E;
-    --wc-blue: #0091DA;
-    --wc-blue-light: #33A7E4;
+    /* Westernacher custom tokens — Sky Blue Glassmorphic */
+    --wc-navy: #1E293B;
+    --wc-navy-light: #334155;
+    --wc-blue: #0EA5E9;
+    --wc-blue-light: #38BDF8;
     --wc-orange: #E8491D;
-    --wc-bg: #F0F2F5;
+    --wc-bg: #F0F9FF;
     --wc-success: #10B981;
     --wc-warning: #F59E0B;
   }
@@ -60,7 +60,7 @@
 /* Mermaid diagram container */
 .mermaid-container {
   @apply my-6 p-4 bg-gradient-to-br from-blue-50/50 to-white border rounded-xl;
-  border-color: rgba(0, 145, 218, 0.2);
+  border-color: rgba(14, 165, 233, 0.2);
 }
 .mermaid-rendered svg {
   @apply w-full max-w-full;
@@ -79,8 +79,8 @@ body > [data-mermaid-error] {
 /* BPMN Signavio-style diagram container */
 .bpmn-container {
   @apply my-8 p-5 bg-white border-2 rounded-xl;
-  border-color: rgba(27, 42, 74, 0.12);
-  box-shadow: 0 4px 24px -4px rgba(0, 145, 218, 0.08);
+  border-color: rgba(30, 41, 59, 0.12);
+  box-shadow: 0 4px 24px -4px rgba(14, 165, 233, 0.08);
 }
 .bpmn-container svg {
   @apply w-full;
@@ -94,7 +94,7 @@ body > [data-mermaid-error] {
 }
 .bpmn-download-btn {
   @apply inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg transition-all;
-  @apply bg-[#1B2A4A] text-white hover:bg-[#0091DA];
+  @apply bg-sky-500 text-white hover:bg-sky-600;
   @apply shadow-sm hover:shadow-md;
 }
 
@@ -201,7 +201,7 @@ body > [data-mermaid-error] {
   background: linear-gradient(
     90deg,
     transparent 25%,
-    rgba(0, 145, 218, 0.05) 50%,
+    rgba(14, 165, 233, 0.05) 50%,
     transparent 75%
   );
   background-size: 200% 100%;
@@ -210,8 +210,8 @@ body > [data-mermaid-error] {
 
 /* Pulse glow */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 145, 218, 0); }
-  50% { box-shadow: 0 0 20px 4px rgba(0, 145, 218, 0.15); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(14, 165, 233, 0.15); }
 }
 
 .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
@@ -250,7 +250,7 @@ body > [data-mermaid-error] {
 }
 
 .enterprise-card:hover {
-  box-shadow: 0 10px 40px -10px rgba(0, 145, 218, 0.15),
+  box-shadow: 0 10px 40px -10px rgba(14, 165, 233, 0.15),
               0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
@@ -261,7 +261,7 @@ body > [data-mermaid-error] {
 
 /* Gradient text */
 .gradient-text {
-  @apply bg-gradient-to-r from-[#1B2A4A] to-[#0091DA] bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent;
 }
 
 /* ────────────────────────────────────────────── */
@@ -415,7 +415,7 @@ body > [data-mermaid-error] {
   position: absolute;
   inset: -2px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #0091DA, #1B2A4A, #0091DA);
+  background: linear-gradient(135deg, #0EA5E9, #38BDF8, #0EA5E9);
   z-index: -1;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -437,8 +437,12 @@ html {
 
 /* Glassmorphism card — Cluely style */
 .glass-card {
-  @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-lg;
-  @apply hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500;
+  @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-lg shadow-sky-100/50;
+  @apply hover:shadow-xl hover:shadow-sky-200/40 transition-all duration-500;
+}
+
+.glass-card-strong {
+  @apply bg-white/80 backdrop-blur-2xl border border-white/70 shadow-xl shadow-sky-200/30;
 }
 
 /* Button shimmer sweep on hover */
