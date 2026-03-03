@@ -2,58 +2,57 @@
 
 import { motion } from "framer-motion";
 
-/* ───── Soft blurred cloud using layered divs ───── */
-function SoftCloud({ size, blur, color }: { size: number; blur: number; color: string }) {
-  const blobSize = size * 0.45;
+/* ───── Clean crisp cloud using SVG ───── */
+function CloudShape({ size, color }: { size: number; color: string }) {
   return (
-    <div className="relative" style={{ width: size, height: size * 0.4 }}>
-      {/* Main body */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: size,
-          height: size * 0.35,
-          bottom: 0,
-          left: 0,
-          background: color,
-          filter: `blur(${blur}px)`,
-        }}
+    <svg
+      width={size}
+      height={size * 0.5}
+      viewBox="0 0 200 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M170 80H30c-11 0-20-9-20-20 0-9.4 6.5-17.3 15.3-19.4C26.5 23.8 40.8 12 58 12c5.8 0 11.3 1.5 16 4.1C80.5 8.2 90.5 3 102 3c17.7 0 32.5 11.8 37.2 28 1.8-.5 3.7-.8 5.8-.8 11 0 20 9 20 20v.5c8.4 2.5 14.5 10.3 14.5 19.5 0 11-9 19.8-20 19.8H170z"
+        fill={color}
       />
-      {/* Top bumps */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: blobSize,
-          height: blobSize,
-          bottom: size * 0.12,
-          left: size * 0.15,
-          background: color,
-          filter: `blur(${blur * 0.9}px)`,
-        }}
+    </svg>
+  );
+}
+
+/* Alternate cloud shape for variety */
+function CloudShape2({ size, color }: { size: number; color: string }) {
+  return (
+    <svg
+      width={size}
+      height={size * 0.45}
+      viewBox="0 0 220 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M190 82H32c-13 0-24-10-24-22 0-10 7-18.5 16.5-21C28 20 44 6 64 6c8 0 15.5 2.5 21.5 6.5C92 5 102 0 114 0c15 0 28 8.5 34 21 3-1.5 6.5-2.5 10-2.5 12.5 0 22.5 9.5 23.8 21.5C193 43.5 202 53 202 65c0 9.5-5.5 17.5-13.5 21H190z"
+        fill={color}
       />
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: blobSize * 1.3,
-          height: blobSize * 1.3,
-          bottom: size * 0.15,
-          left: size * 0.35,
-          background: color,
-          filter: `blur(${blur}px)`,
-        }}
+    </svg>
+  );
+}
+
+/* Small puffy cloud */
+function CloudShape3({ size, color }: { size: number; color: string }) {
+  return (
+    <svg
+      width={size}
+      height={size * 0.55}
+      viewBox="0 0 160 88"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M140 72H24c-8.8 0-16-7.2-16-16 0-7.5 5.2-13.8 12.2-15.5C22.5 22 35.5 10 52 10c4.5 0 8.8 1 12.5 2.8C70.5 5.5 79 1 89 1c13 0 24 8 28.5 19.5 2-.8 4.2-1.2 6.5-1.2 9.5 0 17.2 7.3 18 16.5C150.5 38 157 45.5 157 55c0 9.4-7.6 17-17 17z"
+        fill={color}
       />
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: blobSize * 0.8,
-          height: blobSize * 0.8,
-          bottom: size * 0.1,
-          right: size * 0.15,
-          background: color,
-          filter: `blur(${blur * 0.8}px)`,
-        }}
-      />
-    </div>
+    </svg>
   );
 }
 
@@ -65,9 +64,9 @@ interface DriftingCloudProps {
   duration: number;
   delay: number;
   direction: "left" | "right";
-  blur: number;
-  color?: string;
   startOffset?: string;
+  shape?: 1 | 2 | 3;
+  color?: string;
 }
 
 function DriftingCloud({
@@ -77,12 +76,15 @@ function DriftingCloud({
   duration,
   delay,
   direction,
-  blur,
-  color = "rgba(186, 230, 253, 0.7)",
   startOffset,
+  shape = 1,
+  color = "rgba(186, 230, 253, 0.7)",
 }: DriftingCloudProps) {
   const startX = startOffset ?? (direction === "right" ? "-20vw" : "110vw");
   const endX = direction === "right" ? "110vw" : "-20vw";
+
+  const Cloud =
+    shape === 1 ? CloudShape : shape === 2 ? CloudShape2 : CloudShape3;
 
   return (
     <motion.div
@@ -91,65 +93,112 @@ function DriftingCloud({
       initial={{ x: startX }}
       animate={{
         x: [startX, endX],
-        y: [0, -15, 10, -6, 0],
+        y: [0, -12, 8, -5, 0],
       }}
       transition={{
         x: { duration, delay, repeat: Infinity, ease: "linear" },
-        y: { duration: duration * 0.35, delay, repeat: Infinity, ease: "easeInOut" },
+        y: {
+          duration: duration * 0.35,
+          delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        },
       }}
     >
-      <SoftCloud size={size} blur={blur} color={color} />
+      <Cloud size={size} color={color} />
     </motion.div>
   );
 }
 
 /**
  * Page-wide floating clouds overlay.
- * Soft blurred clouds that drift across the entire viewport.
+ * Crisp SVG clouds that drift across the entire viewport.
  * z-[1] sits above the bg gradient (z-0) but below content (z-10).
  */
 export function FloatingClouds() {
   return (
     <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
-      {/* Layer 1 — Large soft distant clouds */}
+      {/* Layer 1 — Large distant clouds */}
       <DriftingCloud
-        size={380} top="5%" opacity={0.55} duration={55} delay={0}
-        direction="right" blur={35} color="rgba(186, 230, 253, 0.6)"
-        startOffset="10vw"
+        size={320}
+        top="4%"
+        opacity={0.4}
+        duration={55}
+        delay={0}
+        direction="right"
+        shape={1}
+        color="rgba(186, 230, 253, 0.55)"
+        startOffset="15vw"
       />
       <DriftingCloud
-        size={420} top="18%" opacity={0.4} duration={65} delay={8}
-        direction="left" blur={45} color="rgba(191, 219, 254, 0.55)"
-        startOffset="60vw"
+        size={360}
+        top="16%"
+        opacity={0.3}
+        duration={65}
+        delay={10}
+        direction="left"
+        shape={2}
+        color="rgba(191, 219, 254, 0.45)"
+        startOffset="55vw"
       />
 
       {/* Layer 2 — Medium clouds */}
       <DriftingCloud
-        size={280} top="40%" opacity={0.5} duration={45} delay={2}
-        direction="right" blur={28} color="rgba(186, 230, 253, 0.55)"
-        startOffset="40vw"
+        size={240}
+        top="38%"
+        opacity={0.35}
+        duration={45}
+        delay={3}
+        direction="right"
+        shape={3}
+        color="rgba(186, 230, 253, 0.5)"
+        startOffset="35vw"
       />
       <DriftingCloud
-        size={320} top="55%" opacity={0.35} duration={52} delay={15}
-        direction="left" blur={32} color="rgba(224, 242, 254, 0.6)"
+        size={280}
+        top="52%"
+        opacity={0.25}
+        duration={52}
+        delay={18}
+        direction="left"
+        shape={1}
+        color="rgba(224, 242, 254, 0.5)"
       />
 
       {/* Layer 3 — Smaller closer clouds */}
       <DriftingCloud
-        size={200} top="70%" opacity={0.45} duration={38} delay={1}
-        direction="right" blur={20} color="rgba(186, 230, 253, 0.5)"
-        startOffset="25vw"
+        size={180}
+        top="68%"
+        opacity={0.35}
+        duration={38}
+        delay={1}
+        direction="right"
+        shape={2}
+        color="rgba(186, 230, 253, 0.45)"
+        startOffset="20vw"
       />
       <DriftingCloud
-        size={240} top="82%" opacity={0.3} duration={48} delay={18}
-        direction="left" blur={25} color="rgba(191, 219, 254, 0.45)"
-        startOffset="75vw"
+        size={200}
+        top="82%"
+        opacity={0.22}
+        duration={48}
+        delay={22}
+        direction="left"
+        shape={3}
+        color="rgba(191, 219, 254, 0.4)"
+        startOffset="70vw"
       />
 
-      {/* Extra cloud for hero area — immediately visible */}
+      {/* Extra cloud near hero — visible immediately */}
       <DriftingCloud
-        size={300} top="8%" opacity={0.45} duration={50} delay={0}
-        direction="left" blur={30} color="rgba(224, 242, 254, 0.55)"
+        size={260}
+        top="8%"
+        opacity={0.35}
+        duration={50}
+        delay={0}
+        direction="left"
+        shape={2}
+        color="rgba(224, 242, 254, 0.5)"
         startOffset="50vw"
       />
     </div>
