@@ -6,10 +6,10 @@ import { safeErrorResponse } from "@/lib/api-error";
 // PATCH /api/feedback-rules/[ruleId] — toggle active, update content
 export async function PATCH(
   request: Request,
-  { params }: { params: { ruleId: string } }
+  { params }: { params: Promise<{ ruleId: string }> }
 ) {
   try {
-    const { ruleId } = params;
+    const { ruleId } = await params;
     const body = await request.json();
 
     const rule = await prisma.feedbackRule.findUnique({ where: { id: ruleId } });
@@ -42,10 +42,10 @@ export async function PATCH(
 // DELETE /api/feedback-rules/[ruleId]
 export async function DELETE(
   request: Request,
-  { params }: { params: { ruleId: string } }
+  { params }: { params: Promise<{ ruleId: string }> }
 ) {
   try {
-    const { ruleId } = params;
+    const { ruleId } = await params;
 
     const rule = await prisma.feedbackRule.findUnique({ where: { id: ruleId } });
     if (!rule) {

@@ -1,0 +1,41 @@
+# Slim packaging Dockerfile — Next.js is built in the Bitbucket pipeline step.
+# This image packages pre-built artifacts + installs production deps (includes Prisma CLI).
+
+# ── Stage 1: production node_modules (cached by Docker unless package*.json changes) ──
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts
+
+# ── Stage 2: runtime image ──
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nextjs
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Pre-built Next.js standalone server
+COPY --chown=nextjs:nodejs .next/standalone   ./
+COPY --chown=nextjs:nodejs .next/static       ./.next/static
+COPY --chown=nextjs:nodejs public             ./public
+
+# Production node_modules — superset of standalone's bundled modules.
+# Includes Prisma CLI + all transitive deps (valibot, @prisma/dev, etc.)
+# needed by the init container's `prisma migrate deploy`.
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Prisma schema + config (needed by migrate deploy)
+COPY --chown=nextjs:nodejs prisma          ./prisma
+COPY --chown=nextjs:nodejs prisma.config.ts ./prisma.config.ts
+COPY --chown=nextjs:nodejs package.json    ./
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

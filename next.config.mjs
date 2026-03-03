@@ -3,6 +3,16 @@ const nextConfig = {
   // Standalone output for Docker / self-hosted deployments
   output: "standalone",
 
+  // Limit build workers to 1 to prevent OOM in memory-constrained CI environments
+  experimental: {
+    cpus: 1,
+  },
+
+  // Pin build ID to commit hash so Next.js reuses its incremental cache across runs
+  generateBuildId: async () => {
+    return process.env.BITBUCKET_COMMIT ?? "local";
+  },
+
   // Security headers (additional to middleware)
   async headers() {
     return [

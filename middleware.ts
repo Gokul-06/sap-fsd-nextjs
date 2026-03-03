@@ -1,23 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
-
-// ── Public routes that don't require authentication ─────────
-const publicRoutes = [
-  "/",               // Landing page
-  "/auth",           // Login pages
-  "/api/auth",       // NextAuth API endpoints
-  "/shared",         // Shared FSD links (public)
-  "/features",       // Features page
-  "/privacy",        // Privacy policy
-  "/terms",          // Terms of service
-];
-
-function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
-}
+// import { getToken } from "next-auth/jwt";  // Auth disabled for now
 
 // Simple in-memory rate limiter (per serverless instance)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -56,21 +39,18 @@ function cleanupRateLimitMap() {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── Auth Check ──
-  if (!isPublicRoute(pathname)) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-    if (!token) {
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-      }
-      const loginUrl = new URL("/auth/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
+  // ── Auth Check (disabled — will re-enable once Azure AD is configured) ──
+  // if (!isPublicRoute(pathname)) {
+  //   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  //   if (!token) {
+  //     if (pathname.startsWith("/api/")) {
+  //       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  //     }
+  //     const loginUrl = new URL("/auth/login", request.url);
+  //     loginUrl.searchParams.set("callbackUrl", pathname);
+  //     return NextResponse.redirect(loginUrl);
+  //   }
+  // }
 
   // ── CORS Preflight Handler ────────────────────────────────
   if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {

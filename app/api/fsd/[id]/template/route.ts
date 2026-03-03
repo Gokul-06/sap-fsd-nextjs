@@ -5,10 +5,10 @@ import { safeErrorResponse } from "@/lib/api-error";
 // PATCH /api/fsd/[id]/template — Toggle template status and set industry
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { isTemplate, industry } = body;
 

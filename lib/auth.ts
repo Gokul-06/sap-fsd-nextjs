@@ -10,10 +10,8 @@
 
 import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import Credentials from "next-auth/providers/credentials";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/db";
 
 // ── Azure AD Configuration Check ─────────────────────────────
 export const isAzureConfigured = Boolean(
@@ -41,60 +39,37 @@ if (isAzureConfigured) {
   );
 }
 
-// Demo Credentials — always available
+// Demo Credentials — always available (no database dependency)
 providers.push(
-  CredentialsProvider({
+  Credentials({
     id: "demo-login",
     name: "Demo Login",
     credentials: {
       name: { label: "Your Name", type: "text", placeholder: "Demo User" },
     },
     async authorize(credentials) {
+      // Simple demo login — no database needed
       const displayName =
         (credentials?.name as string)?.trim() || "Demo User";
+      const slug = displayName.toLowerCase().replace(/\s+/g, "-");
 
-      // Find or create a demo user in the database
-      try {
-        let user = await prisma.user.findFirst({
-          where: {
-            email: `demo-${displayName.toLowerCase().replace(/\s+/g, "-")}@demo.local`,
-            role: "demo",
-          },
-        });
+      console.log("[Auth] Demo login for:", displayName);
 
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              name: displayName,
-              email: `demo-${displayName.toLowerCase().replace(/\s+/g, "-")}@demo.local`,
-              role: "demo",
-            },
-          });
-        } else {
-          // Update name if changed
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: { name: displayName },
-          });
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
-      } catch (error) {
-        console.error("[Auth] Demo user creation failed:", error);
-        return null;
-      }
+      return {
+        id: `demo-${slug}`,
+        name: displayName,
+        email: `${slug}@demo.local`,
+      };
     },
   })
 );
 
 // ── NextAuth Configuration ────────────────────────────────────
 const authConfig: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+  // NOTE: PrismaAdapter removed — it conflicts with Credentials provider in
+  // NextAuth v5 (tries to create Account records with missing OAuth fields).
+  // Users are managed manually in the authorize() callback via Prisma.
+  // When Azure AD OAuth is added, the adapter can be re-enabled.
 
   // JWT strategy required for credentials provider
   session: {
@@ -113,7 +88,7 @@ const authConfig: NextAuthConfig = {
       // On initial sign-in, add user data to JWT
       if (user) {
         token.id = user.id;
-        token.role = (user as unknown as Record<string, unknown>).role as string || "user";
+        token.role = "demo";
       }
       return token;
     },

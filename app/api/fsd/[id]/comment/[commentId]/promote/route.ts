@@ -7,10 +7,10 @@ import { safeErrorResponse } from "@/lib/api-error";
 // POST /api/fsd/[id]/comment/[commentId]/promote — promote a comment to a feedback rule
 export async function POST(
   request: Request,
-  { params }: { params: { id: string; commentId: string } }
+  { params }: { params: Promise<{ id: string; commentId: string }> }
 ) {
   try {
-    const { id, commentId } = params;
+    const { id, commentId } = await params;
     const body = await request.json();
     const { ruleType } = body;
 

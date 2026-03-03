@@ -1,0 +1,33 @@
+# Use Node 20 Alpine as the pipeline image so npm/npx are available directly
+image: node:20-alpine
+
+definitions:
+  caches:
+    # Caches all installed npm packages between pipeline runs
+    node-modules: node_modules
+    # Caches Next.js webpack/turbopack incremental build artifacts
+    nextjs-cache: .next/cache
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build & Push Docker Image
+          services:
+            - docker
+          caches:
+            - node-modules
+            - nextjs-cache
+          script:
+            - ': "${ATLASSIAN_EMAIL:?ATLASSIAN_EMAIL is not set}"'
+            - ': "${API_TOKEN:?API_TOKEN is not set}"'
+            - export IMAGE_NAME="crg.apkg.io/itwesternacher/sapfsd"
+            # Install only if node_modules cache is stale or missing
+            - npm ci --prefer-offline
+            - npx prisma generate
+            - NODE_OPTIONS="--max_old_space_size=3072" NEXT_TELEMETRY_DISABLED=1 npm run build
+            # Package pre-built artifacts into a slim Docker image (no compilation, just COPY)
+            - echo "$API_TOKEN" | docker login crg.apkg.io -u "$ATLASSIAN_EMAIL" --password-stdin
+            - docker build -f Dockerfile.ci -t "$IMAGE_NAME:latest" -t "$IMAGE_NAME:$BITBUCKET_COMMIT" .
+            - docker push "$IMAGE_NAME:latest"
+            - docker push "$IMAGE_NAME:$BITBUCKET_COMMIT"

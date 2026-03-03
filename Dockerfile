@@ -14,11 +14,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client (uses linux-musl-openssl-3.0.x binary)
 RUN npx prisma generate
 
-# Build Next.js (standalone output)
-RUN npm run build
+# Build Next.js — 3 GB heap (leaves ~1 GB for OS/Docker in a 4 GB CI container)
+RUN NODE_OPTIONS="--max_old_space_size=3072" npm run build
 
 # ── Stage 3: Production runner ──────────────────────────────────
 FROM node:20-alpine AS runner
@@ -39,7 +39,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma schema (needed for runtime migrations if desired)
+# Copy Prisma engines (must be present at runtime)
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy Prisma CLI and package.json for runtime migrations
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+
+# Copy Prisma schema + config (needed for runtime migrations if desired)
 COPY --from=builder /app/prisma ./prisma
 
 USER nextjs

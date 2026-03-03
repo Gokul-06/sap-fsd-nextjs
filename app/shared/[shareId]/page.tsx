@@ -42,9 +42,10 @@ async function getFsdByShareId(shareId: string) {
 export default async function SharedFsdPage({
   params,
 }: {
-  params: { shareId: string };
+  params: Promise<{ shareId: string }>;
 }) {
-  const fsd = await getFsdByShareId(params.shareId);
+  const { shareId } = await params;
+  const fsd = await getFsdByShareId(shareId);
 
   if (!fsd) {
     notFound();
