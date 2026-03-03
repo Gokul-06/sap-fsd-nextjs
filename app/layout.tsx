@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { CookieConsent } from "@/components/shared/cookie-consent";
 import { ConditionalAnalytics } from "@/components/shared/conditional-analytics";
 import { AuthProvider } from "@/components/providers/session-provider";
+import { FloatingClouds } from "@/components/shared/floating-clouds";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,7 +29,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
-          <div className="flex min-h-screen flex-col">
+          <FloatingClouds />
+          <div className="relative z-10 flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />

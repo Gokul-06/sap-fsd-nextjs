@@ -22,88 +22,39 @@ const fadeUp = {
   }),
 };
 
-/* ───── Cloud SVG paths ───── */
-function Cloud({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
-      <path
-        d="M160 60H40c-11 0-20-9-20-20s9-20 20-20c1.5 0 3 .15 4.4.45C49.5 10.2 59 3 70 3c8 0 15 3.8 19.5 9.6C93 7.5 99 4 106 4c13.3 0 24 10.7 24 24 0 1.2-.1 2.3-.3 3.4C135.5 33 140 37.7 140 43.5c0 .5 0 1-.1 1.5h20c11 0 20 9 20 20s-9 15-20 15Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+/* ───── Typewriter component ───── */
+const headlineText = "Generate SAP Specifications";
 
-/* ───── Floating cloud with Framer Motion ───── */
-function FloatingCloud({
-  size,
-  top,
-  left,
-  right,
-  opacity,
-  duration,
-  delay,
-}: {
-  size: number;
-  top: string;
-  left?: string;
-  right?: string;
-  opacity: number;
-  duration: number;
-  delay: number;
-}) {
+function TypewriterHeadline() {
   return (
-    <motion.div
-      className="absolute pointer-events-none text-sky-200"
-      style={{ top, left, right, width: size, opacity }}
-      animate={{
-        x: [0, 25, -15, 0],
-        y: [0, -10, 5, 0],
-      }}
-      transition={{
-        duration,
-        delay,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-    >
-      <Cloud />
-    </motion.div>
+    <span className="inline">
+      {headlineText.split("").map((char, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.04,
+            delay: 0.4 + i * 0.035,
+            ease: "easeOut",
+          }}
+        >
+          {char}
+        </motion.span>
+      ))}
+    </span>
   );
 }
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/80 to-sky-100/60 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/80 to-sky-100/60 px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Soft radial glows */}
         <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-sky-200/25 blur-3xl animate-float-slow" />
         <div className="absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-sky-100/40 blur-3xl animate-float-medium" />
         <div className="absolute left-1/3 top-1/2 h-48 w-48 rounded-full bg-blue-100/20 blur-2xl animate-float-fast" />
-
-        {/* Floating clouds */}
-        <FloatingCloud size={220} top="8%" left="3%" opacity={0.25} duration={22} delay={0} />
-        <FloatingCloud size={160} top="15%" right="5%" opacity={0.18} duration={18} delay={2} />
-        <FloatingCloud size={280} top="55%" left="60%" opacity={0.12} duration={25} delay={4} />
-        <FloatingCloud size={140} top="70%" left="8%" opacity={0.2} duration={20} delay={1} />
-        <FloatingCloud size={180} top="35%" right="15%" opacity={0.15} duration={23} delay={3} />
-
-        {/* Subtle drifting dots */}
-        <div className="absolute right-0 top-0 h-full w-1/2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute h-1.5 w-1.5 rounded-full bg-sky-300/30 animate-drift"
-              style={{
-                top: `${15 + i * 16}%`,
-                right: `${10 + i * 12}%`,
-                animationDelay: `${i * 1.5}s`,
-                animationDuration: `${8 + i * 2}s`,
-              }}
-            />
-          ))}
-        </div>
       </div>
 
       <div className="relative mx-auto max-w-5xl text-center">
@@ -121,25 +72,24 @@ export function HeroSection() {
           </span>
         </motion.div>
 
-        {/* Headline */}
-        <motion.h1
-          initial="hidden"
-          animate="visible"
-          custom={0.15}
-          variants={fadeUp}
-          className="text-4xl font-bold tracking-tight text-slate-800 sm:text-5xl lg:text-6xl"
-        >
-          Generate SAP Specifications
-          <span className="block mt-2 bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">
+        {/* Headline with Typewriter */}
+        <h1 className="text-4xl font-bold tracking-tight text-slate-800 sm:text-5xl lg:text-6xl">
+          <TypewriterHeadline />
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.4, ease: easeOut }}
+            className="block mt-2 bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent"
+          >
             in Seconds
-          </span>
-        </motion.h1>
+          </motion.span>
+        </h1>
 
         {/* Subheading */}
         <motion.p
           initial="hidden"
           animate="visible"
-          custom={0.3}
+          custom={1.7}
           variants={fadeUp}
           className="mx-auto mt-6 max-w-2xl text-lg text-slate-500 leading-relaxed"
         >
@@ -154,7 +104,7 @@ export function HeroSection() {
               key={stat.label}
               initial="hidden"
               animate="visible"
-              custom={0.4 + i * 0.1}
+              custom={1.9 + i * 0.1}
               variants={fadeUp}
               whileHover={{
                 scale: 1.06,
@@ -169,7 +119,6 @@ export function HeroSection() {
               <p className="mt-1.5 text-xs font-medium text-slate-400 uppercase tracking-wider">
                 {stat.label}
               </p>
-              {/* Animated bottom border on hover */}
               <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-transparent via-sky-400/0 to-transparent group-hover:via-sky-400/60 transition-all duration-500" />
             </motion.div>
           ))}
@@ -179,7 +128,7 @@ export function HeroSection() {
         <motion.div
           initial="hidden"
           animate="visible"
-          custom={0.8}
+          custom={2.3}
           variants={fadeUp}
           className="mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
         >

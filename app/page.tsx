@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { HeroSection } from "@/components/shared/hero-section";
 import { AlreadyKnewSection } from "@/components/shared/already-knew-section";
-import { AnimatedCityscape } from "@/components/shared/animated-cityscape";
+import { BentoFeatures } from "@/components/shared/bento-features";
 import { HowItWorksSection } from "@/components/shared/how-it-works";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { FaqSection } from "@/components/shared/faq-section";
+import { CtaSection } from "@/components/shared/cta-section";
 import { prisma } from "@/lib/db";
-import { FileText, Clock, Sparkles, ArrowRight } from "lucide-react";
+import { FileText } from "lucide-react";
 import { ScrollReveal } from "@/components/animations/scroll-reveal";
-import { StaggerContainer, StaggerItem } from "@/components/animations/stagger-container";
 import { StatsSection } from "@/components/shared/stats-section";
 import { RecentDocuments } from "@/components/shared/recent-documents";
 
@@ -43,23 +42,16 @@ export default async function HomePage() {
     <div className="overflow-hidden">
       <HeroSection />
 
-      {/* Animated Supply Chain Cityscape */}
-      <ScrollReveal>
-        <section className="bg-white w-full overflow-hidden">
-          <AnimatedCityscape />
-        </section>
-      </ScrollReveal>
-
       {/* Gradient transition */}
-      <div className="h-16 bg-gradient-to-b from-white to-sky-50/30" />
+      <div className="h-16 bg-gradient-to-b from-sky-100/60 to-sky-50/30" />
 
       {/* Already Knew? Stats */}
       <AlreadyKnewSection />
 
-      {/* Gradient transition */}
-      <div className="h-8 bg-gradient-to-b from-sky-50/40 to-sky-50/20" />
+      {/* Bento Feature Grid — Cluely-style */}
+      <BentoFeatures />
 
-      {/* How It Works — NEW */}
+      {/* How It Works */}
       <HowItWorksSection />
 
       {/* Quick Stats + Recent Documents */}
@@ -91,6 +83,12 @@ export default async function HomePage() {
           </ScrollReveal>
         )}
       </div>
+
+      {/* FAQ */}
+      <FaqSection />
+
+      {/* Bottom CTA */}
+      <CtaSection />
     </div>
   );
 }

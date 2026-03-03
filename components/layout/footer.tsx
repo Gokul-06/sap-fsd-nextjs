@@ -1,24 +1,68 @@
 import Link from "next/link";
 
+const footerLinks = {
+  Product: [
+    { label: "Generate FSD", href: "/generate" },
+    { label: "Templates", href: "/templates" },
+    { label: "Train Agents", href: "/train" },
+    { label: "History", href: "/history" },
+  ],
+  Resources: [
+    { label: "Features", href: "/features" },
+    { label: "AI Landscape", href: "/ai-landscape" },
+    { label: "Feedback", href: "/feedback" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+  ],
+};
+
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-white/50 backdrop-blur-sm py-5">
+    <footer className="border-t border-slate-100 bg-white py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
-            Westernacher Consulting &middot; 2026
-          </p>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-              Privacy Policy
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Brand column */}
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="text-lg font-bold text-slate-800">
+              Westernacher
             </Link>
-            <Link href="/terms" className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-              Terms of Service
-            </Link>
-            <span className="text-xs text-muted-foreground/60">
+            <p className="mt-2 text-sm text-muted-foreground max-w-xs">
+              AI-powered SAP functional specification documents for enterprise teams.
+            </p>
+            <p className="mt-4 text-xs text-muted-foreground/60">
               Powered by WE-AI
-            </span>
+            </p>
           </div>
+
+          {/* Link columns */}
+          {Object.entries(footerLinks).map(([category, links]) => (
+            <div key={category}>
+              <h4 className="text-sm font-semibold text-slate-800 mb-4">
+                {category}
+              </h4>
+              <ul className="space-y-2.5">
+                {links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-slate-800 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom bar */}
+        <div className="mt-12 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground/60">
+            &copy; 2026 Westernacher Consulting. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
