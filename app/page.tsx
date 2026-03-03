@@ -39,7 +39,7 @@ export default async function HomePage() {
   const { fsds, total } = await getRecentFsds();
 
   return (
-    <div className="overflow-hidden bg-gradient-to-b from-white via-sky-50/40 via-[45%] to-slate-100/80">
+    <div className="overflow-hidden">
       <HeroSection />
 
       {/* Already Knew? Stats */}

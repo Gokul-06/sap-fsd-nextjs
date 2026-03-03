@@ -29,6 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
+          <div className="fixed inset-0 z-0 bg-gradient-to-b from-white via-sky-50/60 via-[45%] to-slate-100/80 pointer-events-none" />
           <FloatingClouds />
           <div className="relative z-10 flex min-h-screen flex-col">
             <Header />

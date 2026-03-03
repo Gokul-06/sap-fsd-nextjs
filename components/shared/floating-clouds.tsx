@@ -67,6 +67,7 @@ interface DriftingCloudProps {
   direction: "left" | "right";
   blur: number;
   color?: string;
+  startOffset?: string;
 }
 
 function DriftingCloud({
@@ -77,9 +78,10 @@ function DriftingCloud({
   delay,
   direction,
   blur,
-  color = "rgba(186, 230, 253, 0.6)",
+  color = "rgba(186, 230, 253, 0.7)",
+  startOffset,
 }: DriftingCloudProps) {
-  const startX = direction === "right" ? "-20vw" : "110vw";
+  const startX = startOffset ?? (direction === "right" ? "-20vw" : "110vw");
   const endX = direction === "right" ? "110vw" : "-20vw";
 
   return (
@@ -89,7 +91,7 @@ function DriftingCloud({
       initial={{ x: startX }}
       animate={{
         x: [startX, endX],
-        y: [0, -20, 12, -8, 0],
+        y: [0, -15, 10, -6, 0],
       }}
       transition={{
         x: { duration, delay, repeat: Infinity, ease: "linear" },
@@ -104,38 +106,51 @@ function DriftingCloud({
 /**
  * Page-wide floating clouds overlay.
  * Soft blurred clouds that drift across the entire viewport.
+ * z-[1] sits above the bg gradient (z-0) but below content (z-10).
  */
 export function FloatingClouds() {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
       {/* Layer 1 — Large soft distant clouds */}
       <DriftingCloud
-        size={350} top="3%" opacity={0.35} duration={60} delay={0}
-        direction="right" blur={40} color="rgba(186, 230, 253, 0.5)"
+        size={380} top="5%" opacity={0.55} duration={55} delay={0}
+        direction="right" blur={35} color="rgba(186, 230, 253, 0.6)"
+        startOffset="10vw"
       />
       <DriftingCloud
-        size={400} top="15%" opacity={0.25} duration={70} delay={12}
-        direction="left" blur={50} color="rgba(191, 219, 254, 0.4)"
+        size={420} top="18%" opacity={0.4} duration={65} delay={8}
+        direction="left" blur={45} color="rgba(191, 219, 254, 0.55)"
+        startOffset="60vw"
       />
 
       {/* Layer 2 — Medium clouds */}
       <DriftingCloud
-        size={250} top="38%" opacity={0.3} duration={48} delay={6}
-        direction="right" blur={30} color="rgba(186, 230, 253, 0.45)"
+        size={280} top="40%" opacity={0.5} duration={45} delay={2}
+        direction="right" blur={28} color="rgba(186, 230, 253, 0.55)"
+        startOffset="40vw"
       />
       <DriftingCloud
-        size={280} top="52%" opacity={0.2} duration={55} delay={20}
-        direction="left" blur={35} color="rgba(224, 242, 254, 0.5)"
+        size={320} top="55%" opacity={0.35} duration={52} delay={15}
+        direction="left" blur={32} color="rgba(224, 242, 254, 0.6)"
       />
 
       {/* Layer 3 — Smaller closer clouds */}
       <DriftingCloud
-        size={180} top="68%" opacity={0.28} duration={40} delay={4}
-        direction="right" blur={22} color="rgba(186, 230, 253, 0.4)"
+        size={200} top="70%" opacity={0.45} duration={38} delay={1}
+        direction="right" blur={20} color="rgba(186, 230, 253, 0.5)"
+        startOffset="25vw"
       />
       <DriftingCloud
-        size={220} top="80%" opacity={0.18} duration={52} delay={25}
-        direction="left" blur={28} color="rgba(191, 219, 254, 0.35)"
+        size={240} top="82%" opacity={0.3} duration={48} delay={18}
+        direction="left" blur={25} color="rgba(191, 219, 254, 0.45)"
+        startOffset="75vw"
+      />
+
+      {/* Extra cloud for hero area — immediately visible */}
+      <DriftingCloud
+        size={300} top="8%" opacity={0.45} duration={50} delay={0}
+        direction="left" blur={30} color="rgba(224, 242, 254, 0.55)"
+        startOffset="50vw"
       />
     </div>
   );

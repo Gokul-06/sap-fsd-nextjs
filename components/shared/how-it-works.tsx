@@ -18,7 +18,7 @@ const steps = [
     icon: Sparkles,
     title: "Generate with WE-AI",
     description:
-      "Our 6-agent team analyzes your requirements using McKinsey frameworks and generates a comprehensive FSD in under 30 seconds.",
+      "Our 6-agent team analyzes your requirements using enterprise best practices and generates a comprehensive FSD in under 30 seconds.",
     color: "#3B82F6",
     bgColor: "bg-blue-50",
     hoverBg: "group-hover:bg-blue-100/80",
