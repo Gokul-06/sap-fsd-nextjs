@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+// Auth import — uncomment when Azure AD is configured
+// import { getToken } from "next-auth/jwt";
 
 // ── Public routes that don't require authentication ─────────
 const publicRoutes = [
@@ -56,27 +57,21 @@ function cleanupRateLimitMap() {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── Auth Check (for protected routes) ───────────────────────
-  if (!isPublicRoute(pathname)) {
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-
-    if (!token) {
-      // Not authenticated — redirect to login (for pages) or return 401 (for API)
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json(
-          { error: "Authentication required" },
-          { status: 401 }
-        );
-      }
-
-      const loginUrl = new URL("/auth/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
+  // ── Auth Check — BYPASSED for now (re-enable when Azure AD is configured) ──
+  // if (!isPublicRoute(pathname)) {
+  //   const token = await getToken({
+  //     req: request,
+  //     secret: process.env.NEXTAUTH_SECRET,
+  //   });
+  //   if (!token) {
+  //     if (pathname.startsWith("/api/")) {
+  //       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  //     }
+  //     const loginUrl = new URL("/auth/login", request.url);
+  //     loginUrl.searchParams.set("callbackUrl", pathname);
+  //     return NextResponse.redirect(loginUrl);
+  //   }
+  // }
 
   // ── CORS Preflight Handler ────────────────────────────────
   if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {
