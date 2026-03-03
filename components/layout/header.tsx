@@ -5,40 +5,22 @@ import { usePathname } from "next/navigation";
 // Auth imports — uncomment when Azure AD is configured
 // import { useSession, signOut } from "next-auth/react";
 // import { LogOut, LogIn, ChevronDown } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
 
 const navItems = [
   { href: "/generate", label: "Generate" },
-  { href: "/train", label: "Train Agents" },
-  { href: "/history", label: "History" },
-  { href: "/templates", label: "Templates" },
   { href: "/features", label: "Features" },
-  { href: "/feedback", label: "Feedback" },
 ];
 
 export function Header() {
   const pathname = usePathname();
   // Auth state — uncomment when Azure AD is configured
   // const { data: session, status } = useSession();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Don't render header on login page
   if (pathname === "/auth/login") return null;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full bg-white/40 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left side: Branding */}
         <div className="flex items-center gap-3">
@@ -53,32 +35,30 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Right side: Navigation + Auth */}
-        <div className="flex items-center gap-6">
-          <nav className="flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? "text-sky-600 bg-sky-50"
-                      : "text-muted-foreground hover:text-slate-800 hover:bg-sky-50/50"
-                  }`}
-                >
-                  {item.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-sky-500 rounded-full" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+        {/* Right side: Navigation */}
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  isActive
+                    ? "text-sky-600 bg-sky-50/70"
+                    : "text-muted-foreground hover:text-slate-800 hover:bg-sky-50/50"
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-sky-500 rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
 
-          {/* Auth Section — uncomment when Azure AD is configured */}
-        </div>
+        {/* Auth Section — uncomment when Azure AD is configured */}
       </div>
     </header>
   );
