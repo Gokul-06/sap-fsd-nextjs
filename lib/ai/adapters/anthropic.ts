@@ -145,20 +145,16 @@ export class AnthropicAdapter implements AIProviderAdapter {
         return { type: "text" as const, text: block.text };
       }
       // Document block — pass through to Anthropic's format
+      // Use type assertion because the SDK's DocumentBlockParam has a complex
+      // discriminated union for source that doesn't easily match our generic type
       return {
-        type: "document" as const,
+        type: "document",
         source: {
-          type: "base64" as const,
-          media_type: block.source.media_type as
-            | "application/pdf"
-            | "text/plain"
-            | "text/html"
-            | "text/csv"
-            | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          type: "base64",
+          media_type: block.source.media_type,
           data: block.source.data,
         },
-      };
+      } as unknown as Anthropic.ContentBlockParam;
     });
   }
 }
