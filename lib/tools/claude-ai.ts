@@ -1,30 +1,18 @@
 /**
- * Claude AI Integration for FSD Generation
- * Calls Anthropic API to generate intelligent narrative content
+ * AI Integration for FSD Generation
+ * Multi-provider support: Anthropic, Azure AI Foundry, OpenAI, Azure OpenAI.
+ * Calls the configured AI provider to generate intelligent narrative content
  * for FSD sections that require contextual writing.
  * Supports feedback context, few-shot examples, and multi-language output.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { getProvider, isAIEnabled as providerIsAIEnabled } from '@/lib/ai/provider';
 import type { TeamLeadContext, FsdType } from '@/lib/types';
 import { prisma } from '@/lib/db';
 import type { AgentRole } from '@/lib/agent-training-questions';
 
-let client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY not set in environment');
-    }
-    client = new Anthropic({ apiKey });
-  }
-  return client;
-}
-
 export function isAIEnabled(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+  return providerIsAIEnabled();
 }
 
 // ─── Agent Training Injection ───
@@ -44,35 +32,15 @@ async function getAgentTraining(agentRole: AgentRole): Promise<string> {
 }
 
 export async function callClaude(prompt: string, maxTokens: number = 2048, timeoutMs: number = 120000): Promise<string> {
-  const anthropic = getClient();
+  const provider = getProvider();
 
-  // Wrap with a timeout to prevent single calls from hanging
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const response = await provider.complete({
+    messages: [{ role: 'user', content: prompt }],
+    maxTokens,
+    timeoutMs,
+  });
 
-  try {
-    const message = await anthropic.messages.create(
-      {
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }],
-      },
-      { signal: controller.signal },
-    );
-
-    const block = message.content[0];
-    if (block.type === 'text') {
-      return block.text;
-    }
-    return '';
-  } catch (err: unknown) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error(`Claude API call timed out after ${timeoutMs / 1000}s`);
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
+  return response.text;
 }
 
 /** Append extra context (feedback rules + few-shot) to a prompt if available */

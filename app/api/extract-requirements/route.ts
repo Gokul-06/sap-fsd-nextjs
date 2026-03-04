@@ -2,7 +2,7 @@ export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
-import Anthropic from "@anthropic-ai/sdk";
+import { getProvider, isAIEnabled } from "@/lib/ai/provider";
 import { safeErrorResponse } from "@/lib/api-error";
 import { documentCache } from "@/lib/cache";
 
@@ -35,11 +35,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    // Check AI provider is configured
+    if (!isAIEnabled()) {
       return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY not configured" },
+        { error: "No AI provider configured. Set AI_PROVIDER and the corresponding API key." },
         { status: 500 }
+      );
+    }
+
+    // Check document vision support
+    const provider = getProvider();
+    if (!provider.supportsDocumentVision) {
+      return NextResponse.json(
+        {
+          error: `Document extraction requires Anthropic provider. Current provider (${provider.displayName}) does not support PDF/DOCX uploads. Set AI_PROVIDER=anthropic or AI_PROVIDER=azure-anthropic.`,
+        },
+        { status: 400 }
       );
     }
 
@@ -59,11 +70,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const anthropic = new Anthropic({ apiKey });
-
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
+    const response = await provider.completeWithDocument({
       messages: [
         {
           role: "user",
@@ -94,17 +101,15 @@ If the document doesn't contain SAP-specific requirements, extract general busin
           ],
         },
       ],
+      maxTokens: 4096,
     });
 
-    const block = message.content[0];
-    const requirements = block.type === "text" ? block.text : "";
-
     const result = {
-      requirements,
+      requirements: response.text,
       fileName: fileName || "uploaded-document.pdf",
       tokenUsage: {
-        input: message.usage?.input_tokens || 0,
-        output: message.usage?.output_tokens || 0,
+        input: response.usage?.inputTokens || 0,
+        output: response.usage?.outputTokens || 0,
       },
     };
 

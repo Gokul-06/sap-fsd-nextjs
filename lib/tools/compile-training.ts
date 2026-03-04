@@ -2,11 +2,10 @@
 // Compile Training: AI-powered personality prompt generator
 // Takes questionnaire answers and distills them into
 // a concise personality instruction for each agent.
+// Uses the multi-provider AI abstraction layer.
 // ─────────────────────────────────────────────
 
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic();
+import { getProvider } from "@/lib/ai/provider";
 
 export async function compilePersonalityPrompt(
   agentRole: string,
@@ -17,13 +16,7 @@ export async function compilePersonalityPrompt(
     .map(([q, a], i) => `Q${i + 1}: ${q}\nA${i + 1}: ${a}`)
     .join("\n\n");
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `You are an expert prompt engineer. Analyze the following interview answers from an SAP expert named "${expertName}" (role: ${agentRole}) and create a concise PERSONALITY INSTRUCTION (max 400 words) that captures:
+  const prompt = `You are an expert prompt engineer. Analyze the following interview answers from an SAP expert named "${expertName}" (role: ${agentRole}) and create a concise PERSONALITY INSTRUCTION (max 400 words) that captures:
 
 1. Their thinking style and decision-making approach
 2. Their priorities and what they always focus on
@@ -43,15 +36,17 @@ ${qaPairs}
 
 ---
 
-Return ONLY the personality instruction text. No explanations, no headers, no markdown formatting.`,
-      },
-    ],
+Return ONLY the personality instruction text. No explanations, no headers, no markdown formatting.`;
+
+  const provider = getProvider();
+  const response = await provider.complete({
+    messages: [{ role: "user", content: prompt }],
+    maxTokens: 1024,
   });
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
+  if (!response.text) {
     throw new Error("Failed to compile personality prompt — no text response");
   }
 
-  return textBlock.text.trim();
+  return response.text.trim();
 }
