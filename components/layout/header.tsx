@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/generate", label: "Generate" },
-  { href: "/features", label: "Features" },
+  { href: "/", label: "Home" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export function Header() {
@@ -30,7 +30,10 @@ export function Header() {
         {/* Right side: Navigation */}
         <nav className="flex items-center gap-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

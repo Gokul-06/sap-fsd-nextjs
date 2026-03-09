@@ -15,9 +15,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Westernacher | SAP FSD Generator",
+  title: "Westernacher | AI Agent Hub",
   description:
-    "AI-powered SAP Functional Specification Document generator. Create comprehensive FSDs for SAP implementations in seconds.",
+    "AI-powered consulting tools by Westernacher. Generate functional specifications, proposals, and more using AI agents.",
 };
 
 export default function RootLayout({

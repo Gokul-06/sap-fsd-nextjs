@@ -1,16 +1,9 @@
 import Link from "next/link";
 
 const footerLinks = {
-  Product: [
-    { label: "Generate FSD", href: "/generate" },
-    { label: "Templates", href: "/templates" },
-    { label: "Train Agents", href: "/train" },
-    { label: "History", href: "/history" },
-  ],
   Resources: [
-    { label: "Features", href: "/features" },
+    { label: "Blog", href: "/blog" },
     { label: "AI Landscape", href: "/ai-landscape" },
-    { label: "Feedback", href: "/feedback" },
   ],
   Legal: [
     { label: "Privacy Policy", href: "/privacy" },
@@ -22,14 +15,14 @@ export function Footer() {
   return (
     <footer className="py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="text-lg font-bold text-slate-800">
               Westernacher
             </Link>
             <p className="mt-2 text-sm text-muted-foreground max-w-xs">
-              AI-powered SAP functional specification documents for enterprise teams.
+              AI-powered consulting tools for enterprise teams.
             </p>
             <p className="mt-4 text-xs text-muted-foreground/60">
               Powered by WE-AI
