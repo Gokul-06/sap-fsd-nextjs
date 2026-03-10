@@ -186,11 +186,11 @@ export async function orchestrateAgentTeam(
   // run in 2 batches: Batch A (3 specialists) → Batch B (2 specialists).
   // This reduces concurrent API calls while keeping total time manageable.
   const specialistAgents = [
-    { name: "Business Analyst", role: "Executive Summary & Requirements", status: "pending" as AgentStatus },
-    { name: "Solution Architect", role: "Solution Design & Process Flows", status: "pending" as AgentStatus },
-    { name: "Technical Consultant", role: "Error Handling & Output Management", status: "pending" as AgentStatus },
-    { name: "Project Manager", role: "Migration, Cutover & Testing", status: "pending" as AgentStatus },
-    { name: "BPMN Process Architect", role: "Signavio Process Flow & BPMN XML", status: "pending" as AgentStatus },
+    { name: "Summary Writer", role: "Executive Summary & Requirements", status: "pending" as AgentStatus },
+    { name: "Design Module", role: "Solution Design & Process Flows", status: "pending" as AgentStatus },
+    { name: "Technical Module", role: "Error Handling & Output Management", status: "pending" as AgentStatus },
+    { name: "Planning Module", role: "Migration, Cutover & Testing", status: "pending" as AgentStatus },
+    { name: "Process Flow Module", role: "Signavio Process Flow & BPMN XML", status: "pending" as AgentStatus },
   ];
 
   onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents] });
@@ -236,9 +236,9 @@ export async function orchestrateAgentTeam(
     // Batch A: Business Analyst + Solution Architect + Technical Consultant (3 parallel)
     onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Starting Batch 1 (3 specialists)..." });
     const [baResult, saResult, tcResult] = await withTimeout(Promise.all([
-      runSpecialist(0, () => aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType), "Business Analyst"),
-      runSpecialist(1, () => aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief, fsdType), "Solution Architect"),
-      runSpecialist(2, () => aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief, fsdType), "Technical Consultant"),
+      runSpecialist(0, () => aiBusinessAnalyst(input.title, primaryModule, input.requirements, processArea, language, extraContext, depth, teamLeadBrief, fsdType), "Summary Writer"),
+      runSpecialist(1, () => aiSolutionArchitect(primaryModule, input.requirements, processArea, tableNames, tcodeNames, appNames, language, extraContext, depth, teamLeadBrief, fsdType), "Design Module"),
+      runSpecialist(2, () => aiTechnicalConsultant(primaryModule, processArea, input.requirements, language, extraContext, depth, teamLeadBrief, fsdType), "Technical Module"),
     ]), timeouts.phase2, "Phase 2 Batch A (BA + SA + TC)");
     ba = baResult;
     sa = saResult;
@@ -247,8 +247,8 @@ export async function orchestrateAgentTeam(
     // Batch B: Project Manager + BPMN Architect (2 parallel)
     onProgress({ phase: "specialists", status: "running", agents: [...specialistAgents], message: "Starting Batch 2 (2 specialists)..." });
     const [pmResult, bpmnResult] = await withTimeout(Promise.all([
-      runSpecialist(3, () => aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief, fsdType), "Project Manager"),
-      runSpecialist(4, () => aiBpmnProcessDiagram(primaryModule, input.requirements, processArea, language, [extraContext, teamLeadBrief].filter(Boolean).join("\n\n"), depth, fsdType), "BPMN Process Architect"),
+      runSpecialist(3, () => aiProjectManager(primaryModule, processArea, tableNames, language, extraContext, depth, teamLeadBrief, fsdType), "Planning Module"),
+      runSpecialist(4, () => aiBpmnProcessDiagram(primaryModule, input.requirements, processArea, language, [extraContext, teamLeadBrief].filter(Boolean).join("\n\n"), depth, fsdType), "Process Flow Module"),
     ]), timeouts.phase2, "Phase 2 Batch B (PM + BPMN)");
     pm = pmResult;
     bpmn = bpmnResult;
@@ -291,9 +291,9 @@ export async function orchestrateAgentTeam(
       status: "running",
       message: "Specialists peer-reviewing each other's work (MAR Reflexion)...",
       agents: [
-        { name: "Solution Architect", role: "Reviewing Executive Summary", status: "running" },
-        { name: "Business Analyst", role: "Reviewing Error Handling & Output", status: "running" },
-        { name: "Project Manager", role: "Reviewing Proposed Solution", status: "running" },
+        { name: "Design Module", role: "Reviewing Executive Summary", status: "running" },
+        { name: "Summary Writer", role: "Reviewing Error Handling & Output", status: "running" },
+        { name: "Planning Module", role: "Reviewing Proposed Solution", status: "running" },
       ],
     });
 
@@ -377,9 +377,9 @@ export async function orchestrateAgentTeam(
         status: "completed",
         message: `Peer review complete — ${allCritiques.length} improvements applied`,
         agents: [
-          { name: "Solution Architect", role: "Reviewed Executive Summary", status: critiqueResults[0] ? "completed" : "failed" },
-          { name: "Business Analyst", role: "Reviewed Error Handling & Output", status: critiqueResults[1] ? "completed" : "failed" },
-          { name: "Project Manager", role: "Reviewed Proposed Solution", status: critiqueResults[2] ? "completed" : "failed" },
+          { name: "Design Module", role: "Reviewed Executive Summary", status: critiqueResults[0] ? "completed" : "failed" },
+          { name: "Summary Writer", role: "Reviewed Error Handling & Output", status: critiqueResults[1] ? "completed" : "failed" },
+          { name: "Planning Module", role: "Reviewed Proposed Solution", status: critiqueResults[2] ? "completed" : "failed" },
         ],
       });
     } catch (err: unknown) {

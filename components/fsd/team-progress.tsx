@@ -156,14 +156,14 @@ export function TeamProgress({ progress }: TeamProgressProps) {
                   Phase 1
                 </span>
                 <span className="text-sm font-medium text-[#1B2A4A]">
-                  Project Director
+                  Context Analyzer
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {tlStatus === "running"
                   ? "Analyzing requirements, building shared context..."
                   : tlStatus === "completed"
-                  ? "Director brief ready — terminology, process steps, decisions"
+                  ? "Context brief ready — terminology, process steps, decisions"
                   : "Waiting to start..."}
               </p>
             </div>
@@ -209,15 +209,15 @@ export function TeamProgress({ progress }: TeamProgressProps) {
                   Phase 2
                 </span>
                 <span className="text-sm font-medium text-[#1B2A4A]">
-                  Specialist Agents
+                  Writing Modules
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {specStatus === "running"
-                  ? "5 specialists working in parallel with shared context..."
+                  ? "5 modules working in parallel with shared context..."
                   : specStatus === "completed"
-                  ? "All specialists completed"
-                  : "Waiting for Project Director..."}
+                  ? "All modules completed"
+                  : "Waiting for Context Analyzer..."}
               </p>
             </div>
             <StatusIcon status={specStatus} />
@@ -226,11 +226,11 @@ export function TeamProgress({ progress }: TeamProgressProps) {
           {/* Specialist agent cards — 2x2 grid */}
           <div className="grid grid-cols-2 gap-2">
             {(progress?.agents || [
-              { name: "Business Analyst", role: "Executive Summary", status: "pending" as AgentStatus },
-              { name: "Solution Architect", role: "Solution Design", status: "pending" as AgentStatus },
-              { name: "Technical Consultant", role: "Error Handling", status: "pending" as AgentStatus },
-              { name: "Project Manager", role: "Migration & Cutover", status: "pending" as AgentStatus },
-              { name: "BPMN Process Architect", role: "Signavio Process Flow", status: "pending" as AgentStatus },
+              { name: "Summary Writer", role: "Executive Summary", status: "pending" as AgentStatus },
+              { name: "Design Module", role: "Solution Design", status: "pending" as AgentStatus },
+              { name: "Technical Module", role: "Error Handling", status: "pending" as AgentStatus },
+              { name: "Planning Module", role: "Migration & Cutover", status: "pending" as AgentStatus },
+              { name: "Process Flow Module", role: "Signavio Process Flow", status: "pending" as AgentStatus },
             ]).map((agent, i) => {
               const Icon = SPECIALIST_ICONS[i] || FileText;
               return (
@@ -304,10 +304,10 @@ export function TeamProgress({ progress }: TeamProgressProps) {
               </div>
               <p className="text-xs text-muted-foreground">
                 {ccStatus === "running"
-                  ? "Specialists peer-reviewing each other's work..."
+                  ? "Modules cross-reviewing each other's work..."
                   : ccStatus === "completed"
-                  ? "Peer review complete — sections improved"
-                  : "Waiting for specialist agents..."}
+                  ? "Cross-review complete — sections improved"
+                  : "Waiting for writing modules..."}
               </p>
             </div>
             <StatusIcon status={ccStatus} />
@@ -317,9 +317,9 @@ export function TeamProgress({ progress }: TeamProgressProps) {
           {(progress?.phase === "cross-critique" || ccStatus === "completed") && (
             <div className="grid grid-cols-1 gap-1.5">
               {(progress?.phase === "cross-critique" ? progress.agents : [
-                { name: "Solution Architect", role: "Reviewed Executive Summary", status: "completed" as AgentStatus },
-                { name: "Business Analyst", role: "Reviewed Error Handling & Output", status: "completed" as AgentStatus },
-                { name: "Project Manager", role: "Reviewed Proposed Solution", status: "completed" as AgentStatus },
+                { name: "Design Module", role: "Reviewed Executive Summary", status: "completed" as AgentStatus },
+                { name: "Summary Writer", role: "Reviewed Error Handling & Output", status: "completed" as AgentStatus },
+                { name: "Planning Module", role: "Reviewed Proposed Solution", status: "completed" as AgentStatus },
               ])?.map((agent) => (
                 <div
                   key={agent.name}
@@ -391,7 +391,7 @@ export function TeamProgress({ progress }: TeamProgressProps) {
                   ? "Checking consistency, terminology, cross-references..."
                   : qrStatus === "completed"
                   ? "All sections reviewed and corrected"
-                  : "Waiting for cross-critique..."}
+                  : "Waiting for cross-review..."}
               </p>
             </div>
             <StatusIcon status={qrStatus} />
