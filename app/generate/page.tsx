@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -23,6 +22,7 @@ import { RefinementChat } from "@/components/fsd/refinement-chat";
 import { QuickTemplates, TemplateData } from "@/components/fsd/quick-templates";
 import { MethodologyTips } from "@/components/fsd/methodology-tips";
 import { PdfUpload } from "@/components/fsd/pdf-upload";
+import { StructuredRequirements } from "@/components/fsd/structured-requirements";
 import { TeamProgress } from "@/components/fsd/team-progress";
 import { SectionSelector } from "@/components/fsd/section-selector";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
@@ -35,7 +35,6 @@ import {
   Plus,
   CheckCircle2,
   Sparkles,
-  BookOpen,
   Layers,
   AlertCircle,
   Pencil,
@@ -483,72 +482,12 @@ function GeneratePageContent() {
                     }}
                   />
 
-                  {/* Requirements textarea */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium block text-[#1B2A4A]">
-                        Business Requirements{" "}
-                        <span className="text-destructive">*</span>
-                      </label>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-                        <Layers className="h-3 w-3" />
-                        {requirements.length > 0 && (
-                          <span>
-                            {requirements.length} chars ·{" "}
-                            {requirements.split(/\n/).filter(Boolean).length}{" "}
-                            lines
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Textarea
-                      placeholder={`Paste your business requirements, user stories, or process description here...
-
-Example (SAP Activate — Explore Phase):
-─────────────────────────────────
-1. Process Scope: Define the end-to-end business process
-2. Transactions: Reference SAP transactions (ME21N, VA01, FB01...)
-3. Business Rules: Approval workflows, tolerances, validations
-4. Integrations: Cross-module touchpoints (FI↔MM, SD↔FI...)
-5. Reports & Analytics: Required dashboards, KPIs, Fiori apps
-6. Authorization: Role-based access requirements
-7. Data Migration: Legacy data objects to migrate`}
-                      value={requirements}
-                      onChange={(e) => {
-                        setRequirements(e.target.value);
-                        if (templateApplied) setTemplateApplied(false);
-                      }}
-                      className="min-h-[220px] resize-y font-mono text-sm border-[#0091DA]/20 focus:border-[#0091DA] focus:ring-[#0091DA]/20"
-                    />
-
-                    {/* Smart tips based on content length */}
-                    <div className="mt-2 flex items-start gap-2">
-                      {requirements.length < 50 && requirements.length > 0 ? (
-                        <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-md">
-                          <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                          <span>
-                            Add more detail for better results — include
-                            transactions, business rules, and process steps
-                          </span>
-                        </div>
-                      ) : requirements.length >= 200 ? (
-                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-md">
-                          <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-                          <span>
-                            Great detail! WE-AI will generate a comprehensive
-                            14-section FSD
-                          </span>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground/60">
-                          <BookOpen className="h-3 w-3 inline mr-1" />
-                          The more detail you provide, the richer the generated
-                          specification
-                        </p>
-                      )}
-                    </div>
-
-                  </div>
+                  {/* Structured Requirements */}
+                  <StructuredRequirements
+                    value={requirements}
+                    onChange={setRequirements}
+                    onTemplateAppliedChange={setTemplateApplied}
+                  />
 
                   {/* SAP Activate Methodology Tips (collapsible) */}
                   <MethodologyTips />

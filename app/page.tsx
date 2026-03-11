@@ -24,7 +24,7 @@ const hubCards = [
     title: "FSD Generator",
     description:
       "Generate Functional Specification Documents using AI based on business requirements.",
-    href: "/generate",
+    href: "/fsd",
     icon: FileText,
     iconColor: "text-sky-500",
     iconBg: "bg-sky-50",
