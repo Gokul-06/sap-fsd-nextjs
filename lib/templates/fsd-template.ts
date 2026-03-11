@@ -186,8 +186,9 @@ export function generateFSDMarkdown(params: {
   requirements: string;
   processArea: string;
   sections: Record<string, Record<string, string>>;
+  selectedSections?: string[];
 }): string {
-  const { title, module, relatedModules, date, author, projectName, requirements, processArea, sections } = params;
+  const { title, module, relatedModules, date, author, projectName, requirements, processArea, sections, selectedSections } = params;
 
   let md = `# Functional Specification Document\n\n`;
   md += `## ${title}\n\n`;
@@ -201,6 +202,9 @@ export function generateFSDMarkdown(params: {
   md += `---\n\n`;
 
   for (const section of FSD_TEMPLATE_SECTIONS) {
+    // Skip sections not selected by user
+    if (selectedSections && !selectedSections.includes(section.id)) continue;
+
     md += `## ${section.title}\n\n`;
     md += `> ${section.description}\n\n`;
 

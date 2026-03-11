@@ -24,7 +24,9 @@ import { QuickTemplates, TemplateData } from "@/components/fsd/quick-templates";
 import { MethodologyTips } from "@/components/fsd/methodology-tips";
 import { PdfUpload } from "@/components/fsd/pdf-upload";
 import { TeamProgress } from "@/components/fsd/team-progress";
+import { SectionSelector } from "@/components/fsd/section-selector";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
+import { ALL_SECTION_IDS } from "@/lib/constants/section-config";
 import { useToast } from "@/hooks/use-toast";
 import {
   FileText,
@@ -46,7 +48,10 @@ import { FSD_TYPE_LABELS } from "@/lib/types";
 
 function GeneratePageContent() {
   const searchParams = useSearchParams();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [selectedSections, setSelectedSections] = useState<Set<string>>(
+    new Set(ALL_SECTION_IDS)
+  );
   const [title, setTitle] = useState("");
   const [projectName, setProjectName] = useState("");
   const [author, setAuthor] = useState("GP");
@@ -124,6 +129,7 @@ function GeneratePageContent() {
     documentDepth,
     generationMode,
     fsdType,
+    selectedSections: Array.from(selectedSections),
   };
 
   function handleTemplateSelect(template: TemplateData) {
@@ -138,7 +144,7 @@ function GeneratePageContent() {
     });
   }
 
-  async function handleGenerate() {
+  function handleNextToSections() {
     if (!title.trim()) {
       toast({
         title: "Missing title",
@@ -156,15 +162,16 @@ function GeneratePageContent() {
       });
       return;
     }
-
     setStep(2);
+  }
+
+  async function handleGenerate() {
+    setStep(3);
     const data = await generate(formInput);
     if (data) {
-      setStep(3);
+      setStep(4);
     } else {
-      setStep(1);
-      // Note: error state may not be updated yet due to React batching,
-      // so we show a generic message. The actual error is logged to console.
+      setStep(2);
       toast({
         title: "Generation failed",
         description:
@@ -215,6 +222,7 @@ function GeneratePageContent() {
     setRequirements("");
     setCurrentMarkdown("");
     setTemplateApplied(false);
+    setSelectedSections(new Set(ALL_SECTION_IDS));
     setIsEditing(false);
     setEditBuffer("");
   }
@@ -249,8 +257,8 @@ function GeneratePageContent() {
         </div>
       </div>
 
-      {/* Step 1 & 2: Full-width layout */}
-      {step !== 3 && (
+      {/* Step 1, 2 & 3: Full-width layout */}
+      {step !== 4 && (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* STEP 1: Form */}
           {step === 1 && (
@@ -555,62 +563,72 @@ Example (SAP Activate — Explore Phase):
                     </span>
                   </div>
 
-                  {/* Animated Generate Button */}
+                  {/* Next: Customize Sections Button */}
                   <button
                     className="generate-btn w-full relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0091DA] to-[#1B2A4A] text-white font-semibold py-4 text-base transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none flex items-center justify-center gap-2"
-                    onClick={handleGenerate}
+                    onClick={handleNextToSections}
                     disabled={isGenerating}
                   >
                     {/* Shimmer overlay */}
                     <div className="absolute inset-0 animate-shimmer-btn opacity-30 pointer-events-none" />
-                    {generationMode === "agent-team" ? (
-                      <Users className="h-5 w-5 relative z-10" />
-                    ) : (
-                      <Sparkles className="h-5 w-5 relative z-10" />
-                    )}
+                    <Layers className="h-5 w-5 relative z-10" />
                     <span className="relative z-10">
-                      {generationMode === "agent-team"
-                        ? "Generate FSD with Agent Team"
-                        : "Generate FSD with WE-AI"}
+                      Next: Customize Sections
                     </span>
                   </button>
 
-                  {/* What you get */}
-                  <div className="bg-[#0091DA]/[0.04] border border-[#0091DA]/10 rounded-lg p-4">
-                    <p className="text-xs font-semibold text-[#1B2A4A] mb-2">
-                      Your FSD will include:
+                  {/* Section count hint */}
+                  <div className="bg-[#0091DA]/[0.04] border border-[#0091DA]/10 rounded-lg p-3 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      <Layers className="h-3 w-3 inline mr-1" />
+                      Next step: Choose which of the <span className="font-semibold text-[#0091DA]">14 FSD sections</span> to include in your document
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-1.5 gap-x-4 text-[11px] text-muted-foreground">
-                      {[
-                        "Executive Summary",
-                        "Solution Design",
-                        "Business Process Flow",
-                        "Functional Requirements",
-                        "Technical Architecture",
-                        "Data Migration Plan",
-                        "Integration Points",
-                        "Authorization Concept",
-                        "Test Scenarios",
-                        "Cutover Plan",
-                        "SAP Object Mapping",
-                        "Cross-Module Impacts",
-                        "Risk Assessment",
-                        "Training Plan",
-                      ].map((section) => (
-                        <div key={section} className="flex items-center gap-1.5">
-                          <div className="h-1 w-1 rounded-full bg-[#0091DA]" />
-                          {section}
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
           )}
 
-          {/* STEP 2: Loading */}
+          {/* STEP 2: Section Selector */}
           {step === 2 && (
+            <div className="space-y-5 animate-fade-in-up">
+              <Card className="shadow-lg border border-[#0091DA]/10">
+                <CardContent className="p-6">
+                  <SectionSelector
+                    selectedSections={selectedSections}
+                    onSelectionChange={setSelectedSections}
+                  />
+
+                  <div className="mt-6 flex items-center justify-between">
+                    <Button
+                      variant="outline"
+                      className="border-[#0091DA]/30 text-[#0091DA] hover:bg-[#0091DA]/5"
+                      onClick={() => setStep(1)}
+                    >
+                      ← Back to Requirements
+                    </Button>
+                    <button
+                      className="generate-btn relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0091DA] to-[#1B2A4A] text-white font-semibold py-3 px-8 text-base transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/30 hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
+                      onClick={handleGenerate}
+                    >
+                      <div className="absolute inset-0 animate-shimmer-btn opacity-30 pointer-events-none" />
+                      {generationMode === "agent-team" ? (
+                        <Users className="h-5 w-5 relative z-10" />
+                      ) : (
+                        <Sparkles className="h-5 w-5 relative z-10" />
+                      )}
+                      <span className="relative z-10">
+                        Generate FSD ({selectedSections.size} sections)
+                      </span>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* STEP 3: Loading */}
+          {step === 3 && (
             <Card className="shadow-lg border border-[#0091DA]/10">
               <CardContent>
                 {generationMode === "agent-team" ? (
@@ -624,8 +642,8 @@ Example (SAP Activate — Explore Phase):
         </div>
       )}
 
-      {/* STEP 3: Results — Full-width two-column layout */}
-      {step === 3 && result && (
+      {/* STEP 4: Results — Full-width two-column layout */}
+      {step === 4 && result && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           {/* Success Banner */}
           <div className="bg-gradient-to-r from-[#0091DA]/10 to-emerald-50 border border-[#0091DA]/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
@@ -654,7 +672,7 @@ Example (SAP Activate — Explore Phase):
           {/* Stats */}
           <FsdResultStats
             primaryModule={result.primaryModule}
-            sections={14}
+            sections={selectedSections.size}
             integrations={result.crossModuleImpacts.length}
             processArea={result.processArea}
           />

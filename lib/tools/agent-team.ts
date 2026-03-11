@@ -140,6 +140,7 @@ export async function orchestrateAgentTeam(
       date: new Date().toISOString().split("T")[0],
       author: input.author || "GP", projectName: input.projectName,
       requirements: input.requirements, processArea, sections,
+      selectedSections: input.selectedSections,
     });
     onProgress({ phase: "complete", status: "completed" });
     return { markdown, classifiedModules, primaryModule, processArea, language, crossModuleImpacts, warnings };
@@ -508,6 +509,7 @@ export async function orchestrateAgentTeam(
     requirements: input.requirements,
     processArea,
     sections,
+    selectedSections: input.selectedSections,
   });
 
   const output: FSDOutput = {

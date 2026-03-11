@@ -12,6 +12,7 @@ export const generateFsdSchema = z.object({
   documentDepth: z.enum(["standard", "comprehensive"]).default("standard"),
   generationMode: z.enum(["standard", "agent-team"]).default("standard"),
   fsdType: z.enum(["standard", "enhancement", "interface", "report", "form", "conversion", "workflow"]).default("standard"),
+  selectedSections: z.array(z.string()).optional(),
 });
 
 // ── Comment ───────────────────────────────────────────────

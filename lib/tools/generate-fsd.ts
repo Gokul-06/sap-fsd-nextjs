@@ -50,6 +50,7 @@ export interface FSDInput {
   includeAllSections?: boolean;
   feedbackContext?: string; // Injected feedback rules context
   fewShotContext?: string; // Injected few-shot examples context
+  selectedSections?: string[]; // User-selected sections to include
 }
 
 export interface FSDOutput {
@@ -186,6 +187,7 @@ export async function generateFSD(input: FSDInput): Promise<FSDOutput> {
     requirements: input.requirements,
     processArea,
     sections,
+    selectedSections: input.selectedSections,
   });
 
   return {

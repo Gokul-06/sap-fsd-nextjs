@@ -29,6 +29,7 @@ interface GenerationInput {
   documentDepth?: "standard" | "comprehensive";
   generationMode?: "standard" | "agent-team";
   fsdType?: string;
+  selectedSections?: string[];
 }
 
 export function useFsdGeneration() {

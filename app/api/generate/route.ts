@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 // ─── Standard Generation (unchanged) ───
 
 async function handleStandardGeneration(body: Record<string, unknown>) {
-  const { title, projectName, author, requirements, module, language, documentDepth, fsdType } = body as {
+  const { title, projectName, author, requirements, module, language, documentDepth, fsdType, selectedSections } = body as {
     title: string;
     projectName: string;
     author: string;
@@ -55,6 +55,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
     language?: string;
     documentDepth?: string;
     fsdType?: string;
+    selectedSections?: string[];
   };
 
   if (!title || !projectName || !author || !requirements) {
@@ -98,6 +99,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
     fsdType: ((fsdType as string) || "standard") as import("@/lib/types").FsdType,
     feedbackContext: feedbackContext || undefined,
     fewShotContext: fewShotContext || undefined,
+    selectedSections,
   });
 
   // Increment appliedCount (fire-and-forget)
@@ -122,7 +124,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
 // ─── Agent Teams Generation (SSE streaming) ───
 
 async function handleAgentTeamGeneration(body: Record<string, unknown>) {
-  const { title, projectName, author, requirements, module, language, documentDepth, fsdType } = body as {
+  const { title, projectName, author, requirements, module, language, documentDepth, fsdType, selectedSections } = body as {
     title: string;
     projectName: string;
     author: string;
@@ -131,6 +133,7 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
     language?: string;
     documentDepth?: string;
     fsdType?: string;
+    selectedSections?: string[];
   };
 
   if (!title || !projectName || !author || !requirements) {
@@ -188,6 +191,7 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
             fsdType: ((fsdType as string) || "standard") as import("@/lib/types").FsdType,
             feedbackContext: feedbackContext || undefined,
             fewShotContext: fewShotContext || undefined,
+            selectedSections,
           },
           sendEvent,
         );

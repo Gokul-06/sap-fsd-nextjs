@@ -1,11 +1,12 @@
 interface StepIndicatorProps {
-  currentStep: 1 | 2 | 3;
+  currentStep: 1 | 2 | 3 | 4;
 }
 
 const steps = [
   { number: 1, label: "Requirements" },
-  { number: 2, label: "Generating" },
-  { number: 3, label: "Results" },
+  { number: 2, label: "Sections" },
+  { number: 3, label: "Generating" },
+  { number: 4, label: "Results" },
 ];
 
 export function StepIndicator({ currentStep }: StepIndicatorProps) {
@@ -61,7 +62,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
             {/* Connector line (not after last step) */}
             {index < steps.length - 1 && (
               <div
-                className={`mx-3 mb-5 h-0.5 w-16 sm:w-24 ${
+                className={`mx-3 mb-5 h-0.5 w-12 sm:w-16 ${
                   step.number < currentStep ? "bg-emerald-500" : "bg-gray-200"
                 }`}
               />
