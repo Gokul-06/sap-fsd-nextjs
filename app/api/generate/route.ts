@@ -15,6 +15,17 @@ import { identifyProcessArea } from "@/lib/tools/classify-module";
 import { logAudit } from "@/lib/audit";
 import { generateFsdSchema, validateBody } from "@/lib/validations";
 import type { AgentProgressEvent } from "@/lib/types";
+import {
+  createThread,
+  addMessage,
+  addMessages,
+  linkThreadToFsd,
+  summarizeThread,
+  recallMemories,
+  buildMemoryContext,
+  getPastThreadSummaries,
+  buildCrossSessionContext,
+} from "@/lib/services/agent-memory";
 
 export async function POST(request: Request) {
   try {
@@ -68,7 +79,8 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
   const primaryModule = (module as string) || "MM";
   const processArea = identifyProcessArea(requirements as string, primaryModule);
 
-  const [feedbackRules, fewShotExamples] = await Promise.all([
+  // Fetch feedback rules, few-shot examples, and agent memories in parallel
+  const [feedbackRules, fewShotExamples, memories, pastSummaries] = await Promise.all([
     prisma.feedbackRule
       .findMany({
         where: {
@@ -83,10 +95,33 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
       })
       .catch(() => []),
     getTopRatedExamples(primaryModule, processArea, 2).catch(() => []),
+    recallMemories({
+      module: primaryModule,
+      processArea,
+      projectName: projectName as string,
+      limit: 10,
+    }).catch(() => []),
+    getPastThreadSummaries({
+      projectName: projectName as string,
+      module: primaryModule,
+      limit: 3,
+    }).catch(() => []),
   ]);
 
   const feedbackContext = buildFeedbackContext(feedbackRules);
   const fewShotContext = buildFewShotContext(fewShotExamples);
+  const memoryContext = buildMemoryContext(memories);
+  const crossSessionContext = buildCrossSessionContext(pastSummaries);
+
+  // Create conversation thread for this generation (fire-and-forget for speed)
+  const sessionId = `std-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const threadPromise = createThread({
+    sessionId,
+    projectName: projectName as string,
+    module: primaryModule,
+    processArea,
+    threadType: "generation",
+  }).catch(() => null);
 
   const result = await generateFSD({
     title: title as string,
@@ -97,7 +132,7 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
     language: (language as string) || "English",
     documentDepth: (documentDepth as "standard" | "comprehensive") || "standard",
     fsdType: ((fsdType as string) || "standard") as import("@/lib/types").FsdType,
-    feedbackContext: feedbackContext || undefined,
+    feedbackContext: [feedbackContext, memoryContext, crossSessionContext].filter(Boolean).join("") || undefined,
     fewShotContext: fewShotContext || undefined,
     selectedSections,
   });
@@ -113,11 +148,23 @@ async function handleStandardGeneration(body: Record<string, unknown>) {
       .catch(() => {});
   }
 
+  // Store conversation in thread (fire-and-forget)
+  threadPromise.then(async (threadId) => {
+    if (!threadId) return;
+    await addMessages(threadId, [
+      { role: "user", content: `Generate FSD: ${title}\nModule: ${primaryModule}\nRequirements: ${(requirements as string).slice(0, 1000)}` },
+      { role: "assistant", content: `Generated FSD with ${result.warnings.length} warnings. Module: ${result.primaryModule}, Process Area: ${result.processArea}` },
+    ]);
+    // Summarize the thread for future cross-session context
+    summarizeThread(threadId).catch(() => {});
+  }).catch(() => {});
+
   return NextResponse.json({
     ...result,
     aiEnabled: isAIEnabled(),
     usedFeedbackRuleIds: feedbackRules.map((r) => r.id),
     usedFewShotFsdIds: fewShotExamples.map((e) => e.fsdId),
+    memoryUsed: memories.length,
   });
 }
 
@@ -146,7 +193,8 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
   const primaryModule = (module as string) || "MM";
   const processArea = identifyProcessArea(requirements as string, primaryModule);
 
-  const [feedbackRules, fewShotExamples] = await Promise.all([
+  // Fetch feedback rules, few-shot examples, and agent memories in parallel
+  const [feedbackRules, fewShotExamples, memories, pastSummaries] = await Promise.all([
     prisma.feedbackRule
       .findMany({
         where: {
@@ -161,10 +209,38 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
       })
       .catch(() => []),
     getTopRatedExamples(primaryModule, processArea, 2).catch(() => []),
+    recallMemories({
+      module: primaryModule,
+      processArea,
+      projectName: projectName as string,
+      limit: 10,
+    }).catch(() => []),
+    getPastThreadSummaries({
+      projectName: projectName as string,
+      module: primaryModule,
+      limit: 3,
+    }).catch(() => []),
   ]);
 
   const feedbackContext = buildFeedbackContext(feedbackRules);
   const fewShotContext = buildFewShotContext(fewShotExamples);
+  const memoryContext = buildMemoryContext(memories);
+  const crossSessionContext = buildCrossSessionContext(pastSummaries);
+
+  // Create conversation thread
+  const sessionId = `agent-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  let threadId: string | null = null;
+  try {
+    threadId = await createThread({
+      sessionId,
+      projectName: projectName as string,
+      module: primaryModule,
+      processArea,
+      threadType: "generation",
+    });
+  } catch {
+    // Non-critical
+  }
 
   // Create SSE stream
   const encoder = new TextEncoder();
@@ -173,11 +249,29 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
       function sendEvent(event: AgentProgressEvent) {
         const data = JSON.stringify(event);
         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+
+        // Log agent progress messages to thread (fire-and-forget)
+        if (threadId && event.message) {
+          addMessage(threadId, {
+            role: "agent",
+            agentName: event.phase,
+            content: event.message,
+            metadata: { phase: event.phase, status: event.status },
+          }).catch(() => {});
+        }
       }
 
       try {
-        console.log("[AgentTeam] Starting orchestration for:", title, "module:", primaryModule);
+        console.log("[AgentTeam] Starting orchestration for:", title, "module:", primaryModule, `(${memories.length} memories loaded)`);
         const startTime = Date.now();
+
+        // Log user input to thread
+        if (threadId) {
+          addMessage(threadId, {
+            role: "user",
+            content: `Generate FSD (Agent Team): ${title}\nModule: ${primaryModule}\nRequirements: ${(requirements as string).slice(0, 1000)}`,
+          }).catch(() => {});
+        }
 
         const result = await orchestrateAgentTeam(
           {
@@ -189,7 +283,7 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
             language: (language as string) || "English",
             documentDepth: (documentDepth as "standard" | "comprehensive") || "standard",
             fsdType: ((fsdType as string) || "standard") as import("@/lib/types").FsdType,
-            feedbackContext: feedbackContext || undefined,
+            feedbackContext: [feedbackContext, memoryContext, crossSessionContext].filter(Boolean).join("") || undefined,
             fewShotContext: fewShotContext || undefined,
             selectedSections,
           },
@@ -197,7 +291,18 @@ async function handleAgentTeamGeneration(body: Record<string, unknown>) {
         );
 
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`[AgentTeam] Completed in ${elapsed}s. Warnings: ${result.warnings.length}`);
+        console.log(`[AgentTeam] Completed in ${elapsed}s. Warnings: ${result.warnings.length}. Memories used: ${memories.length}`);
+
+        // Log completion to thread
+        if (threadId) {
+          addMessage(threadId, {
+            role: "assistant",
+            content: `Agent Team completed in ${elapsed}s. Module: ${result.primaryModule}, Process Area: ${result.processArea}, Warnings: ${result.warnings.length}`,
+            metadata: { elapsed, warningCount: result.warnings.length },
+          }).catch(() => {});
+          // Summarize for future context (fire-and-forget)
+          summarizeThread(threadId).catch(() => {});
+        }
 
         // Send final complete event with the full result
         sendEvent({

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { safeErrorResponse } from "@/lib/api-error";
 import { ratingSchema, validateBody } from "@/lib/validations";
+import { learnFromHighRating } from "@/lib/services/agent-memory";
 
 export async function POST(
   request: Request,
@@ -32,6 +33,19 @@ export async function POST(
     });
 
     logAudit("RATE_FSD", "Fsd", id, request, `Rated ${rating}/5`);
+
+    // Learn from high ratings (fire-and-forget)
+    if (rating >= 4) {
+      learnFromHighRating({
+        fsdId: id,
+        rating,
+        module: fsd.primaryModule,
+        processArea: fsd.processArea,
+        projectName: fsd.projectName,
+        requirements: fsd.markdown.slice(0, 300),
+        userId: fsd.userId || undefined,
+      }).catch(() => {});
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

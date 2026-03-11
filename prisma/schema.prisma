@@ -141,6 +141,66 @@ model AgentTraining {
   @@index([agentRole, isActive])
 }
 
+// ── Agent Memory ────────────────────────────────────────────
+// Stores conversation threads so agents remember past interactions,
+// learn from corrections, and build cross-session context.
+
+model ConversationThread {
+  id           String   @id @default(cuid())
+  sessionId    String   // Browser session / generation run ID
+  projectName  String   // Links memory to specific project context
+  module       String?  // SAP module for scoping memory
+  processArea  String?
+  threadType   String   @default("generation") // "generation" | "refinement" | "feedback"
+  summary      String?  @db.Text // AI-generated summary of the conversation
+  userId       String?
+  fsdId        String?  // Link to the generated FSD (if applicable)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  messages     ConversationMessage[]
+
+  @@index([userId, projectName])
+  @@index([module, processArea])
+  @@index([sessionId])
+  @@index([fsdId])
+}
+
+model ConversationMessage {
+  id        String   @id @default(cuid())
+  threadId  String
+  thread    ConversationThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role      String   // "user" | "assistant" | "system" | "agent"
+  agentName String?  // Which agent sent this (e.g. "context-analyzer", "design-module")
+  content   String   @db.Text
+  metadata  String?  @db.Text // JSON: { tokens, duration, phase, sectionId }
+  createdAt DateTime @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+model AgentMemory {
+  id           String   @id @default(cuid())
+  memoryType   String   // "preference" | "correction" | "pattern" | "insight" | "client_context"
+  module       String?  // SAP module scope (null = global)
+  processArea  String?
+  projectName  String?  // Scoped to a specific project
+  content      String   @db.Text // The actual memory/learning
+  importance   Int      @default(5) // 1-10 scale, higher = more important
+  recallCount  Int      @default(0) // How many times this memory was used
+  source       String   // "user_correction" | "refinement" | "rating" | "ai_extracted" | "manual"
+  sourceId     String?  // ID of the source (comment, FSD, thread)
+  expiresAt    DateTime? // Optional TTL for temporary memories
+  userId       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([memoryType, module])
+  @@index([projectName])
+  @@index([importance])
+  @@index([recallCount])
+  @@index([userId, memoryType])
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   action     String   // CREATE_FSD, DELETE_FSD, EXPORT_DATA, SHARE_FSD, RATE_FSD, CREATE_COMMENT, USER_LOGIN, USER_LOGOUT, etc.

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { safeErrorResponse, stripHtmlTags } from "@/lib/api-error";
 import { commentSchema, validateBody } from "@/lib/validations";
+import { learnFromComment } from "@/lib/services/agent-memory";
 
 export async function GET(
   request: Request,
@@ -71,6 +72,15 @@ export async function POST(
     });
 
     logAudit("CREATE_COMMENT", "Comment", comment.id, request, `On FSD ${id}`);
+
+    // Learn from comment (fire-and-forget — non-blocking AI extraction)
+    learnFromComment({
+      comment: sanitizedContent,
+      module: fsd.primaryModule,
+      processArea: fsd.processArea,
+      fsdId: id,
+      userId: fsd.userId || undefined,
+    }).catch(() => {});
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {

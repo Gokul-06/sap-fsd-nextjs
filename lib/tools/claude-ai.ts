@@ -43,10 +43,36 @@ export async function callClaude(prompt: string, maxTokens: number = 2048, timeo
   return response.text;
 }
 
+/**
+ * Call Claude with full conversation history (multi-turn).
+ * Used when agent memory provides prior context for richer generation.
+ */
+export async function callClaudeWithHistory(
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+  maxTokens: number = 2048,
+  timeoutMs: number = 120000,
+): Promise<string> {
+  const provider = getProvider();
+
+  const response = await provider.complete({
+    messages,
+    maxTokens,
+    timeoutMs,
+  });
+
+  return response.text;
+}
+
 /** Append extra context (feedback rules + few-shot) to a prompt if available */
 function withExtraContext(prompt: string, extraContext?: string): string {
   if (!extraContext?.trim()) return prompt;
   return `${prompt}\n\n${extraContext}`;
+}
+
+/** Append agent memory context to a prompt if available */
+export function withMemoryContext(prompt: string, memoryContext?: string): string {
+  if (!memoryContext?.trim()) return prompt;
+  return `${prompt}\n\n${memoryContext}`;
 }
 
 /** Build a depth instruction to inject into AI prompts */

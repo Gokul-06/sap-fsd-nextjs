@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { callClaude, isAIEnabled } from "@/lib/tools/claude-ai";
 import { safeErrorResponse } from "@/lib/api-error";
 import { refineSchema, validateBody } from "@/lib/validations";
+import { learnFromRefinement } from "@/lib/services/agent-memory";
 
 /**
  * Smart FSD refinement endpoint.
@@ -28,7 +29,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const { markdown, instruction } = validated.data;
+    const { markdown, instruction, module } = validated.data;
+
+    // Learn from refinement instruction (fire-and-forget — non-blocking)
+    learnFromRefinement({
+      instruction,
+      module: module || undefined,
+    }).catch(() => {});
 
     // Step 1: Ask Claude for specific replacements (fast, small output)
     const prompt = `You are an SAP FSD document editor. Given the user's instruction and the current document, identify the EXACT text changes needed.
