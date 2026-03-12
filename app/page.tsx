@@ -9,10 +9,10 @@ import {
   Sparkles,
   Zap,
   Brain,
-  Download,
   Shield,
   ChevronRight,
-  Clock,
+  Globe,
+  Bot,
 } from "lucide-react";
 import {
   StaggerContainer,
@@ -33,78 +33,68 @@ const fadeUp = {
   }),
 };
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: (delay: number) => ({
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, delay, ease },
-  }),
-};
-
-/* ─── Data ─── */
-const hubCards = [
+/* ─── Hub-level data ─── */
+const agents = [
   {
     title: "FSD Generator",
     subtitle: "Functional Specifications",
     description:
-      "Generate comprehensive SAP Functional Specification Documents using our 6-agent AI system. From requirements to a complete, professional FSD in under 30 seconds.",
+      "Generate comprehensive SAP Functional Specification Documents with our 6-agent AI system. 14 sections covering scope, process flows, data models, authorization, and more — in under 30 seconds.",
     href: "/fsd",
     icon: FileText,
     gradient: "from-sky-500 to-blue-600",
     glowColor: "rgba(14, 165, 233, 0.15)",
-    lightBg: "bg-sky-500/10",
-    tag: "Most Popular",
+    tag: "Live",
+    tagColor: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
+    highlights: ["14 FSD Sections", "6 AI Agents", "Word Export", "AI Refinement Chat"],
   },
   {
     title: "Proposal Generator",
     subtitle: "Consulting Proposals",
     description:
-      "Create polished consulting proposals using AI-assisted templates and structured client information. Perfect for pre-sales and project kickoffs.",
+      "Create polished SAP consulting proposals using AI-assisted templates and structured client information. Perfect for pre-sales, project kickoffs, and client presentations.",
     href: "/proposal",
     icon: ScrollText,
     gradient: "from-violet-500 to-purple-600",
     glowColor: "rgba(139, 92, 246, 0.15)",
-    lightBg: "bg-violet-500/10",
-    tag: "New",
+    tag: "Live",
+    tagColor: "bg-emerald-50 text-emerald-600 border-emerald-200/50",
+    highlights: ["AI Templates", "Client Structuring", "Professional Export", "Multi-Language"],
   },
 ];
 
-const stats = [
-  { value: 14, suffix: "", label: "FSD Sections", icon: FileText },
-  { value: 30, suffix: "s", label: "Generation Time", icon: Clock },
-  { value: 6, suffix: "", label: "AI Agents", icon: Brain },
-  { value: 100, suffix: "%", label: "SAP Coverage", icon: Shield },
+const platformStats = [
+  { value: 2, suffix: "", label: "AI Agents", icon: Bot },
+  { value: 8, suffix: "+", label: "SAP Modules", icon: Globe },
+  { value: 30, suffix: "s", label: "Avg. Generation", icon: Zap },
+  { value: 6, suffix: "", label: "Specialized AIs", icon: Brain },
 ];
 
-const steps = [
+const capabilities = [
   {
-    step: "01",
-    title: "Input Requirements",
-    description:
-      "Paste your business requirements or use our guided form with 7 structured sections.",
-    icon: FileText,
-    color: "text-sky-500",
-  },
-  {
-    step: "02",
-    title: "AI Generates",
-    description:
-      "Our 6-agent AI team analyzes and generates a comprehensive 14-section FSD document.",
     icon: Brain,
-    color: "text-violet-500",
+    title: "Multi-Agent Architecture",
+    description:
+      "Each agent leverages specialized AI models working in concert — analyzing requirements, mapping processes, and generating enterprise-grade documents.",
+    gradient: "from-sky-500 to-blue-600",
   },
   {
-    step: "03",
-    title: "Refine & Export",
+    icon: Shield,
+    title: "SAP Best Practices",
     description:
-      "Refine sections with AI chat, then download as a professionally formatted Word document.",
-    icon: Download,
-    color: "text-emerald-500",
+      "Built on deep SAP knowledge — 200+ objects, transaction codes, Fiori apps, CDS views, and BAPIs baked into every generated document.",
+    gradient: "from-violet-500 to-purple-600",
+  },
+  {
+    icon: Zap,
+    title: "Seconds, Not Weeks",
+    description:
+      "What used to take days of manual work now happens in under 30 seconds. Enterprise-grade output at the speed of thought.",
+    gradient: "from-emerald-500 to-teal-600",
   },
 ];
 
-/* ─── Animated gradient text component ─── */
+/* ─── Components ─── */
 function GradientText({
   children,
   className = "",
@@ -121,7 +111,6 @@ function GradientText({
   );
 }
 
-/* ─── Floating orb component ─── */
 function FloatingOrb({
   className,
   delay = 0,
@@ -161,32 +150,18 @@ export default function HomePage() {
   return (
     <div className="relative">
       {/* ════════════════════════════════════════════
-          HERO SECTION — Cinematic gradient mesh
+          HERO — The AI Agent Hub
       ════════════════════════════════════════════ */}
       <section
         ref={heroRef}
-        className="relative overflow-hidden px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-24 lg:px-8 min-h-[80vh] flex items-center"
+        className="relative overflow-hidden px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20 lg:px-8 min-h-[70vh] flex items-center"
       >
-        {/* Gradient mesh background */}
+        {/* Background */}
         <div className="absolute inset-0 -z-10">
-          {/* Base gradient */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-sky-50/30" />
-
-          {/* Animated orbs */}
-          <FloatingOrb
-            className="w-[600px] h-[600px] -top-40 -left-40 bg-sky-200/30 blur-[120px] animate-float-slow"
-            delay={0}
-          />
-          <FloatingOrb
-            className="w-[500px] h-[500px] -top-20 -right-32 bg-violet-200/25 blur-[100px] animate-float-medium"
-            delay={0.5}
-          />
-          <FloatingOrb
-            className="w-[400px] h-[400px] bottom-0 left-1/3 bg-blue-200/20 blur-[80px] animate-float-fast"
-            delay={1}
-          />
-
-          {/* Interactive mouse-follow glow */}
+          <FloatingOrb className="w-[600px] h-[600px] -top-40 -left-40 bg-sky-200/30 blur-[120px] animate-float-slow" />
+          <FloatingOrb className="w-[500px] h-[500px] -top-20 -right-32 bg-violet-200/25 blur-[100px] animate-float-medium" delay={0.5} />
+          <FloatingOrb className="w-[400px] h-[400px] bottom-0 left-1/3 bg-blue-200/20 blur-[80px] animate-float-fast" delay={1} />
           <div
             className="absolute w-[500px] h-[500px] rounded-full blur-[120px] bg-sky-300/10 transition-all duration-[2000ms] ease-out pointer-events-none"
             style={{
@@ -195,8 +170,6 @@ export default function HomePage() {
               transform: "translate(-50%, -50%)",
             }}
           />
-
-          {/* Subtle grid pattern */}
           <div
             className="absolute inset-0 opacity-[0.03]"
             style={{
@@ -207,11 +180,7 @@ export default function HomePage() {
           />
         </div>
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          className="relative mx-auto max-w-5xl text-center"
-        >
+        <motion.div initial="hidden" animate="visible" className="relative mx-auto max-w-5xl text-center">
           {/* Badge */}
           <motion.div variants={fadeUp} custom={0} className="mb-8">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md border border-sky-200/50 px-5 py-2 text-xs font-semibold tracking-wide text-sky-600 shadow-lg shadow-sky-100/30">
@@ -219,7 +188,7 @@ export default function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500" />
               </span>
-              Powered by WE-AI
+              {agents.length} AI Agents Active
             </span>
           </motion.div>
 
@@ -234,35 +203,35 @@ export default function HomePage() {
             Hub
           </motion.h1>
 
-          {/* Subtitle */}
+          {/* Subtitle — hub-level */}
           <motion.p
             variants={fadeUp}
             custom={0.2}
             className="mx-auto mt-6 max-w-2xl text-lg text-slate-500 leading-relaxed sm:text-xl"
           >
-            The future of AI-powered SAP consulting. Generate professional
-            documents, specifications, and proposals in seconds.
+            Your AI-powered toolkit for SAP consulting. Generate specifications,
+            proposals, and documents — each powered by specialized AI agents.
           </motion.p>
 
-          {/* CTA Buttons */}
+          {/* CTA — explore agents */}
           <motion.div
             variants={fadeUp}
             custom={0.35}
             className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link
-              href="/generate"
+            <a
+              href="#agents"
               className="group relative inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 hover:shadow-xl hover:shadow-sky-500/30 transition-all duration-300 hover:-translate-y-0.5"
             >
-              <Sparkles className="h-4 w-4" />
-              Generate FSD
+              <Bot className="h-4 w-4" />
+              Explore Agents
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </Link>
+            </a>
             <Link
-              href="/fsd"
+              href="/blog"
               className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur-sm border border-slate-200 px-7 py-3.5 text-sm font-semibold text-slate-700 hover:bg-white hover:border-slate-300 hover:text-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5"
             >
-              View Dashboard
+              Read Our Blog
               <ChevronRight className="h-4 w-4" />
             </Link>
           </motion.div>
@@ -270,12 +239,12 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          STATS — Animated counters
+          PLATFORM STATS — Hub-level numbers
       ════════════════════════════════════════════ */}
-      <section className="relative px-4 py-16 sm:px-6 lg:px-8 border-y border-slate-100 bg-white/50 backdrop-blur-sm">
+      <section className="relative px-4 py-14 sm:px-6 lg:px-8 border-y border-slate-100 bg-white/50 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => {
+            {platformStats.map((stat, i) => {
               const Icon = stat.icon;
               return (
                 <motion.div
@@ -303,10 +272,9 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          HUB CARDS — Premium glassmorphism
+          AGENT CARDS — The two agents
       ════════════════════════════════════════════ */}
-      <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 overflow-hidden">
-        {/* Background decorations */}
+      <section id="agents" className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 overflow-hidden scroll-mt-20">
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-20 right-0 w-72 h-72 bg-violet-100/30 rounded-full blur-[80px]" />
           <div className="absolute bottom-20 left-0 w-72 h-72 bg-sky-100/30 rounded-full blur-[80px]" />
@@ -321,31 +289,28 @@ export default function HomePage() {
             transition={{ duration: 0.6, ease }}
             className="text-center mb-14"
           >
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200/50 px-4 py-1.5 text-xs font-semibold text-sky-600 mb-4">
+              <Bot className="h-3 w-3" />
+              AI Agents
+            </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              Choose Your Tool
+              Choose Your Agent
             </h2>
             <p className="mt-3 text-slate-500 max-w-lg mx-auto">
-              AI-powered document generation, built for SAP consultants
+              Each agent is purpose-built for a specific SAP consulting workflow
             </p>
           </motion.div>
 
-          <StaggerContainer
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
-            staggerDelay={0.2}
-          >
-            {hubCards.map((card) => {
-              const Icon = card.icon;
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8" staggerDelay={0.2}>
+            {agents.map((agent) => {
+              const Icon = agent.icon;
               return (
-                <StaggerItem key={card.title}>
-                  <Link href={card.href} className="block group h-full">
+                <StaggerItem key={agent.title}>
+                  <Link href={agent.href} className="block group h-full">
                     <motion.div
                       whileHover={{
                         y: -8,
-                        transition: {
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 15,
-                        },
+                        transition: { type: "spring", stiffness: 400, damping: 15 },
                       }}
                       className="relative rounded-2xl bg-white/80 backdrop-blur-xl p-8 sm:p-10 border border-slate-200/60 shadow-lg shadow-slate-200/40 hover:shadow-2xl hover:shadow-slate-300/40 hover:bg-white transition-all duration-500 cursor-pointer overflow-hidden h-full flex flex-col"
                     >
@@ -353,49 +318,61 @@ export default function HomePage() {
                       <div
                         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-2xl"
                         style={{
-                          background: `radial-gradient(circle at 30% 20%, ${card.glowColor} 0%, transparent 70%)`,
+                          background: `radial-gradient(circle at 30% 20%, ${agent.glowColor} 0%, transparent 70%)`,
                         }}
                       />
 
-                      {/* Content */}
                       <div className="relative z-10 flex-1 flex flex-col">
-                        {/* Top row: Icon + Tag */}
+                        {/* Icon + Tag */}
                         <div className="flex items-start justify-between mb-6">
                           <div
-                            className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${card.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                            className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${agent.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
                           >
                             <Icon className="h-7 w-7 text-white" />
                           </div>
-                          <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-                            {card.tag}
+                          <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-semibold tracking-wide uppercase ${agent.tagColor}`}>
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            {agent.tag}
                           </span>
                         </div>
 
                         {/* Subtitle */}
                         <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">
-                          {card.subtitle}
+                          {agent.subtitle}
                         </p>
 
                         {/* Title */}
                         <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-sky-600 transition-colors duration-300">
-                          {card.title}
+                          {agent.title}
                         </h3>
 
                         {/* Description */}
-                        <p className="text-sm text-slate-500 leading-relaxed mb-8 flex-1">
-                          {card.description}
+                        <p className="text-sm text-slate-500 leading-relaxed mb-6 flex-1">
+                          {agent.description}
                         </p>
+
+                        {/* Highlight pills */}
+                        <div className="flex flex-wrap gap-2 mb-6">
+                          {agent.highlights.map((h) => (
+                            <span
+                              key={h}
+                              className="inline-flex items-center rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500"
+                            >
+                              {h}
+                            </span>
+                          ))}
+                        </div>
 
                         {/* CTA */}
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 group-hover:text-sky-600 transition-colors duration-300">
-                          Get started
+                          Explore Agent
                           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5" />
                         </div>
                       </div>
 
-                      {/* Bottom gradient line */}
+                      {/* Bottom gradient */}
                       <div
-                        className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                        className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${agent.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
                       />
                     </motion.div>
                   </Link>
@@ -407,11 +384,10 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          HOW IT WORKS — 3-step process
+          PLATFORM CAPABILITIES — Hub-level (not FSD-specific)
       ════════════════════════════════════════════ */}
       <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 bg-gradient-to-b from-slate-50/80 to-white">
         <div className="mx-auto max-w-5xl">
-          {/* Section header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -419,57 +395,50 @@ export default function HomePage() {
             transition={{ duration: 0.6, ease }}
             className="text-center mb-16"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/50 px-4 py-1.5 text-xs font-semibold text-emerald-600 mb-4">
-              <Zap className="h-3 w-3" />
-              Simple Process
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 border border-violet-200/50 px-4 py-1.5 text-xs font-semibold text-violet-600 mb-4">
+              <Sparkles className="h-3 w-3" />
+              Platform
             </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              From Requirements to FSD
+              Why WE-AI Agent Hub
             </h2>
             <p className="mt-3 text-slate-500 max-w-lg mx-auto">
-              Three simple steps to generate professional SAP specifications
+              Enterprise-grade AI built specifically for SAP consulting workflows
             </p>
           </motion.div>
 
-          {/* Steps */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            {steps.map((item, i) => {
-              const Icon = item.icon;
+            {capabilities.map((cap, i) => {
+              const Icon = cap.icon;
               return (
                 <motion.div
-                  key={item.step}
+                  key={cap.title}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ duration: 0.5, delay: i * 0.15, ease }}
-                  className="relative group"
+                  whileHover={{
+                    y: -6,
+                    transition: { type: "spring", stiffness: 400, damping: 15 },
+                  }}
+                  className="group relative bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-8 hover:shadow-xl hover:shadow-slate-200/40 hover:bg-white transition-all duration-500 cursor-default overflow-hidden"
                 >
-                  {/* Connector line (between cards) */}
-                  {i < steps.length - 1 && (
-                    <div className="hidden md:block absolute top-14 left-full w-full h-px bg-gradient-to-r from-slate-200 via-slate-200 to-transparent z-0" />
-                  )}
+                  {/* Top accent */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${cap.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-t-2xl`} />
 
-                  <div className="relative bg-white rounded-2xl border border-slate-200/60 p-8 hover:shadow-xl hover:shadow-slate-200/40 hover:border-slate-200 transition-all duration-500 hover:-translate-y-1 h-full">
-                    {/* Step number */}
-                    <div className="flex items-center gap-4 mb-5">
-                      <span className="text-4xl font-extrabold text-slate-100 group-hover:text-sky-100 transition-colors duration-300">
-                        {item.step}
-                      </span>
-                      <div
-                        className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 ${item.color} group-hover:scale-110 transition-transform duration-300`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">
-                      {item.description}
-                    </p>
+                  {/* Icon */}
+                  <div
+                    className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${cap.gradient} shadow-lg mb-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                  >
+                    <Icon className="h-6 w-6 text-white" />
                   </div>
+
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-sky-600 transition-colors duration-300">
+                    {cap.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {cap.description}
+                  </p>
                 </motion.div>
               );
             })}
@@ -478,14 +447,13 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          BOTTOM CTA — Final push
+          BOTTOM CTA — Hub-level
       ════════════════════════════════════════════ */}
       <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-sky-900" />
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-[120px]" />
-          {/* Grid pattern overlay */}
           <div
             className="absolute inset-0 opacity-[0.05]"
             style={{
@@ -504,30 +472,30 @@ export default function HomePage() {
           className="relative mx-auto max-w-3xl text-center"
         >
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            Ready to Transform Your{" "}
+            Your AI Consulting{" "}
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-violet-400">
-              SAP Documentation
+              Toolkit Awaits
             </span>
-            ?
           </h2>
           <p className="mt-5 text-lg text-slate-400 max-w-xl mx-auto">
-            Join the next generation of AI-powered SAP consulting.
-            Generate your first FSD in under 30 seconds.
+            Pick an agent and transform how your team delivers SAP projects.
+            Specifications, proposals, and more — powered by WE-AI.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/generate"
+              href="/fsd"
               className="group inline-flex items-center gap-2.5 rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-slate-900 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-0.5"
             >
-              <Sparkles className="h-4 w-4 text-sky-500" />
-              Start Generating
+              <FileText className="h-4 w-4 text-sky-500" />
+              FSD Generator
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
             <Link
-              href="/fsd"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white/90 hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+              href="/proposal"
+              className="inline-flex items-center gap-2.5 rounded-xl border border-white/20 px-7 py-3.5 text-sm font-semibold text-white/90 hover:bg-white/10 hover:border-white/30 transition-all duration-300"
             >
-              Explore Dashboard
+              <ScrollText className="h-4 w-4 text-violet-400" />
+              Proposal Generator
             </Link>
           </div>
         </motion.div>
