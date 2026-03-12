@@ -42,6 +42,7 @@ export const refineSchema = z.object({
   instruction: z.string().min(3).max(2000).trim(),
   markdown: z.string().min(1).max(500000),
   module: z.string().max(10).optional(),
+  targetSection: z.string().max(100).optional(), // Section-level editing: only modify this section
 });
 
 // ── Share ─────────────────────────────────────────────────

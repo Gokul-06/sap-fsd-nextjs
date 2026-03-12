@@ -69,6 +69,131 @@ function withExtraContext(prompt: string, extraContext?: string): string {
   return `${prompt}\n\n${extraContext}`;
 }
 
+/**
+ * Build universal "User Input Priority" instruction.
+ * Addresses Florian's feedback: AI must prioritize user's actual input
+ * over generic SAP knowledge, be keyword-aware, preserve number ranges,
+ * generate hierarchical config, better process flows, filtered tables,
+ * and accurate interface sections.
+ */
+function buildUserInputPriorityInstruction(requirements: string): string {
+  // Extract number ranges from requirements (e.g., "S400 → 4000–4099", "4600000000-4699999999")
+  const numberRangePatterns = requirements.match(
+    /\b\d{4,}[\s]*[-–→to]+[\s]*\d{4,}\b/gi
+  ) || [];
+  const specificNumbers = requirements.match(
+    /\b[A-Z]{1,3}\d{2,4}\b/gi
+  ) || [];
+  const preserveNumbers = [...new Set([...numberRangePatterns, ...specificNumbers])];
+
+  // Extract keywords from user input for context-aware generation
+  const userKeywords = extractUserKeywords(requirements);
+
+  return `
+USER INPUT PRIORITY — CRITICAL RULES (MUST follow these):
+
+1. USER INPUT OVER GENERIC KNOWLEDGE:
+   - The user's requirements text below is your PRIMARY source of truth
+   - If the user mentions specific processes, transactions, thresholds, or rules, use EXACTLY those — do NOT replace them with generic SAP defaults
+   - If the user says "approval threshold $10,000" — use $10,000, not a generic amount
+   - If the user mentions specific order types, document types, or movement types — use EXACTLY those
+   - Generic SAP knowledge is ONLY a fallback for topics the user did NOT explicitly address
+
+2. KEYWORD-AWARE GENERATION:
+   - Only generate configuration, tables, and details RELEVANT to the user's specific requirement
+   - User's key topics: ${userKeywords.join(", ") || "general process"}
+   - Do NOT include unrelated SAP configuration areas just because they exist in the module
+   - Every table row, config item, and process step must be traceable to the user's input
+   - If the user mentions "3-way matching" — focus configuration on 3-way matching, not unrelated procurement config
+
+3. PRESERVE SPECIFIC DATA FROM USER INPUT:
+   - Number ranges mentioned by user MUST appear exactly as stated: ${preserveNumbers.length > 0 ? preserveNumbers.join(", ") : "none detected"}
+   - Transaction codes mentioned by user MUST be used (not substituted with alternatives)
+   - Approval thresholds, tolerance limits, and business rules from user input MUST be preserved verbatim
+   - Organization-specific names, codes, and identifiers MUST be used as-is
+
+4. HIERARCHICAL CONFIGURATION STRUCTURE:
+   - Generate configuration in a clear hierarchy: Category → Sub-category → Detail
+   - Example: "Order Types → Number Ranges → Settlement Profiles → Results Analysis Keys"
+   - Group related config items under parent categories with clear nesting
+   - Show dependencies between config items explicitly
+
+5. CLEAR STEP-BY-STEP PROCESS FLOWS:
+   - Process flows must follow: Start → [Step 1: Action (Tcode)] → [Step 2: Action (Tcode)] → ... → End
+   - Each step must state: WHO does it, WHAT they do, WHICH transaction/app, and WHAT output it produces
+   - Include decision points as gateways: "Approved? → Yes: next step / No: return to step X"
+   - Use arrow notation (→) for flow direction
+
+6. FILTERED TECHNICAL CONTENT:
+   - In appendix and technical object sections, ONLY include SAP tables, BAPIs, and CDS views that are DIRECTLY used in the user's process
+   - Do NOT dump all module tables — filter to only process-relevant ones
+   - Each technical object must have a clear "Usage in This Spec" column explaining WHY it's included
+
+7. ACCURATE INTERFACE SECTION:
+   - Interface/integration sections MUST reflect the user's ACTUAL integration details
+   - If the user mentions specific source/target systems — use those exact system names
+   - If the user mentions specific middleware (PI/PO, CPI) — reference that middleware
+   - Do NOT generate generic "SAP integrates with..." text — be specific to the user's requirements
+   - If no integration details are mentioned, explicitly state "Integration details to be confirmed with the customer"
+`;
+}
+
+/** Extract key topics/keywords from user requirements for context-aware generation */
+function extractUserKeywords(requirements: string): string[] {
+  const keywords: string[] = [];
+  const text = requirements.toLowerCase();
+
+  // SAP process keywords
+  const processKeywords: Record<string, string> = {
+    "procure-to-pay": "Procure-to-Pay",
+    "p2p": "Procure-to-Pay",
+    "purchase": "Purchasing",
+    "procurement": "Procurement",
+    "order-to-cash": "Order-to-Cash",
+    "o2c": "Order-to-Cash",
+    "sales order": "Sales Order Processing",
+    "billing": "Billing",
+    "invoice": "Invoice Processing",
+    "3-way match": "3-Way Matching",
+    "three-way match": "3-Way Matching",
+    "goods receipt": "Goods Receipt",
+    "payment": "Payment Processing",
+    "credit management": "Credit Management",
+    "inventory": "Inventory Management",
+    "warehouse": "Warehouse Management",
+    "production order": "Production Order",
+    "mrp": "Material Requirements Planning",
+    "bom": "Bill of Materials",
+    "routing": "Routing",
+    "cost center": "Cost Center Accounting",
+    "profit center": "Profit Center Accounting",
+    "internal order": "Internal Orders",
+    "product costing": "Product Costing",
+    "settlement": "Settlement",
+    "results analysis": "Results Analysis",
+    "wbs": "Work Breakdown Structure",
+    "project system": "Project System",
+    "asset accounting": "Asset Accounting",
+    "general ledger": "General Ledger",
+    "accounts payable": "Accounts Payable",
+    "accounts receivable": "Accounts Receivable",
+    "approval": "Approval Workflow",
+    "workflow": "Workflow",
+  };
+
+  for (const [key, label] of Object.entries(processKeywords)) {
+    if (text.includes(key)) keywords.push(label);
+  }
+
+  // Extract transaction codes mentioned
+  const tcodeMatches = requirements.match(/\b(ME\d{2}N?|VA\d{2}|VL\d{2}N?|VF\d{2}|FB\d{2}|F-?\d{2}|MIGO|MIRO|CO\d{2}N?|KO\d{2}|KS\d{2}|MD\d{2}|MR\d{2}N?|FK\d{2}N?|XK\d{2}|MM\d{2}|MB\d{2}|MI\d{2}|CS\d{2}|CR\d{2}|CK\d{2}|KP\d{2}|KSU\d|S_ALR_\d+)\b/gi);
+  if (tcodeMatches) {
+    keywords.push(...new Set(tcodeMatches.map(t => t.toUpperCase())));
+  }
+
+  return [...new Set(keywords)].slice(0, 15);
+}
+
 /** Append agent memory context to a prompt if available */
 export function withMemoryContext(prompt: string, memoryContext?: string): string {
   if (!memoryContext?.trim()) return prompt;
@@ -306,10 +431,12 @@ export async function aiExecutiveSummary(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const wordLimit = depth === "comprehensive" ? 400 : 200;
   const consultingFramework = buildConsultingFramework("business-analyst");
   const prompt = `You are a senior SAP functional consultant at a top consulting firm. Write a professional executive summary for a Functional Specification Document (FSD).
 ${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Title: ${title}
 SAP Module: ${module}
@@ -346,9 +473,11 @@ export async function aiProposedSolution(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const consultingFramework = buildConsultingFramework("solution-architect");
   const prompt = `You are a senior SAP ${module} solution architect. Design the proposed solution for this FSD.
 ${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Requirements: ${requirements}
 Process Area: ${processArea}
@@ -359,19 +488,23 @@ Fiori Apps: ${fioriApps.slice(0, 8).join(', ') || 'Standard ' + module + ' Fiori
 Write the following in markdown format:
 
 ### 4.1 Solution Overview
-A ${depth === "comprehensive" ? "4-5" : "2-3"} sentence overview of the solution approach.
+A ${depth === "comprehensive" ? "4-5" : "2-3"} sentence overview of the solution approach. Reference the user's specific requirements — do NOT write a generic overview.
 
 ### 4.2 To-Be Process Flow
-A numbered step-by-step process flow (${depth === "comprehensive" ? "12-18" : "8-12"} steps) showing the end-to-end process. Include the SAP transaction or Fiori app used at each step.
+A numbered step-by-step process flow (${depth === "comprehensive" ? "12-18" : "8-12"} steps) showing the end-to-end process.
+Format each step as: **Step N: [Action]** — [Who] uses [Transaction/App] to [what]. Output: [result]
+Example: **Step 1: Create Purchase Requisition** — Requestor uses ME51N to enter material requirements. Output: PR document created with approval status "Pending".
+Use → arrows between steps for flow direction. Include decision gateways where applicable.
 
 ### 4.3 Key Design Decisions
 A markdown table with columns: Decision | Option Chosen | Rationale
-Include ${depth === "comprehensive" ? "8-10" : "4-6"} design decisions specific to this process.
+Include ${depth === "comprehensive" ? "8-10" : "4-6"} design decisions specific to this process. Decisions MUST reference the user's requirements — not generic SAP best practices.
 
 Rules:
 - Be specific to SAP ${module}
 - Reference actual tcodes and Fiori apps from the list above
-- Keep it practical and implementable`;
+- Keep it practical and implementable
+- Every process step and design decision must be traceable to the user's input`;
 
   const maxTokens = depth === "comprehensive" ? 4096 : 2048;
   return await callClaude(withExtraContext(prompt, extraContext), maxTokens);
@@ -389,9 +522,11 @@ export async function aiOutputManagement(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const consultingFramework = buildConsultingFramework("technical-consultant");
   const prompt = `You are an SAP ${module} consultant. Define the output management requirements for this FSD.
 ${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
@@ -427,9 +562,11 @@ export async function aiErrorHandling(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const consultingFramework = buildConsultingFramework("technical-consultant");
   const prompt = `You are an SAP ${module} consultant. Define error handling and validations for this FSD.
 ${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
@@ -469,9 +606,11 @@ export async function aiDataMigration(
   const langInstruction = buildLanguageInstruction(language);
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
+  const userPriority = buildUserInputPriorityInstruction(""); // No requirements context needed for migration
   const consultingFramework = buildConsultingFramework("project-manager");
   const prompt = `You are an SAP ${module} data migration specialist. Define the data migration plan for this FSD.
 ${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Key Tables: ${tables.slice(0, 15).join(', ') || 'Standard ' + module + ' tables'}
@@ -631,8 +770,10 @@ export async function aiBpmnProcessDiagram(
 
   const personalityTraining = await getAgentTraining("bpmn-architect");
   const consultingFramework = buildConsultingFramework("bpmn-architect");
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const prompt = `You are an SAP ${module} process architect creating a BPMN 2.0 process diagram for SAP Signavio.
 ${personalityTraining}${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Requirements: ${requirements}
@@ -743,9 +884,11 @@ export async function aiTestScripts(
   const depthInstruction = buildDepthInstruction(depth);
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
 
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const consultingFramework = buildConsultingFramework("general");
   const prompt = `You are a senior SAP ${module} test manager. Generate detailed test scripts for a Functional Specification Document.
 ${consultingFramework}
+${userPriority}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -841,8 +984,10 @@ export async function aiTeamLeadAnalysis(
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("project-director");
   const consultingFramework = buildConsultingFramework("project-director");
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const prompt = `You are a Senior SAP Project Director leading a team of 5 specialist consultants who will collaboratively write a Functional Specification Document (FSD). Your job is to deeply analyze the business requirements and create a comprehensive brief that all specialists will reference to ensure consistency.
 ${personalityTraining}${consultingFramework}
+${userPriority}
 ${depthInstruction}${fsdTypeInstruction}
 SAP Module: ${module}
 Process Area: ${processArea}
@@ -929,9 +1074,11 @@ export async function aiBusinessAnalyst(
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("business-analyst");
   const consultingFramework = buildConsultingFramework("business-analyst");
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const wordLimit = depth === "comprehensive" ? 500 : 250;
   const prompt = `You are a Senior SAP Business Analyst on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your output with the Project Director's analysis — use the same terminology, reference the same process steps, and follow the design decisions.
 ${personalityTraining}${consultingFramework}
+${userPriority}
 
 ${teamLeadBrief}
 
@@ -984,8 +1131,10 @@ export async function aiSolutionArchitect(
   const nodeCount = depth === "comprehensive" ? "16-22" : "12-16";
   const personalityTraining = await getAgentTraining("solution-architect");
   const consultingFramework = buildConsultingFramework("solution-architect");
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const prompt = `You are a Senior SAP ${module} Solution Architect on an Agent Team writing a Functional Specification Document. Your Project Director has analyzed the requirements and provided a brief below. You MUST align your solution with the Project Director's process steps and design decisions.
 ${personalityTraining}${consultingFramework}
+${userPriority}
 
 ${teamLeadBrief}
 
@@ -1061,8 +1210,10 @@ export async function aiTechnicalConsultant(
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const personalityTraining = await getAgentTraining("technical-consultant");
   const consultingFramework = buildConsultingFramework("technical-consultant");
+  const userPriority = buildUserInputPriorityInstruction(requirements);
   const prompt = `You are a Senior SAP ${module} Technical Consultant on an Agent Team. Your Project Director has provided a brief below. Align your specifications with the Project Director's process steps, design decisions, and risk areas.
 ${personalityTraining}${consultingFramework}
+${userPriority}
 
 ${teamLeadBrief}
 
@@ -1132,6 +1283,8 @@ ${teamLeadBrief}
 ${langInstruction}${depthInstruction}${fsdTypeInstruction}
 Process Area: ${processArea}
 Key Tables: ${tables.slice(0, 15).join(", ") || "Standard " + module + " tables"}
+
+IMPORTANT: Only include migration objects and cutover tasks directly relevant to the user's process. Do not include generic module-wide migration objects that are unrelated to the specified requirement.
 
 YOUR TASK: Write TWO sections separated by markers.
 

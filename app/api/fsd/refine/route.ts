@@ -7,10 +7,48 @@ import { refineSchema, validateBody } from "@/lib/validations";
 import { learnFromRefinement } from "@/lib/services/agent-memory";
 
 /**
- * Smart FSD refinement endpoint.
- * Instead of regenerating the entire document (slow, timeout-prone),
- * we ask Claude to return ONLY the specific text replacements needed,
- * then apply them server-side. This is 10x faster.
+ * Helper: Extract a specific section from markdown by its heading.
+ * Returns the section content and the start/end indices for replacement.
+ */
+function extractSection(
+  markdown: string,
+  sectionTitle: string
+): { content: string; startIdx: number; endIdx: number } | null {
+  // Match both ## and ### section headings
+  // Look for "## N. Title" or "## Title" patterns
+  const escapedTitle = sectionTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(`^(## \\d+\\.\\s*${escapedTitle})`, "im"),
+    new RegExp(`^(## ${escapedTitle})`, "im"),
+  ];
+
+  let match: RegExpExecArray | null = null;
+  for (const pattern of patterns) {
+    match = pattern.exec(markdown);
+    if (match) break;
+  }
+
+  if (!match) return null;
+
+  const startIdx = match.index;
+
+  // Find the next ## heading (same level or higher) to determine section end
+  const afterHeading = markdown.slice(startIdx + match[1].length);
+  const nextSectionMatch = afterHeading.match(/\n## \d+\./);
+  const endIdx = nextSectionMatch
+    ? startIdx + match[1].length + (nextSectionMatch.index ?? afterHeading.length)
+    : markdown.length;
+
+  const content = markdown.slice(startIdx, endIdx).trim();
+  return { content, startIdx, endIdx };
+}
+
+/**
+ * POST /api/fsd/refine — Smart FSD refinement endpoint.
+ * Supports both full-document and section-level editing.
+ *
+ * When `targetSection` is provided, only that section is sent to AI
+ * for editing, making refinement faster and more accurate.
  */
 export async function POST(request: Request) {
   try {
@@ -29,7 +67,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const { markdown, instruction, module } = validated.data;
+    const { markdown, instruction, module, targetSection } = validated.data;
 
     // Learn from refinement instruction (fire-and-forget — non-blocking)
     learnFromRefinement({
@@ -37,6 +75,56 @@ export async function POST(request: Request) {
       module: module || undefined,
     }).catch(() => {});
 
+    // ── Section-level editing mode ──
+    if (targetSection) {
+      const section = extractSection(markdown, targetSection);
+      if (!section) {
+        return NextResponse.json(
+          { error: `Could not find section "${targetSection}" in the document.` },
+          { status: 400 }
+        );
+      }
+
+      const sectionPrompt = `You are an SAP FSD document editor. You are editing ONLY the section "${targetSection}" of a Functional Specification Document.
+
+CRITICAL RULES:
+- Apply the user's instruction ONLY to this section
+- Return the COMPLETE updated section (including the heading)
+- Preserve all markdown formatting (tables, headers, bullets, code blocks)
+- Do NOT add content from other sections
+- Maintain the same section heading exactly as it appears
+- If adding new subsections, use the appropriate heading level (###)
+- Preserve all existing subsection structure unless the instruction says to change it
+
+USER INSTRUCTION: ${instruction}
+
+CURRENT SECTION CONTENT:
+${section.content}
+
+Return ONLY the updated section content. No explanation, no markdown fences wrapping the response.`;
+
+      const updatedSection = await callClaude(sectionPrompt, 4096);
+
+      if (!updatedSection?.trim()) {
+        return NextResponse.json(
+          { error: "AI returned empty response. Please try again." },
+          { status: 500 }
+        );
+      }
+
+      // Replace the section in the full document
+      const updatedMarkdown =
+        markdown.slice(0, section.startIdx) +
+        updatedSection.trim() +
+        markdown.slice(section.endIdx);
+
+      return NextResponse.json({
+        markdown: updatedMarkdown,
+        editedSection: targetSection,
+      });
+    }
+
+    // ── Full-document refinement mode (original behavior) ──
     // Step 1: Ask Claude for specific replacements (fast, small output)
     const prompt = `You are an SAP FSD document editor. Given the user's instruction and the current document, identify the EXACT text changes needed.
 

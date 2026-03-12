@@ -230,10 +230,14 @@ function buildSectionContent(
     };
   }
 
-  // Section 6: Technical Objects (generic for all supported modules)
+  // Section 6: Technical Objects — filtered to process-relevant items only
   if (isModuleSupported(primaryModule)) {
     sections["technical_objects"] = {
-      standard_tables: generateModuleTablesMarkdown(primaryModule),
+      standard_tables: filterTablesForProcess(
+        generateModuleTablesMarkdown(primaryModule),
+        requirements,
+        processArea
+      ),
       cds_views: generateModuleCdsViewsMarkdown(primaryModule),
       fiori_apps: generateModuleFioriAppsMarkdown(primaryModule),
       bapis_rfcs: generateModuleBapisMarkdown(primaryModule),
@@ -366,4 +370,103 @@ function generateIntegrationTestScenarios(
   });
 
   return table;
+}
+
+/**
+ * Filter module tables to only include process-relevant ones.
+ * Addresses feedback: "Appendix tables should only contain SAP tables relevant to the process."
+ *
+ * Strategy:
+ * 1. Extract keywords from requirements and process area
+ * 2. Score each table row by keyword relevance
+ * 3. Return top N most relevant tables + always include header/item tables
+ */
+export function filterTablesForProcess(
+  tablesMarkdown: string,
+  requirements: string,
+  processArea: string
+): string {
+  const lines = tablesMarkdown.split("\n");
+  if (lines.length <= 3) return tablesMarkdown; // Too few to filter
+
+  // First 2 lines are header + separator
+  const header = lines.slice(0, 2).join("\n");
+  const dataRows = lines.slice(2).filter((l) => l.trim().startsWith("|"));
+
+  if (dataRows.length <= 10) return tablesMarkdown; // Already small enough
+
+  // Build keyword set from requirements + process area
+  const keywords = new Set<string>();
+  const text = `${requirements} ${processArea}`.toLowerCase();
+
+  // Add common process-related keywords
+  const processKeywordMap: Record<string, string[]> = {
+    "purchase": ["EKKO", "EKPO", "EKBE", "EBAN", "EINA", "EINE", "LFA1", "MARA", "MARC"],
+    "sales": ["VBAK", "VBAP", "VBKD", "LIKP", "LIPS", "VBRK", "VBRP", "KNA1", "KNVV"],
+    "invoice": ["RSEG", "RBKP", "BSEG", "BKPF", "BSIK", "BSID"],
+    "goods receipt": ["MKPF", "MSEG", "MARD", "MCHB"],
+    "inventory": ["MARD", "MARC", "MARA", "MAKT", "MCHB"],
+    "production": ["AUFK", "AFKO", "AFPO", "AFVC", "AFFL", "STKO", "STPO"],
+    "cost": ["COSS", "COSP", "COBK", "COEP", "CSKS", "CSKA"],
+    "accounting": ["BKPF", "BSEG", "SKA1", "SKB1", "ACDOCA"],
+    "payment": ["REGUH", "REGUP", "BSIK", "BSID", "PAYR"],
+    "material": ["MARA", "MARC", "MARD", "MAKT", "MARM", "MBEW"],
+    "vendor": ["LFA1", "LFB1", "LFM1", "LFBK"],
+    "customer": ["KNA1", "KNB1", "KNVV", "KNVP"],
+    "asset": ["ANLA", "ANLP", "ANLC", "ANEK"],
+    "workflow": ["SWWWIHEAD", "SWW_WI2OBJ"],
+    "mrp": ["MDKP", "MDTB", "RESB", "PLAF"],
+  };
+
+  for (const [keyword, tables] of Object.entries(processKeywordMap)) {
+    if (text.includes(keyword)) {
+      tables.forEach((t) => keywords.add(t.toLowerCase()));
+    }
+  }
+
+  // Extract specific table names mentioned in requirements
+  const tableMatches = requirements.match(
+    /\b(E[A-Z]{3}|V[A-Z]{3}|M[A-Z]{3}|B[A-Z]{3}|K[A-Z]{3}|C[A-Z]{3}|A[A-Z]{3}|L[A-Z]{3}|S[A-Z]{3}|T[A-Z]{3,4}|ACDOCA|MATDOC|PRCD_ELEMENTS)\b/gi
+  );
+  if (tableMatches) {
+    tableMatches.forEach((t) => keywords.add(t.toLowerCase()));
+  }
+
+  // Score and filter rows
+  const scoredRows = dataRows.map((row) => {
+    const rowLower = row.toLowerCase();
+    let score = 0;
+
+    // Check if table name is in the keywords set
+    const tableNameMatch = row.match(/\|\s*([A-Z0-9_]+)\s*\|/);
+    if (tableNameMatch && keywords.has(tableNameMatch[1].toLowerCase())) {
+      score += 10;
+    }
+
+    // Check if description contains any requirement keywords
+    const reqWords = text.split(/\s+/).filter((w) => w.length > 3);
+    for (const word of reqWords) {
+      if (rowLower.includes(word)) score += 1;
+    }
+
+    // Always include header/item document tables
+    if (
+      rowLower.includes("header") ||
+      rowLower.includes("item") ||
+      rowLower.includes("document")
+    ) {
+      score += 3;
+    }
+
+    return { row, score };
+  });
+
+  // Sort by score descending and take top 15
+  scoredRows.sort((a, b) => b.score - a.score);
+  const filtered = scoredRows.slice(0, 15).map((r) => r.row);
+
+  // Add a note about filtering
+  const note = `\n\n> *Tables filtered to show only process-relevant objects. Full module table reference available in SAP documentation.*\n`;
+
+  return header + "\n" + filtered.join("\n") + note;
 }

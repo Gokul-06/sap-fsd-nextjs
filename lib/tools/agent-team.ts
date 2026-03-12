@@ -8,6 +8,7 @@
 
 import type { AgentProgressEvent, AgentStatus, TeamLeadContext, FsdType } from "@/lib/types";
 import type { FSDInput, FSDOutput } from "@/lib/tools/generate-fsd";
+import { filterTablesForProcess } from "@/lib/tools/generate-fsd";
 import { generateFSDMarkdown } from "@/lib/templates/fsd-template";
 import { classifyModules, identifyProcessArea } from "@/lib/tools/classify-module";
 import {
@@ -573,10 +574,14 @@ function buildSectionContent(
     };
   }
 
-  // Section 6: Technical Objects
+  // Section 6: Technical Objects — filtered to process-relevant items
   if (isModuleSupported(primaryModule)) {
     sections["technical_objects"] = {
-      standard_tables: generateModuleTablesMarkdown(primaryModule),
+      standard_tables: filterTablesForProcess(
+        generateModuleTablesMarkdown(primaryModule),
+        requirements,
+        processArea
+      ),
       cds_views: generateModuleCdsViewsMarkdown(primaryModule),
       fiori_apps: generateModuleFioriAppsMarkdown(primaryModule),
       bapis_rfcs: generateModuleBapisMarkdown(primaryModule),
