@@ -13,7 +13,7 @@ export const metadata = {
 
 export default function FsdLandingPage() {
   return (
-    <main className="min-h-screen bg-[#F0F2F5]">
+    <main className="min-h-screen">
       <HeroSection />
       <AlreadyKnewSection />
       <BentoFeatures />
