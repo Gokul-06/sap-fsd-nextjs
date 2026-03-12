@@ -65,31 +65,31 @@ export function HeroSection() {
     >
       {/* ── Background layers ── */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-sky-50/30 to-[#F0F2F5]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-transparent to-transparent" />
 
-        {/* Animated orbs */}
+        {/* Animated orbs – vivid & visible */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 2 }}
-          className="absolute w-[600px] h-[600px] -top-40 -left-40 bg-sky-200/30 rounded-full blur-[120px] animate-float-slow"
+          className="absolute w-[700px] h-[700px] -top-40 -left-40 bg-sky-300/50 rounded-full blur-[100px] animate-float-slow"
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 2, delay: 0.5 }}
-          className="absolute w-[500px] h-[500px] -top-20 -right-32 bg-violet-200/20 rounded-full blur-[100px] animate-float-medium"
+          className="absolute w-[600px] h-[600px] -top-20 -right-32 bg-violet-300/35 rounded-full blur-[90px] animate-float-medium"
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 2, delay: 1 }}
-          className="absolute w-[400px] h-[400px] bottom-0 left-1/3 bg-blue-200/15 rounded-full blur-[80px] animate-float-fast"
+          className="absolute w-[500px] h-[500px] bottom-0 left-1/3 bg-blue-300/30 rounded-full blur-[70px] animate-float-fast"
         />
 
         {/* Mouse-follow glow */}
         <div
-          className="absolute w-[500px] h-[500px] rounded-full blur-[120px] bg-sky-300/10 transition-all duration-[2000ms] ease-out pointer-events-none"
+          className="absolute w-[500px] h-[500px] rounded-full blur-[100px] bg-sky-300/20 transition-all duration-[2000ms] ease-out pointer-events-none"
           style={{
             left: `${mousePosition.x * 100}%`,
             top: `${mousePosition.y * 100}%`,

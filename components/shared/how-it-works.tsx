@@ -36,7 +36,7 @@ const ease = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
 export function HowItWorksSection() {
   return (
     <section className="py-20 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#F0F2F5] via-white to-[#F0F2F5] -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent -z-10" />
 
       <div className="max-w-6xl mx-auto">
         {/* Section header */}

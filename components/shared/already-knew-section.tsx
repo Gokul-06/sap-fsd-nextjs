@@ -17,7 +17,7 @@ export function AlreadyKnewSection() {
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       {/* Subtle background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#F0F2F5] via-white to-[#F0F2F5] -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent -z-10" />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
