@@ -13,10 +13,7 @@ export type AuditAction =
   | "GENERATE_FSD"
   | "CALM_CONNECTION_TEST"
   | "CALM_PULL_REQUIREMENTS"
-  | "CALM_PUSH_FSD"
-  | "CREATE_FEEDBACK"
-  | "UPDATE_FEEDBACK"
-  | "DELETE_FEEDBACK";
+  | "CALM_PUSH_FSD";
 
 /**
  * Log an audit trail entry (GDPR compliance).

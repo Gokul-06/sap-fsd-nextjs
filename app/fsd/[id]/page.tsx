@@ -14,7 +14,6 @@ import { FsdResultStats } from "@/components/fsd/fsd-result-stats";
 import { useToast } from "@/hooks/use-toast";
 import { StarRating } from "@/components/fsd/star-rating";
 import { PromoteCommentDialog } from "@/components/fsd/promote-comment-dialog";
-import { ReportIssueDialog } from "@/components/fsd/report-issue-dialog";
 import {
   Select,
   SelectContent,
@@ -304,11 +303,6 @@ export default function FsdDetailPage() {
               </>
             )}
           </Button>
-          <ReportIssueDialog
-            fsdId={fsd.id}
-            fsdModule={fsd.primaryModule}
-            fsdTitle={fsd.title}
-          />
 
           {/* Push to CALM */}
           {calmStatus.configured && (

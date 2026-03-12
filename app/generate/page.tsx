@@ -25,7 +25,6 @@ import { StructuredRequirements, REQUIREMENT_FIELDS } from "@/components/fsd/str
 import { TeamProgress } from "@/components/fsd/team-progress";
 import { SectionSelector } from "@/components/fsd/section-selector";
 import { AISidebar, AISidebarFAB } from "@/components/fsd/ai-sidebar";
-import { ReportIssueDialog } from "@/components/fsd/report-issue-dialog";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
 import { ALL_SECTION_IDS } from "@/lib/constants/section-config";
 import { useToast } from "@/hooks/use-toast";
@@ -722,12 +721,6 @@ function GeneratePageContent() {
                   <Plus className="h-4 w-4 mr-2" />
                   New FSD
                 </Button>
-                <ReportIssueDialog
-                  fsdId={savedId || undefined}
-                  fsdModule={result.primaryModule}
-                  fsdTitle={title}
-                  generationMode={generationMode}
-                />
               </div>
             </CardContent>
           </Card>

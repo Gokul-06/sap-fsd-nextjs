@@ -70,28 +70,6 @@ export const calmPushFsdSchema = z.object({
   projectName: z.string().min(1).max(200),
 });
 
-// ── FSD Feedback (Issue Reports) ─────────────────────────
-export const fsdFeedbackSchema = z.object({
-  fsdId: z.string().max(50).optional(),
-  feedbackType: z.enum(["bug", "incorrect_config", "missing_info", "improvement", "general"]),
-  section: z.enum([
-    "process_scope", "process_flow", "configuration", "integration",
-    "authorization", "output_management", "error_handling",
-    "data_migration", "testing", "cutover", "appendix",
-    "entire_document",
-  ]).optional(),
-  description: z.string().min(10, "Please provide at least 10 characters").max(5000).trim(),
-  userEmail: z.string().email().max(200).optional().or(z.literal("")),
-  fsdModule: z.string().max(10).optional(),
-  fsdTitle: z.string().max(200).optional(),
-  generationMode: z.string().max(20).optional(),
-});
-
-export const feedbackStatusSchema = z.object({
-  status: z.enum(["new", "reviewing", "resolved", "wont_fix"]),
-  adminNotes: z.string().max(5000).trim().optional(),
-});
-
 // Helper to validate and return typed data or error response
 export function validateBody<T>(schema: z.ZodSchema<T>, body: unknown): { data: T } | { error: string } {
   const result = schema.safeParse(body);
