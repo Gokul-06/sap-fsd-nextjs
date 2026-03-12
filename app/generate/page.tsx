@@ -302,7 +302,7 @@ function GeneratePageContent() {
     <div className="min-h-[calc(100vh-68px-60px)] relative">
       <PageBackground />
       {/* Step Indicator */}
-      <div className="bg-white border-b border-[#0091DA]/10 py-4">
+      <div className="bg-white/60 backdrop-blur-sm border-b border-white/40 py-4">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <StepIndicator currentStep={step} />
         </div>
@@ -317,14 +317,14 @@ function GeneratePageContent() {
             {/* ── Left Column: Form ── */}
             <div className="space-y-5 animate-fade-in-up">
               {/* Quick-Start Templates */}
-              <Card className="shadow-sm border border-[#0091DA]/10 bg-gradient-to-br from-[#0091DA]/[0.02] to-white">
+              <Card className="shadow-sm border border-white/50 bg-white/70 backdrop-blur-xl">
                 <CardContent className="p-5">
                   <QuickTemplates onSelect={handleTemplateSelect} />
                 </CardContent>
               </Card>
 
               {/* Main Form Card */}
-              <Card className="shadow-lg border border-[#0091DA]/10">
+              <Card className="shadow-lg border border-white/50 bg-white/70 backdrop-blur-xl">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -553,7 +553,7 @@ function GeneratePageContent() {
                   </button>
 
                   {/* Section count hint */}
-                  <div className="bg-[#0091DA]/[0.04] border border-[#0091DA]/10 rounded-lg p-3 text-center">
+                  <div className="bg-white/40 border border-white/50 rounded-lg p-3 text-center">
                     <p className="text-xs text-muted-foreground">
                       <Layers className="h-3 w-3 inline mr-1" />
                       Next step: Choose which of the <span className="font-semibold text-[#0091DA]">14 FSD sections</span> to include in your document
@@ -596,7 +596,7 @@ function GeneratePageContent() {
           {/* STEP 2: Section Selector */}
           {step === 2 && (
             <div className="space-y-5 animate-fade-in-up">
-              <Card className="shadow-lg border border-[#0091DA]/10">
+              <Card className="shadow-lg border border-white/50 bg-white/70 backdrop-blur-xl">
                 <CardContent className="p-6">
                   <SectionSelector
                     selectedSections={selectedSections}
@@ -633,7 +633,7 @@ function GeneratePageContent() {
 
           {/* STEP 3: Loading */}
           {step === 3 && (
-            <Card className="shadow-lg border border-[#0091DA]/10">
+            <Card className="shadow-lg border border-white/50 bg-white/70 backdrop-blur-xl">
               <CardContent>
                 {generationMode === "agent-team" ? (
                   <TeamProgress progress={agentProgress} />
@@ -652,7 +652,7 @@ function GeneratePageContent() {
       {step === 4 && result && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           {/* Success Banner */}
-          <div className="bg-gradient-to-r from-[#0091DA]/10 to-emerald-50 border border-[#0091DA]/20 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
+          <div className="bg-white/60 backdrop-blur-sm border border-white/50 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
             <CheckCircle2 className="h-6 w-6 text-wc-success flex-shrink-0" />
             <div className="flex-1">
               <p className="font-semibold text-[#1B2A4A]">
@@ -684,7 +684,7 @@ function GeneratePageContent() {
           />
 
           {/* Actions */}
-          <Card className="shadow-sm border border-[#0091DA]/10">
+          <Card className="shadow-sm border border-white/50 bg-white/70 backdrop-blur-xl">
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -727,8 +727,8 @@ function GeneratePageContent() {
             </CardContent>
           </Card>
 
-          {/* Two-column: Chat + Preview */}
-          <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
+          {/* Two-column: Chat + Preview — expand to full width */}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(360px,1fr)_minmax(0,2.5fr)] gap-6">
             {/* Left: Chat Sidebar */}
             <div className="lg:sticky lg:top-20 lg:self-start">
               <RefinementChat
@@ -744,9 +744,9 @@ function GeneratePageContent() {
             </div>
 
             {/* Right: Document Preview with Edit Toggle */}
-            <Card className="shadow-lg border border-[#0091DA]/10">
+            <Card className="shadow-lg border border-white/50 bg-white/70 backdrop-blur-xl">
               {/* Toolbar */}
-              <div className="border-b border-[#0091DA]/10 bg-gradient-to-r from-slate-50 to-white px-5 py-3">
+              <div className="border-b border-white/40 bg-white/40 backdrop-blur-sm px-5 py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center bg-[#0091DA]/[0.06] rounded-lg p-1">
                     <button
@@ -821,7 +821,7 @@ function GeneratePageContent() {
                     />
                   </div>
                 ) : (
-                  <div className="max-h-[calc(100vh-320px)] overflow-y-auto p-6 bg-white">
+                  <div className="max-h-[calc(100vh-320px)] overflow-y-auto p-6 bg-white/80">
                     <MarkdownRenderer markdown={currentMarkdown} />
                   </div>
                 )}
