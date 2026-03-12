@@ -1,55 +1,73 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, FileText, Cpu, Clock, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { Counter } from "@/components/animations/counter";
 import { StaggerContainer, StaggerItem } from "@/components/animations/stagger-container";
 
 const stats = [
-  { value: 14, suffix: "", sub: "sections", label: "Complete FSD Coverage" },
-  { value: 6, suffix: "+", sub: "SAP modules", label: "MM · SD · FI · CO · PP · QM" },
-  { value: 30, prefix: "<", suffix: "s", sub: "generation", label: "Enterprise-Grade Speed" },
-  { value: 100, suffix: "%", sub: "AI-powered", label: "WE-AI Intelligence" },
+  { value: 14, suffix: "", label: "FSD Sections", sublabel: "Complete Coverage", icon: FileText, gradient: "from-sky-500 to-blue-500" },
+  { value: 6, suffix: "+", label: "SAP Modules", sublabel: "MM · SD · FI · CO · PP · QM", icon: Cpu, gradient: "from-violet-500 to-purple-500" },
+  { value: 30, prefix: "<", suffix: "s", label: "Generation", sublabel: "Enterprise-Grade Speed", icon: Clock, gradient: "from-emerald-500 to-teal-500" },
+  { value: 100, suffix: "%", label: "AI-Powered", sublabel: "WE-AI Intelligence", icon: Shield, gradient: "from-amber-500 to-orange-500" },
 ];
 
 export function AlreadyKnewSection() {
   return (
-    <section className="py-16 px-4">
+    <section className="py-20 px-4 relative overflow-hidden">
+      {/* Subtle background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F0F2F5] via-white to-[#F0F2F5] -z-10" />
+
       <div className="max-w-6xl mx-auto">
-        {/* Header row */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4"
+          className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-14 gap-4"
         >
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-800 leading-tight">
-            Already knew<span className="text-sky-500">?</span>
-          </h2>
+          <div>
+            <span className="inline-block text-xs font-semibold text-sky-500 uppercase tracking-widest mb-3">
+              By the Numbers
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+              Built for Enterprise<span className="text-sky-500">.</span>
+            </h2>
+          </div>
           <Link
             href="/generate"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-sky-500 transition-colors group"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-sky-500 transition-colors group"
           >
             Try it now
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </motion.div>
 
-        {/* Stats grid with blue vertical separators */}
-        <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0" staggerDelay={0.15}>
-          {stats.map((stat) => (
-            <StaggerItem key={stat.sub}>
-              <motion.div
-                whileHover={{ x: 4 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="relative group cursor-default"
-              >
-                {/* Sky blue vertical line — grows on hover */}
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-full bg-sky-400 transition-all duration-300 group-hover:w-[5px] group-hover:bg-sky-500" />
-                <div className="pl-5">
-                  <p className="text-3xl sm:text-4xl font-black text-slate-800">
+        {/* Stats grid — card style */}
+        <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6" staggerDelay={0.12}>
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <StaggerItem key={stat.label}>
+                <motion.div
+                  whileHover={{
+                    y: -6,
+                    transition: { type: "spring", stiffness: 400, damping: 15 },
+                  }}
+                  className="group relative rounded-2xl bg-white/80 backdrop-blur-xl p-6 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:bg-white transition-all duration-500 cursor-default overflow-hidden"
+                >
+                  {/* Gradient top accent */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                  {/* Icon */}
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 text-slate-400 group-hover:text-sky-500 mb-4 transition-colors duration-300">
+                    <Icon className="h-5 w-5" />
+                  </div>
+
+                  {/* Number */}
+                  <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 tabular-nums">
                     <Counter
                       target={stat.value}
                       prefix={stat.prefix || ""}
@@ -57,16 +75,18 @@ export function AlreadyKnewSection() {
                       duration={1.5}
                     />
                   </p>
-                  <p className="text-sm font-medium text-slate-500 mt-0.5">
-                    {stat.sub}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2 hidden sm:block">
+
+                  {/* Labels */}
+                  <p className="text-sm font-semibold text-slate-700 mt-1">
                     {stat.label}
                   </p>
-                </div>
-              </motion.div>
-            </StaggerItem>
-          ))}
+                  <p className="text-xs text-slate-400 mt-0.5 hidden sm:block">
+                    {stat.sublabel}
+                  </p>
+                </motion.div>
+              </StaggerItem>
+            );
+          })}
         </StaggerContainer>
       </div>
     </section>

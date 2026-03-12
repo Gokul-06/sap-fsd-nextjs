@@ -10,63 +10,65 @@ const steps = [
     title: "Describe Your Process",
     description:
       "Enter your business requirements — from a quick one-liner to a detailed process description. Our AI understands SAP context.",
-    color: "#0EA5E9",
-    bgColor: "bg-sky-50",
-    hoverBg: "group-hover:bg-sky-100/80",
+    gradient: "from-sky-500 to-blue-600",
+    step: "01",
   },
   {
     icon: Sparkles,
     title: "Generate with WE-AI",
     description:
       "Our 6-agent team analyzes your requirements using enterprise best practices and generates a comprehensive FSD in under 30 seconds.",
-    color: "#3B82F6",
-    bgColor: "bg-blue-50",
-    hoverBg: "group-hover:bg-blue-100/80",
+    gradient: "from-violet-500 to-purple-600",
+    step: "02",
   },
   {
     icon: Download,
     title: "Download & Share",
     description:
       "Export as a professional Word document, share via secure links, or refine with AI-powered chat. Ready for your project team.",
-    color: "#10B981",
-    bgColor: "bg-emerald-50",
-    hoverBg: "group-hover:bg-emerald-100/80",
+    gradient: "from-emerald-500 to-teal-600",
+    step: "03",
   },
 ];
 
+const ease = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
+
 export function HowItWorksSection() {
   return (
-    <section className="py-20 px-4">
+    <section className="py-20 px-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F0F2F5] via-white to-[#F0F2F5] -z-10" />
+
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] }}
+          transition={{ duration: 0.6, ease }}
           className="text-center mb-16"
         >
-          <span className="inline-block text-xs font-semibold text-sky-500 uppercase tracking-widest mb-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/50 px-4 py-1.5 text-xs font-semibold text-emerald-600 mb-4">
+            <Sparkles className="h-3 w-3" />
             Simple & Powerful
           </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-800">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
             How It Works
           </h2>
-          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+          <p className="mt-3 text-slate-500 max-w-xl mx-auto">
             From requirements to enterprise-grade specifications in three simple steps
           </p>
         </motion.div>
 
         {/* Steps grid */}
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8 relative" staggerDelay={0.2}>
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 relative" staggerDelay={0.2}>
           {/* Connecting lines (desktop only) */}
-          <div className="hidden md:block absolute top-1/2 left-[calc(33.33%+1rem)] right-[calc(33.33%+1rem)] -translate-y-1/2 z-0">
+          <div className="hidden md:block absolute top-16 left-[calc(33.33%)] right-[calc(33.33%)] z-0">
             <motion.div
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
-              className="h-px bg-gradient-to-r from-sky-200/40 via-sky-300/30 to-sky-200/40 origin-left"
+              className="h-px bg-gradient-to-r from-sky-200 via-violet-200 to-emerald-200 origin-left"
             />
           </div>
 
@@ -77,35 +79,30 @@ export function HowItWorksSection() {
                   y: -8,
                   transition: { type: "spring", stiffness: 400, damping: 15 },
                 }}
-                className="group relative z-10 rounded-2xl bg-white/60 backdrop-blur-xl p-8 border border-white/60 shadow-lg shadow-sky-100/30 hover:shadow-xl hover:shadow-sky-200/40 hover:bg-white/80 transition-all duration-500 cursor-default"
+                className="group relative z-10 rounded-2xl bg-white/80 backdrop-blur-xl p-8 border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 hover:bg-white transition-all duration-500 cursor-default h-full"
               >
-                {/* Step number */}
-                <div className="absolute -top-3 -left-1 w-7 h-7 rounded-full bg-white border-2 border-sky-200 flex items-center justify-center text-xs font-bold text-sky-500 group-hover:border-sky-400 group-hover:text-sky-600 transition-colors duration-300 shadow-sm">
-                  {i + 1}
-                </div>
+                {/* Top gradient line */}
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${step.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-t-2xl`} />
 
-                {/* Icon */}
-                <div
-                  className={`inline-flex items-center justify-center w-14 h-14 rounded-xl ${step.bgColor} ${step.hoverBg} transition-colors duration-300 mb-5`}
-                >
-                  <step.icon
-                    className="h-7 w-7 transition-transform duration-300 group-hover:scale-110"
-                    style={{ color: step.color }}
-                  />
+                {/* Step number + Icon row */}
+                <div className="flex items-center gap-4 mb-5">
+                  <span className="text-4xl font-extrabold text-slate-100 group-hover:text-sky-100 transition-colors duration-300">
+                    {step.step}
+                  </span>
+                  <div
+                    className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${step.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                  >
+                    <step.icon className="h-6 w-6 text-white" />
+                  </div>
                 </div>
 
                 {/* Content */}
-                <h3 className="text-lg font-semibold text-slate-800 mb-2 group-hover:text-sky-600 transition-colors duration-300">
+                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-sky-600 transition-colors duration-300">
                   {step.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-slate-500 leading-relaxed">
                   {step.description}
                 </p>
-
-                {/* Bottom accent line */}
-                <div className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:from-transparent group-hover:via-current group-hover:to-transparent transition-all duration-500"
-                  style={{ color: step.color }}
-                />
               </motion.div>
             </StaggerItem>
           ))}
