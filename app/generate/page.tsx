@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PageBackground } from "@/components/shared/page-background";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -298,7 +299,8 @@ function GeneratePageContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-68px-60px)] bg-[#F0F2F5]">
+    <div className="min-h-[calc(100vh-68px-60px)] relative">
+      <PageBackground />
       {/* Step Indicator */}
       <div className="bg-white border-b border-[#0091DA]/10 py-4">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -834,7 +836,7 @@ function GeneratePageContent() {
 
 export default function GeneratePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F0F2F5]" />}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <GeneratePageContent />
     </Suspense>
   );
