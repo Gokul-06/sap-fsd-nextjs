@@ -237,6 +237,10 @@ export function useFsdGeneration() {
 
   async function downloadWord(input: GenerationInput, markdownOverride?: string) {
     try {
+      // Always prefer markdownOverride (the current in-memory document).
+      // Fall back to the last generation result so we never re-generate from scratch.
+      const effectiveMarkdown = markdownOverride || result?.markdown;
+
       const bodyPayload: Record<string, unknown> = {
         title: input.title,
         projectName: input.projectName,
@@ -245,10 +249,8 @@ export function useFsdGeneration() {
         module: result?.primaryModule || input.module,
         companyName: input.companyName,
         language: input.language || "English",
+        ...(effectiveMarkdown ? { markdownOverride: effectiveMarkdown } : {}),
       };
-      if (markdownOverride) {
-        bodyPayload.markdownOverride = markdownOverride;
-      }
       const res = await fetch("/api/generate-word", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

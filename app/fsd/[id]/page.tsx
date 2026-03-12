@@ -138,9 +138,10 @@ export default function FsdDetailPage() {
           title: fsd.title,
           projectName: fsd.projectName,
           author: fsd.author,
-          requirements: "Re-generated from saved FSD",
+          requirements: fsd.requirements || "",
           module: fsd.primaryModule,
           companyName: fsd.companyName,
+          markdownOverride: fsd.markdown,
         }),
       });
       if (!res.ok) throw new Error();
