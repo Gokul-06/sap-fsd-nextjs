@@ -19,7 +19,7 @@ import {
   StaggerItem,
 } from "@/components/animations/stagger-container";
 import { Counter } from "@/components/animations/counter";
-import { useEffect, useRef, useState } from "react";
+import { PageBackground } from "@/components/shared/page-background";
 
 /* ─── Animation presets ─── */
 const ease = [0.25, 0.4, 0.25, 1] as [number, number, number, number];
@@ -111,75 +111,17 @@ function GradientText({
   );
 }
 
-function FloatingOrb({
-  className,
-  delay = 0,
-}: {
-  className: string;
-  delay?: number;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 2, delay }}
-      className={`absolute rounded-full pointer-events-none ${className}`}
-    />
-  );
-}
-
 /* ─── Main Page ─── */
 export default function HomePage() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const heroRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (heroRef.current) {
-        const rect = heroRef.current.getBoundingClientRect();
-        setMousePosition({
-          x: (e.clientX - rect.left) / rect.width,
-          y: (e.clientY - rect.top) / rect.height,
-        });
-      }
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
   return (
     <div className="relative">
+      {/* Page-level seamless background */}
+      <PageBackground />
+
       {/* ════════════════════════════════════════════
           HERO — The AI Agent Hub
       ════════════════════════════════════════════ */}
-      <section
-        ref={heroRef}
-        className="relative overflow-hidden px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20 lg:px-8 min-h-[70vh] flex items-center"
-      >
-        {/* Background */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-sky-50/30" />
-          <FloatingOrb className="w-[600px] h-[600px] -top-40 -left-40 bg-sky-200/30 blur-[120px] animate-float-slow" />
-          <FloatingOrb className="w-[500px] h-[500px] -top-20 -right-32 bg-violet-200/25 blur-[100px] animate-float-medium" delay={0.5} />
-          <FloatingOrb className="w-[400px] h-[400px] bottom-0 left-1/3 bg-blue-200/20 blur-[80px] animate-float-fast" delay={1} />
-          <div
-            className="absolute w-[500px] h-[500px] rounded-full blur-[120px] bg-sky-300/10 transition-all duration-[2000ms] ease-out pointer-events-none"
-            style={{
-              left: `${mousePosition.x * 100}%`,
-              top: `${mousePosition.y * 100}%`,
-              transform: "translate(-50%, -50%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)",
-              backgroundSize: "60px 60px",
-            }}
-          />
-        </div>
-
+      <section className="relative px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20 lg:px-8 min-h-[70vh] flex items-center">
         <motion.div initial="hidden" animate="visible" className="relative mx-auto max-w-5xl text-center">
           {/* Badge */}
           <motion.div variants={fadeUp} custom={0} className="mb-8">
@@ -203,7 +145,7 @@ export default function HomePage() {
             Hub
           </motion.h1>
 
-          {/* Subtitle — hub-level */}
+          {/* Subtitle */}
           <motion.p
             variants={fadeUp}
             custom={0.2}
@@ -213,7 +155,7 @@ export default function HomePage() {
             proposals, and documents — each powered by specialized AI agents.
           </motion.p>
 
-          {/* CTA — explore agents */}
+          {/* CTA */}
           <motion.div
             variants={fadeUp}
             custom={0.35}
@@ -239,9 +181,9 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          PLATFORM STATS — Hub-level numbers
+          PLATFORM STATS
       ════════════════════════════════════════════ */}
-      <section className="relative px-4 py-14 sm:px-6 lg:px-8 border-y border-slate-100 bg-white/50 backdrop-blur-sm">
+      <section className="relative px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {platformStats.map((stat, i) => {
@@ -255,7 +197,7 @@ export default function HomePage() {
                   transition={{ duration: 0.5, delay: i * 0.1, ease }}
                   className="text-center group"
                 >
-                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-sky-50 text-sky-500 mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white/60 backdrop-blur-sm text-sky-500 mb-3 group-hover:scale-110 transition-transform duration-300">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="text-3xl sm:text-4xl font-bold text-slate-900 tabular-nums">
@@ -272,14 +214,9 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          AGENT CARDS — The two agents
+          AGENT CARDS
       ════════════════════════════════════════════ */}
-      <section id="agents" className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 overflow-hidden scroll-mt-20">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 right-0 w-72 h-72 bg-violet-100/30 rounded-full blur-[80px]" />
-          <div className="absolute bottom-20 left-0 w-72 h-72 bg-sky-100/30 rounded-full blur-[80px]" />
-        </div>
-
+      <section id="agents" className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 scroll-mt-20">
         <div className="mx-auto max-w-5xl">
           {/* Section header */}
           <motion.div
@@ -289,7 +226,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, ease }}
             className="text-center mb-14"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200/50 px-4 py-1.5 text-xs font-semibold text-sky-600 mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 backdrop-blur-sm border border-sky-200/50 px-4 py-1.5 text-xs font-semibold text-sky-600 mb-4">
               <Bot className="h-3 w-3" />
               AI Agents
             </span>
@@ -312,7 +249,7 @@ export default function HomePage() {
                         y: -8,
                         transition: { type: "spring", stiffness: 400, damping: 15 },
                       }}
-                      className="relative rounded-2xl bg-white/80 backdrop-blur-xl p-8 sm:p-10 border border-slate-200/60 shadow-lg shadow-slate-200/40 hover:shadow-2xl hover:shadow-slate-300/40 hover:bg-white transition-all duration-500 cursor-pointer overflow-hidden h-full flex flex-col"
+                      className="relative rounded-2xl bg-white/70 backdrop-blur-xl p-8 sm:p-10 border border-white/50 shadow-lg shadow-slate-200/30 hover:shadow-2xl hover:shadow-slate-300/40 hover:bg-white/90 transition-all duration-500 cursor-pointer overflow-hidden h-full flex flex-col"
                     >
                       {/* Hover glow */}
                       <div
@@ -356,7 +293,7 @@ export default function HomePage() {
                           {agent.highlights.map((h) => (
                             <span
                               key={h}
-                              className="inline-flex items-center rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500"
+                              className="inline-flex items-center rounded-lg bg-slate-50/80 border border-slate-100/80 px-2.5 py-1 text-[11px] font-medium text-slate-500"
                             >
                               {h}
                             </span>
@@ -384,9 +321,9 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          PLATFORM CAPABILITIES — Hub-level (not FSD-specific)
+          PLATFORM CAPABILITIES
       ════════════════════════════════════════════ */}
-      <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 bg-gradient-to-b from-slate-50/80 to-white">
+      <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -395,7 +332,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, ease }}
             className="text-center mb-16"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 border border-violet-200/50 px-4 py-1.5 text-xs font-semibold text-violet-600 mb-4">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 backdrop-blur-sm border border-violet-200/50 px-4 py-1.5 text-xs font-semibold text-violet-600 mb-4">
               <Sparkles className="h-3 w-3" />
               Platform
             </span>
@@ -421,7 +358,7 @@ export default function HomePage() {
                     y: -6,
                     transition: { type: "spring", stiffness: 400, damping: 15 },
                   }}
-                  className="group relative bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 p-8 hover:shadow-xl hover:shadow-slate-200/40 hover:bg-white transition-all duration-500 cursor-default overflow-hidden"
+                  className="group relative bg-white/70 backdrop-blur-xl rounded-2xl border border-white/50 p-8 hover:shadow-xl hover:shadow-slate-200/40 hover:bg-white/90 transition-all duration-500 cursor-default overflow-hidden"
                 >
                   {/* Top accent */}
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${cap.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-t-2xl`} />
@@ -447,7 +384,7 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════════════
-          BOTTOM CTA — Hub-level
+          BOTTOM CTA
       ════════════════════════════════════════════ */}
       <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 -z-10">
