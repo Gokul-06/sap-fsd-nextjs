@@ -4,6 +4,7 @@ import { HowItWorksSection } from "@/components/shared/how-it-works";
 import { AlreadyKnewSection } from "@/components/shared/already-knew-section";
 import { FaqSection } from "@/components/shared/faq-section";
 import { CtaSection } from "@/components/shared/cta-section";
+import { PageBackground } from "@/components/shared/page-background";
 
 export const metadata = {
   title: "FSD Generator | Westernacher AI Agent Hub",
@@ -13,7 +14,8 @@ export const metadata = {
 
 export default function FsdLandingPage() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen relative">
+      <PageBackground />
       <HeroSection />
       <AlreadyKnewSection />
       <BentoFeatures />

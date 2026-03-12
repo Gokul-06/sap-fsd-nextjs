@@ -15,9 +15,7 @@ const stats = [
 
 export function AlreadyKnewSection() {
   return (
-    <section className="py-20 px-4 relative overflow-hidden">
-      {/* Subtle background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-transparent -z-10" />
+    <section className="py-20 px-4 relative">
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
