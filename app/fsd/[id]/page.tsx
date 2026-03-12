@@ -138,7 +138,6 @@ export default function FsdDetailPage() {
           title: fsd.title,
           projectName: fsd.projectName,
           author: fsd.author,
-          requirements: fsd.requirements || "",
           module: fsd.primaryModule,
           companyName: fsd.companyName,
           markdownOverride: fsd.markdown,
