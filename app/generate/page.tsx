@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,11 +20,11 @@ import { FsdResultStats } from "@/components/fsd/fsd-result-stats";
 import { MarkdownRenderer } from "@/components/shared/markdown-renderer";
 import { RefinementChat } from "@/components/fsd/refinement-chat";
 import { QuickTemplates, TemplateData } from "@/components/fsd/quick-templates";
-import { MethodologyTips } from "@/components/fsd/methodology-tips";
 import { PdfUpload } from "@/components/fsd/pdf-upload";
-import { StructuredRequirements } from "@/components/fsd/structured-requirements";
+import { StructuredRequirements, REQUIREMENT_FIELDS } from "@/components/fsd/structured-requirements";
 import { TeamProgress } from "@/components/fsd/team-progress";
 import { SectionSelector } from "@/components/fsd/section-selector";
+import { AISidebar, AISidebarFAB } from "@/components/fsd/ai-sidebar";
 import { useFsdGeneration } from "@/hooks/use-fsd-generation";
 import { ALL_SECTION_IDS } from "@/lib/constants/section-config";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,9 @@ function GeneratePageContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [editBuffer, setEditBuffer] = useState("");
 
+  // Track filled requirement fields for sidebar progress
+  const [filledFieldCount, setFilledFieldCount] = useState(0);
+
   const {
     isGenerating,
     result,
@@ -89,7 +92,27 @@ function GeneratePageContent() {
     }
   }, [result]);
 
-  // Pre-fill from template URL param (e.g., /generate?template=cuid123)
+  // Track filled fields from requirements text
+  useEffect(() => {
+    if (!requirements) {
+      setFilledFieldCount(0);
+      return;
+    }
+    const sections = requirements.split("\n## ");
+    setFilledFieldCount(Math.max(1, sections.length - (requirements.startsWith("## ") ? 0 : 0)));
+    // Count non-empty sections more accurately
+    const fieldIds = ["processScope", "transactions", "businessRules", "integrations", "reportsAnalytics", "authorization", "dataMigration"];
+    const sectionHeaders = ["Process Scope", "SAP Transactions", "Business Rules", "Integrations", "Reports", "Authorization", "Data Migration"];
+    let count = 0;
+    for (const header of sectionHeaders) {
+      if (requirements.toLowerCase().includes(header.toLowerCase())) count++;
+    }
+    // If plain text without headers, count as 1 (processScope)
+    if (count === 0 && requirements.trim().length > 0) count = 1;
+    setFilledFieldCount(count);
+  }, [requirements]);
+
+  // Pre-fill from template URL param
   useEffect(() => {
     const templateId = searchParams.get("template");
     if (templateId) {
@@ -101,7 +124,6 @@ function GeneratePageContent() {
             setProjectName(data.projectName || "");
             setModule(data.primaryModule || "");
             setLanguage(data.language || "English");
-            // Extract requirements from the markdown business requirements section
             const reqMatch = data.markdown?.match(/### 3\.3 Functional Requirements\n\n([\s\S]*?)(?=\n### |\n## |$)/);
             if (reqMatch) {
               setRequirements(reqMatch[1].trim());
@@ -140,6 +162,36 @@ function GeneratePageContent() {
     toast({
       title: "Template loaded!",
       description: `${template.title} — review and customize the requirements below.`,
+    });
+  }
+
+  function handleAIFieldsFilled(fields: Record<string, string>) {
+    // Combine fields into the structured format
+    const parts: string[] = [];
+    const labels: Record<string, string> = {
+      processScope: "Process Scope",
+      transactions: "SAP Transactions / Fiori Apps",
+      businessRules: "Business Rules & Validations",
+      integrations: "Integrations & Interfaces",
+      reportsAnalytics: "Reports & Analytics",
+      authorization: "Authorization & Roles",
+      dataMigration: "Data Migration",
+    };
+
+    for (const [key, label] of Object.entries(labels)) {
+      const val = fields[key]?.trim();
+      if (val) {
+        parts.push(`## ${label}\n${val}`);
+      }
+    }
+
+    const combined = parts.join("\n\n");
+    setRequirements(combined);
+    setTemplateApplied(false);
+
+    toast({
+      title: "Requirements filled!",
+      description: `AI structured your input into ${Object.values(fields).filter((v) => v?.trim()).length} sections. Review and edit below.`,
     });
   }
 
@@ -228,11 +280,9 @@ function GeneratePageContent() {
 
   function toggleEditMode() {
     if (!isEditing) {
-      // Entering edit mode — copy current markdown to buffer
       setEditBuffer(currentMarkdown);
       setIsEditing(true);
     } else {
-      // Saving edits — apply buffer to currentMarkdown
       setCurrentMarkdown(editBuffer);
       setIsEditing(false);
       toast({
@@ -251,16 +301,18 @@ function GeneratePageContent() {
     <div className="min-h-[calc(100vh-68px-60px)] bg-[#F0F2F5]">
       {/* Step Indicator */}
       <div className="bg-white border-b border-[#0091DA]/10 py-4">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <StepIndicator currentStep={step} />
         </div>
       </div>
 
-      {/* Step 1, 2 & 3: Full-width layout */}
-      {step !== 4 && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* STEP 1: Form */}
-          {step === 1 && (
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* STEP 1: Requirements Form — Full-width with AI sidebar        */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {step === 1 && (
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+            {/* ── Left Column: Form ── */}
             <div className="space-y-5 animate-fade-in-up">
               {/* Quick-Start Templates */}
               <Card className="shadow-sm border border-[#0091DA]/10 bg-gradient-to-br from-[#0091DA]/[0.02] to-white">
@@ -361,28 +413,14 @@ function GeneratePageContent() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="auto">Auto-detect</SelectItem>
-                          <SelectItem value="MM">
-                            MM - Materials Management
-                          </SelectItem>
-                          <SelectItem value="SD">
-                            SD - Sales & Distribution
-                          </SelectItem>
-                          <SelectItem value="FI">
-                            FI - Financial Accounting
-                          </SelectItem>
+                          <SelectItem value="MM">MM - Materials Management</SelectItem>
+                          <SelectItem value="SD">SD - Sales & Distribution</SelectItem>
+                          <SelectItem value="FI">FI - Financial Accounting</SelectItem>
                           <SelectItem value="CO">CO - Controlling</SelectItem>
-                          <SelectItem value="PP">
-                            PP - Production Planning
-                          </SelectItem>
-                          <SelectItem value="QM">
-                            QM - Quality Management
-                          </SelectItem>
-                          <SelectItem value="EWM">
-                            EWM - Extended Warehouse
-                          </SelectItem>
-                          <SelectItem value="TM">
-                            TM - Transportation
-                          </SelectItem>
+                          <SelectItem value="PP">PP - Production Planning</SelectItem>
+                          <SelectItem value="QM">QM - Quality Management</SelectItem>
+                          <SelectItem value="EWM">EWM - Extended Warehouse</SelectItem>
+                          <SelectItem value="TM">TM - Transportation</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -397,8 +435,8 @@ function GeneratePageContent() {
                         <SelectContent>
                           <SelectItem value="English">English</SelectItem>
                           <SelectItem value="German">Deutsch (German)</SelectItem>
-                          <SelectItem value="French">Français (French)</SelectItem>
-                          <SelectItem value="Spanish">Español (Spanish)</SelectItem>
+                          <SelectItem value="French">Fran&ccedil;ais (French)</SelectItem>
+                          <SelectItem value="Spanish">Espa&ntilde;ol (Spanish)</SelectItem>
                           <SelectItem value="Japanese">日本語 (Japanese)</SelectItem>
                           <SelectItem value="Chinese">中文 (Chinese)</SelectItem>
                         </SelectContent>
@@ -467,7 +505,7 @@ function GeneratePageContent() {
 
                   <Separator className="bg-[#0091DA]/10" />
 
-                  {/* PDF Upload for Requirements Extraction */}
+                  {/* PDF Upload */}
                   <PdfUpload
                     onRequirementsExtracted={(extracted) => {
                       setRequirements((prev) =>
@@ -489,9 +527,6 @@ function GeneratePageContent() {
                     onTemplateAppliedChange={setTemplateApplied}
                   />
 
-                  {/* SAP Activate Methodology Tips (collapsible) */}
-                  <MethodologyTips />
-
                   {/* AI Processing Disclosure (GDPR) */}
                   <div className="flex items-start gap-2 text-[11px] text-muted-foreground/70 bg-amber-50/50 border border-amber-200/40 rounded-lg px-3 py-2">
                     <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
@@ -508,7 +543,6 @@ function GeneratePageContent() {
                     onClick={handleNextToSections}
                     disabled={isGenerating}
                   >
-                    {/* Shimmer overlay */}
                     <div className="absolute inset-0 animate-shimmer-btn opacity-30 pointer-events-none" />
                     <Layers className="h-5 w-5 relative z-10" />
                     <span className="relative z-10">
@@ -526,8 +560,37 @@ function GeneratePageContent() {
                 </CardContent>
               </Card>
             </div>
-          )}
 
+            {/* ── Right Column: AI Sidebar (desktop) ── */}
+            <div className="hidden lg:block">
+              <div className="lg:sticky lg:top-24 lg:self-start space-y-4">
+                <AISidebar
+                  onFieldsFilled={handleAIFieldsFilled}
+                  onModuleDetected={(m) => setModule(m)}
+                  filledCount={filledFieldCount}
+                  totalFields={REQUIREMENT_FIELDS.length}
+                  detectedModule={module}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile FAB for AI Sidebar */}
+          <AISidebarFAB
+            onFieldsFilled={handleAIFieldsFilled}
+            onModuleDetected={(m) => setModule(m)}
+            filledCount={filledFieldCount}
+            totalFields={REQUIREMENT_FIELDS.length}
+            detectedModule={module}
+          />
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* STEPS 2 & 3: Section Selector + Loading                       */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {(step === 2 || step === 3) && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* STEP 2: Section Selector */}
           {step === 2 && (
             <div className="space-y-5 animate-fade-in-up">
@@ -544,7 +607,7 @@ function GeneratePageContent() {
                       className="border-[#0091DA]/30 text-[#0091DA] hover:bg-[#0091DA]/5"
                       onClick={() => setStep(1)}
                     >
-                      ← Back to Requirements
+                      &larr; Back to Requirements
                     </Button>
                     <button
                       className="generate-btn relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0091DA] to-[#1B2A4A] text-white font-semibold py-3 px-8 text-base transition-all duration-300 hover:shadow-xl hover:shadow-[#0091DA]/30 hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
@@ -581,7 +644,9 @@ function GeneratePageContent() {
         </div>
       )}
 
-      {/* STEP 4: Results — Full-width two-column layout */}
+      {/* ════════════════════════════════════════════════════════════════ */}
+      {/* STEP 4: Results — Full-width two-column layout                */}
+      {/* ════════════════════════════════════════════════════════════════ */}
       {step === 4 && result && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           {/* Success Banner */}
@@ -678,10 +743,9 @@ function GeneratePageContent() {
 
             {/* Right: Document Preview with Edit Toggle */}
             <Card className="shadow-lg border border-[#0091DA]/10">
-              {/* ── Prominent Edit/Preview Toolbar ── */}
+              {/* Toolbar */}
               <div className="border-b border-[#0091DA]/10 bg-gradient-to-r from-slate-50 to-white px-5 py-3">
                 <div className="flex items-center justify-between">
-                  {/* Tab-style toggle */}
                   <div className="flex items-center bg-[#0091DA]/[0.06] rounded-lg p-1">
                     <button
                       onClick={() => { if (isEditing) toggleEditMode(); }}
@@ -707,7 +771,6 @@ function GeneratePageContent() {
                     </button>
                   </div>
 
-                  {/* Status badges + actions */}
                   <div className="flex items-center gap-3">
                     {currentMarkdown !== result.markdown && (
                       <Badge
