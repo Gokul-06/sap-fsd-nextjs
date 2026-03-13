@@ -350,68 +350,566 @@ ROLE-SPECIFIC CONSULTING GUIDANCE:
   return core + (roleSpecific[role] || roleSpecific.general);
 }
 
-/** Build an FSD type instruction to inject into AI prompts (RICEFW) */
+/** Build an FSD type instruction to inject into AI prompts (RICEFW)
+ *  Based on Westernacher FS Section Mapping (Florian's template)
+ *  Each type has 7 common sections + type-specific sections */
 function buildFsdTypeInstruction(fsdType?: FsdType): string {
-  if (!fsdType || fsdType === "standard") return "";
+  if (!fsdType || fsdType === "standard") return buildStandardFsdInstruction();
+
+  const commonSections = `
+COMMON SECTIONS (include these in every FSD regardless of type):
+- Business Background: Why this development is needed, the business context and triggers
+- Why SAP Standard Is Not Sufficient: Explicitly state what gaps exist in SAP standard that require this custom development
+- Alternative Approaches Considered: List 2-3 alternatives that were evaluated and why they were rejected
+- Out of Scope: Clearly define what is NOT covered by this specification
+- Assumptions: List all assumptions made during the specification (e.g., system landscape, data quality, user access)
+- Dependencies: Other projects, objects, transports, or teams this specification depends on
+- Links: References to related documents, Jira tickets, SharePoint links, or other FSDs
+`;
 
   const typeInstructions: Record<string, string> = {
     enhancement: `\nFSD TYPE: ENHANCEMENT (BADI / User Exit / Enhancement Spot)
-- Focus on identifying specific BADIs, Enhancement Spots, and User Exits
-- Detail the custom ABAP logic required (pseudo-code or logic description)
-- Specify the enhancement implementation class/method names
-- Include before/after behavior comparison
-- Reference specific enhancement framework components (BAdI definitions, filter values)
-- Detail which standard SAP processes need modification and why
-- Include fallback/default behavior when enhancement is not active\n`,
+${commonSections}
+TYPE-SPECIFIC SECTIONS (you MUST include all of these as sub-sections):
+
+**Enhancement Logic:**
+- Identify the specific BAdI, Enhancement Spot, User Exit, or implicit enhancement point
+- Provide the BAdI definition name, filter values, and implementation class name
+- Detail the custom ABAP logic required — use pseudo-code or structured logic description
+- Include before/after behavior comparison (what SAP does standard vs. with enhancement active)
+- Specify fallback/default behavior when the enhancement is not active
+- Detail activation/deactivation strategy (switchable BAdIs, enhancement switches)
+
+**Data Model (Enhancement):**
+- List any custom tables (Z-tables), append structures, or CI includes needed
+- Specify custom data elements, domains, and field catalog extensions
+- Include table relationships and foreign key dependencies
+- Detail any custom CDS views or database views required
+
+**Test (Enhancement):**
+- Unit test cases for the enhancement logic (positive and negative)
+- Regression test cases to verify standard SAP behavior is not broken
+- Include test data requirements specific to the enhancement
+- Specify activation/deactivation testing scenarios\n`,
 
     interface: `\nFSD TYPE: INTERFACE (IDoc / BAPI / RFC / API)
-- Focus on interface specifications: source system, target system, protocol, direction
-- Include detailed field mapping tables (source field -> target field -> transformation rules)
-- Specify message types, IDoc types, segments, and segment fields
-- Detail error handling for interface failures (retry logic, alerting, dead-letter queue)
-- Include interface monitoring and reconciliation approach
-- Specify data volume estimates, frequency, and scheduling
-- Detail middleware configuration (PI/PO, CPI, AIF) if applicable\n`,
+${commonSections}
+TYPE-SPECIFIC SECTIONS (you MUST include all of these as sub-sections):
+
+**APIs & Web Services:**
+- Specify the interface type: IDoc, BAPI, RFC, REST API, OData, SOAP
+- Detail source system, target system, protocol, direction (inbound/outbound/bidirectional)
+- Specify middleware: SAP PI/PO, SAP CPI/Integration Suite, AIF, or direct connection
+- Include simplified API overview if this is a straightforward pass-through
+
+**API Business Object:**
+- Identify the SAP Business Object being interfaced (e.g., PurchaseOrder, SalesOrder, BusinessPartner)
+- Specify the BAPI or API name (e.g., BAPI_PO_CREATE1, API_BUSINESS_PARTNER)
+- Detail the business object structure and key fields
+
+**API Signature:**
+- Full API signature: import parameters, export parameters, tables, changing parameters
+- Include parameter data types, lengths, and mandatory/optional flags
+- Provide a field mapping table: Source Field → Target Field → Transformation Rule → Default Value
+
+**API Data Validation:**
+- Input validation rules before calling the API (mandatory fields, value ranges, format checks)
+- Cross-field validation rules (e.g., if field A = X then field B is mandatory)
+- Data type and format conversion rules (date formats, number formats, encoding)
+
+**API Logic:**
+- Step-by-step processing logic in pseudo-code or structured text
+- Include error handling, retry logic, and compensating actions
+- Detail transformation and enrichment logic between source and target formats
+- Specify idempotency handling for duplicate message detection
+
+**API Confirm/Error:**
+- Confirmation message structure and content
+- Error response structure: error codes, messages, severity levels
+- Alerting and monitoring: who gets notified on failure, SLA for resolution
+- Dead-letter queue / parking lot handling for failed messages
+
+**IDoc Structure (if IDoc-based):**
+- Message type, IDoc type, basic type, extension type
+- Segment structure: segment name, fields, mandatory/optional, max occurrences
+- Partner profiles: sender, receiver, port, partner type
+
+**Inbound Processing:**
+- Inbound function module or process code
+- Posting logic: how inbound data maps to SAP documents
+- Duplicate check mechanism and reprocessing strategy
+- Status management and monitoring (WE05, BD87)
+
+**Outbound Processing:**
+- Triggering event: change pointer, message control, workflow, custom trigger
+- Outbound function module or process code
+- Filtering rules: which data qualifies for outbound distribution
+- Serialization and sequencing requirements
+
+**Test (Interfaces):**
+- Test cases for each direction (inbound/outbound)
+- Include positive, negative, and edge case scenarios
+- Specify test data requirements and system landscape for testing
+- Include volume/performance test criteria\n`,
 
     report: `\nFSD TYPE: REPORT (ALV / Selection Screen / Dashboard)
-- Focus on selection screen parameters (field, type, default, mandatory)
-- Detail the ALV output layout: columns, sorting, subtotals, filters
-- Specify data sources (tables, CDS views, function modules)
-- Include authorization checks for report execution
-- Detail drill-down capabilities and interactive features
-- Include output format options (PDF, Excel, email, spool)
-- Specify performance considerations for large data volumes\n`,
+${commonSections}
+TYPE-SPECIFIC SECTIONS (you MUST include all of these as sub-sections):
+
+**Selection Criteria:**
+- Selection screen layout: block structure, field arrangement
+- Table of parameters: Parameter Name | Field/Table | Type | Mandatory | Default | F4 Help
+- Include select-options (ranges) vs. parameters distinction
+- Specify dynamic selection screen behavior (hide/show based on selections)
+- Detail any custom F4 value helps or search helps
+
+**Validation:**
+- Input validation rules on the selection screen (mandatory combinations, date range checks)
+- Authority checks before report execution (S_TCODE, custom auth objects)
+- Cross-field validation rules
+
+**Authorizations:**
+- Authorization objects checked during execution
+- Table: Auth Object | Field | Value Range | Description
+- Detail organizational level restrictions (company code, plant, sales org)
+
+**Data Selection / Error Handling:**
+- Data selection logic: which tables/CDS views are read, join conditions
+- Performance optimization: indexes used, parallel processing, buffering
+- Error handling during data selection (missing data, timeout, authorization failures)
+
+**Flow Diagram:**
+- Processing flow from selection screen → data retrieval → processing → output
+- Include decision points and parallel processing paths
+
+**Report Output:**
+- ALV grid layout: Column | Field | Header Text | Width | Alignment | Totals | Conditional Format
+- Include color coding rules, traffic light indicators
+- Detail subtotals, grand totals, and grouping hierarchy
+- Specify toolbar customization (custom buttons, functions)
+- Include output format options (ALV, PDF, Excel, email distribution)
+
+**Drilldown:**
+- Drilldown navigation: which fields are clickable
+- Target transactions or reports for each drilldown
+- Include hotspot and hyperlink definitions
+- Detail popup details or secondary list behavior
+
+**Batch / Scheduling:**
+- Batch job scheduling: frequency, variant, server group
+- Job chain dependencies if multiple jobs
+- Monitoring and alerting for batch failures
+
+**Appendix (Selection):**
+- Screenshot mockups of selection screen layout
+- Sample output screenshots or layouts\n`,
 
     form: `\nFSD TYPE: FORM (SmartForm / Adobe Form / Print Program)
-- Focus on form layout specifications: header, body, footer sections
-- Detail the form output type, print program, and driver program
-- Specify dynamic text elements and their data sources
-- Include page break logic and multi-page handling
-- Detail barcode, QR code, and logo placement requirements
-- Specify the form trigger events (output determination, manual print)
-- Detail multi-language and multi-format considerations\n`,
+${commonSections}
+TYPE-SPECIFIC SECTIONS (you MUST include all of these as sub-sections):
+
+**Existing Form (Current State):**
+- Current form name, type (SAPscript, SmartForm, Adobe Form)
+- What is changing: complete replacement, modification, or new form
+- Screenshots or description of current form layout if applicable
+
+**Print Program / Data Model:**
+- Driver program name and description
+- Data retrieval logic: tables read, function modules called
+- Print program interface: FORM routines or class methods
+- Data model structure: header data, item data, text data, partner data
+
+**Form Layout:**
+- Page structure: first page, subsequent pages, final page, copy pages
+- Window definitions: MAIN window, HEADER, FOOTER, ADDRESS, LOGO, custom windows
+- Section-by-section layout description with field placements
+- Include a wireframe or ASCII mockup of the form layout
+
+**Styles:**
+- Font definitions: font family, size, bold/italic for each text element
+- Paragraph formats: alignment, spacing, indentation
+- Character formats: colors, underlining, superscript
+- Table formatting: borders, cell padding, alternating row colors
+
+**Paper / Printing:**
+- Paper size and orientation (A4 portrait, Letter landscape, label sizes)
+- Margins: top, bottom, left, right
+- Printer types and spool handling
+- Duplex printing, stapling, tray selection requirements
+- Output device configuration
+
+**Long Texts:**
+- SAP long text IDs used in the form (text objects, text names)
+- Text include handling: how dynamic texts are pulled and positioned
+- Rich text / SAPscript formatting tags used
+
+**Legal Requirements:**
+- Legal compliance: tax information, mandatory disclaimers, regulatory text
+- Country-specific requirements (e.g., EU invoicing directives, Brazilian NF-e)
+- Digital signature or e-invoicing requirements
+
+**Follow-on:**
+- Output determination: condition records, output types, partner functions
+- Email distribution: PDF attachment, subject line, body text
+- EDI/electronic output considerations
+- Archive linkage (ArchiveLink, DMS)
+
+**Test (Print Forms):**
+- Test cases for each page type and output scenario
+- Test multi-language output
+- Test edge cases: very long texts, missing data, multiple pages
+- Printer compatibility testing requirements\n`,
 
     conversion: `\nFSD TYPE: CONVERSION (Data Migration / LSMW / LTMC)
-- Focus on source-to-target field mapping with transformation rules
-- Detail data cleansing rules and validation criteria per field
-- Specify the migration tool (LSMW, LTMC, custom BAPI program) for each object
-- Include data volume estimates and load sequence dependencies
-- Detail the reconciliation approach (count, value, hash comparisons)
-- Include dry-run / mock migration strategy
-- Specify error handling: rejection criteria, reprocessing approach\n`,
+${commonSections}
+TYPE-SPECIFIC SECTIONS (you MUST include all of these as sub-sections):
+
+=== UPLOAD (Legacy → SAP) ===
+
+**Upload Business Object:**
+- SAP business object being loaded (e.g., Material Master, Vendor, GL Account, Open Items)
+- Target transaction or BAPI: LSMW recording, BAPI call, LTMC template
+- Object dependencies and load sequence
+
+**Source File:**
+- Source system name and technology
+- File format: CSV, Excel, XML, flat file
+- File layout: column definitions, delimiter, encoding (UTF-8, ASCII)
+- Include sample file structure with example data rows
+
+**Source Validation:**
+- Pre-load validation rules applied to the source file
+- Data quality checks: completeness, uniqueness, format compliance
+- Validation report format and error handling
+
+**Selection Screen (Conversion):**
+- Upload program selection screen parameters
+- Test/production run toggle
+- File path input, processing options
+
+**Update Method:**
+- BAPI, BDC recording, direct input, LTMC, or custom program
+- Specify the exact BAPI name or recording transaction
+- Commit frequency (per record, per batch, at end)
+
+**Mapping (Upload):**
+- Full field mapping table: Source Field | Target Field | Transformation Rule | Default | Mandatory
+- Include lookup tables, value mappings, and derived fields
+- Detail concatenation, splitting, and format conversion rules
+
+**Reporting (Upload):**
+- Upload execution report: success count, error count, details
+- Reconciliation report: source totals vs. loaded totals
+
+**Error Handling:**
+- Error classification: data errors, authorization errors, system errors
+- Error log format and storage
+- Reprocessing strategy for failed records
+
+**Transaction Volume:**
+- Estimated record counts per object
+- Expected load duration and performance requirements
+- Parallel processing strategy for large volumes
+
+**Batch Frequency:**
+- One-time cutover load vs. recurring delta loads
+- Scheduling requirements and job dependencies
+
+=== DOWNLOAD (SAP → External) ===
+
+**Download Target:**
+- Target system or file destination
+- File format and delivery mechanism (SFTP, API, shared drive)
+
+**Download Selection:**
+- Data selection criteria: date range, organizational units, status filters
+- Performance considerations for large extractions
+
+**Download Validation:**
+- Post-extraction validation rules
+- Completeness and accuracy checks
+
+**Download Authorization:**
+- Authorization checks for data extraction
+- Data privacy considerations (GDPR, masking)
+
+**Download Data Selection / Error:**
+- Error handling during extraction
+- Partial failure handling
+
+**Download Flow:**
+- End-to-end extraction process flow
+- Scheduling and automation
+
+**Download Mapping:**
+- SAP field to target field mapping table
+- Transformation and formatting rules
+
+**Reporting (Download):**
+- Extraction execution report
+- Reconciliation with target system
+
+**Batch Frequency (Download):**
+- Extraction scheduling: daily, weekly, on-demand
+- Delta vs. full extraction strategy
+
+**Appendix (Conversion):**
+- Sample source files
+- Value mapping tables
+- Load sequence diagram\n`,
 
     workflow: `\nFSD TYPE: WORKFLOW (SAP Business Workflow / Approval Chains)
-- Focus on workflow definition: triggering events, tasks, agents, deadlines
-- Detail the approval chain logic: levels, conditions, escalation paths
-- Specify agent determination rules (organizational, rule-based, custom)
-- Include workflow container elements and their bindings
-- Detail email/notification templates for each workflow step
-- Specify parallel vs sequential approval patterns
-- Include substitution and delegation rules
-- Detail monitoring, restart, and admin override capabilities\n`,
+${commonSections}
+TYPE-SPECIFIC SECTIONS (you MUST include all of these as sub-sections):
+
+**Workflow Definition:**
+- Workflow template ID and description
+- Triggering events: business object events, change documents, custom triggers
+- Workflow container elements and their bindings to business object attributes
+
+**Approval Chain Logic:**
+- Approval levels, conditions, and thresholds
+- Parallel vs. sequential approval patterns
+- Escalation paths and deadlines per approval step
+- Auto-approval rules and bypass conditions
+
+**Agent Determination:**
+- Agent determination rules per step: organizational, rule-based, custom expression
+- Responsible agent resolution: position, job, role, user
+- Substitution and delegation rules
+
+**Notification Templates:**
+- Email/notification templates for each workflow step
+- Include subject line, body text, and dynamic placeholders
+- Work item text and decision options (approve/reject/rework)
+
+**Monitoring & Administration:**
+- Workflow monitoring transactions (SWI5, SWI6, SWI14)
+- Restart and repair procedures for stuck workflows
+- Admin override capabilities
+- Reporting on workflow throughput and SLA compliance
+
+**Test (Workflow):**
+- Test cases for each approval path (approve, reject, escalate, timeout)
+- Test agent determination with different organizational assignments
+- Test substitution and delegation scenarios\n`,
   };
 
   return typeInstructions[fsdType] || "";
+}
+
+/** Build S/4HANA standard FSD instruction (type = "standard" or undefined) */
+function buildStandardFsdInstruction(): string {
+  return `
+COMMON SECTIONS TO INCLUDE:
+- Business Background: Why this development/configuration is needed
+- Why SAP Standard Is Not Sufficient: What gaps exist (if any — for config-only FSDs, explain why configuration is needed)
+- Alternative Approaches Considered: Briefly list alternatives evaluated
+- Out of Scope: What is NOT covered
+- Assumptions: Key assumptions (landscape, data, access)
+- Dependencies: Related projects, objects, or teams
+- Purpose & Prerequisites: Document purpose and reader prerequisites
+- Overview & Definitions: Key terms and abbreviations
+- Scope: Functional scope with solution components
+- Business Requirements: Detailed requirements traceable to business needs
+- Extension Requirements: Custom developments needed (if any)
+- Integration Requirements: Integration points with other modules/systems
+- Analytics Requirements: Reporting and analytics needs
+- Data Requirements: Master data, transactional data, migration needs
+- Security Requirements: Authorization objects, roles, SoD considerations
+- Testing Requirements: Test approach and key test scenarios
+`;
+}
+
+/** Build type-specific sub-sections for the Proposed Solution (Section 4) */
+function buildTypeSpecificSolutionSections(fsdType?: FsdType, module?: string, depth?: string): string {
+  if (!fsdType || fsdType === "standard") return "";
+  const detailed = depth === "comprehensive";
+
+  const sections: Record<string, string> = {
+    enhancement: `
+MANDATORY TYPE-SPECIFIC SUB-SECTIONS (include after 4.3):
+
+### 4.4 Enhancement Logic
+- Identify the specific BAdI / Enhancement Spot / User Exit / Implicit Enhancement
+- Provide: BAdI definition name, filter values, implementation class/method name
+- Write the enhancement logic in structured pseudo-code (IF/ELSE/LOOP)
+- Include before/after behavior comparison table: Scenario | Standard Behavior | Enhanced Behavior
+- Detail activation/deactivation strategy
+
+### 4.5 Data Model
+- List custom tables (Z-tables), append structures, CI includes
+- Table: Object Type | Name | Description | Key Fields | Relationship
+- Include custom data elements and domains if needed
+- Detail any CDS view extensions`,
+
+    interface: `
+MANDATORY TYPE-SPECIFIC SUB-SECTIONS (include after 4.3):
+
+### 4.4 API / Web Service Specification
+- Interface type (IDoc/BAPI/RFC/REST/OData/SOAP), direction, protocol
+- Source system → Target system with middleware details
+
+### 4.5 API Business Object & Signature
+- Business Object name, BAPI/API name
+- Parameter table: Parameter | Direction | Type | Length | Mandatory | Description
+
+### 4.6 Field Mapping
+- Full mapping table: Source Field | Target Field | Transformation Rule | Default | Mandatory
+- Include ${detailed ? "15-20" : "8-12"} field mappings
+
+### 4.7 API Data Validation
+- Input validation rules table: Field | Rule | Error Code | Severity
+- Cross-field validations
+
+### 4.8 Processing Logic
+- Step-by-step processing logic in pseudo-code
+- Include retry logic, idempotency handling
+
+### 4.9 Confirmation & Error Handling
+- Success response structure
+- Error response: Code | Message | Severity | Resolution
+- Alerting and monitoring setup (AIF, SLT, custom)
+
+### 4.10 IDoc Structure (if applicable)
+- Message type, IDoc type, segments, partner profiles
+
+### 4.11 Inbound Processing
+- Function module / process code, posting logic, duplicate checks
+
+### 4.12 Outbound Processing
+- Triggering event, filter rules, serialization requirements`,
+
+    report: `
+MANDATORY TYPE-SPECIFIC SUB-SECTIONS (include after 4.3):
+
+### 4.4 Selection Criteria
+- Selection screen layout with field table: Parameter | Field/Table | Type | Mandatory | Default | F4 Help
+- Include ${detailed ? "10-14" : "6-8"} selection parameters
+- Dynamic screen behavior rules
+
+### 4.5 Data Selection & Processing Logic
+- Data selection logic: tables/CDS views, join conditions, WHERE clauses
+- Performance optimization approach (indexes, buffering, parallel processing)
+
+### 4.6 Authorizations
+- Authorization objects table: Auth Object | Field | Values | Description
+- Organizational level restrictions
+
+### 4.7 Report Output (ALV Layout)
+- ALV columns table: Column | Field | Header Text | Width | Alignment | Totals | Conditional Format
+- Include ${detailed ? "15-20" : "8-12"} columns
+- Color coding and traffic light rules
+- Subtotals and grouping hierarchy
+
+### 4.8 Drilldown Navigation
+- Drilldown table: Clickable Field | Target Transaction/Report | Parameters Passed
+- Popup details and secondary list behavior
+
+### 4.9 Batch Scheduling
+- Job name, frequency, variant, server group
+- Job chain dependencies and monitoring`,
+
+    form: `
+MANDATORY TYPE-SPECIFIC SUB-SECTIONS (include after 4.3):
+
+### 4.4 Existing Form (Current State)
+- Current form name, type, and what is changing
+
+### 4.5 Print Program / Data Model
+- Driver program, data retrieval logic
+- Data model: header data, item data, text data, partner data
+
+### 4.6 Form Layout
+- Page structure: first page, subsequent pages, final page, copies
+- Window definitions: MAIN, HEADER, FOOTER, ADDRESS, LOGO
+- Field placement wireframe or ASCII mockup
+
+### 4.7 Styles
+- Font table: Element | Font Family | Size | Style (Bold/Italic) | Color
+- Paragraph formats and table formatting rules
+
+### 4.8 Paper / Printing
+- Paper size, orientation, margins
+- Printer configuration, duplex, tray selection
+
+### 4.9 Long Texts
+- SAP text objects/IDs used, text include handling
+
+### 4.10 Legal Requirements
+- Tax information, regulatory disclaimers, country-specific compliance
+
+### 4.11 Follow-on / Output Determination
+- Output types, condition records, email distribution
+- Archive linkage (ArchiveLink/DMS)`,
+
+    conversion: `
+MANDATORY TYPE-SPECIFIC SUB-SECTIONS (include after 4.3):
+
+=== UPLOAD (Legacy → SAP) ===
+
+### 4.4 Upload Business Object & Method
+- Business object, target BAPI/transaction, update method (BAPI/BDC/LTMC/Direct Input)
+
+### 4.5 Source File Specification
+- File format, layout, delimiter, encoding
+- Sample file structure with column definitions
+
+### 4.6 Source Validation & Selection Screen
+- Pre-load validation rules
+- Upload program selection screen parameters
+
+### 4.7 Field Mapping (Upload)
+- Full mapping table: Source Column | Target Field | Transformation | Default | Mandatory
+- Include ${detailed ? "20-30" : "12-18"} field mappings
+- Lookup tables and value mapping rules
+
+### 4.8 Error Handling & Reporting (Upload)
+- Error classification and handling
+- Upload execution report format: success/error counts
+- Reconciliation approach
+
+### 4.9 Volume & Scheduling (Upload)
+- Estimated record counts, expected duration, parallel processing
+- One-time vs. recurring loads
+
+=== DOWNLOAD (SAP → External) ===
+
+### 4.10 Download Specification
+- Target system, file format, delivery mechanism
+- Selection criteria, authorization checks
+- Field mapping (SAP → target)
+
+### 4.11 Reconciliation & Monitoring
+- Post-extraction validation
+- Extraction scheduling and reporting`,
+
+    workflow: `
+MANDATORY TYPE-SPECIFIC SUB-SECTIONS (include after 4.3):
+
+### 4.4 Workflow Definition
+- Workflow template ID, triggering events
+- Container elements and bindings
+
+### 4.5 Approval Chain
+- Approval levels table: Level | Condition | Approver Determination | Deadline | Escalation
+- Parallel vs. sequential patterns
+- Auto-approval and bypass rules
+
+### 4.6 Agent Determination
+- Rules per step: organizational, rule-based, custom expression
+- Substitution and delegation rules
+
+### 4.7 Notification Templates
+- Email templates table: Step | Subject | Body Template | Recipient
+- Work item text and decision options
+
+### 4.8 Monitoring & Administration
+- Monitoring transactions, restart procedures
+- Admin override capabilities, SLA reporting`,
+  };
+
+  return sections[fsdType] || "";
 }
 
 // ─────────────────────────────────────────────
@@ -434,6 +932,32 @@ export async function aiExecutiveSummary(
   const userPriority = buildUserInputPriorityInstruction(requirements);
   const wordLimit = depth === "comprehensive" ? 400 : 200;
   const consultingFramework = buildConsultingFramework("business-analyst");
+  const commonSectionsPrompt = fsdType && fsdType !== "standard" ? `
+
+IMPORTANT: After the executive summary paragraphs, you MUST also include these sub-sections (as ### headers):
+
+### 2.1 Business Background
+Explain why this ${fsdType} development is needed. What business process or pain point triggered this requirement?
+
+### 2.2 Why SAP Standard Is Not Sufficient
+Explicitly state what gaps exist in SAP standard functionality that require this custom ${fsdType}.
+
+### 2.3 Alternative Approaches Considered
+List 2-3 alternative approaches that were evaluated (e.g., different enhancement points, third-party tools, workarounds) and explain why they were rejected.
+
+### 2.4 Out of Scope
+Clearly list what is NOT covered by this specification (related but excluded processes, future phases, etc.).
+
+### 2.5 Assumptions
+List 3-5 key assumptions (system landscape, data quality, user training, organizational readiness).
+
+### 2.6 Dependencies
+List dependencies on other projects, FSDs, transports, master data, or teams.
+
+### 2.7 Related Links
+Placeholder section for links to related documents, Jira tickets, or references.
+` : "";
+
   const prompt = `You are a senior SAP functional consultant at a top consulting firm. Write a professional executive summary for a Functional Specification Document (FSD).
 ${consultingFramework}
 ${userPriority}
@@ -447,14 +971,18 @@ Write ${depth === "comprehensive" ? "4-5" : "2-3"} concise paragraphs covering:
 1. Purpose of this specification document
 2. Scope — what business processes are covered
 3. Expected business benefits and outcomes${depth === "comprehensive" ? "\n4. Key stakeholders and organizational impact\n5. Success criteria and KPIs" : ""}
-
+${commonSectionsPrompt}
 Rules:
 - Be specific to SAP ${module} and the ${processArea} process
 - Use professional consulting language
-- Do NOT use markdown headers — just plain paragraphs
-- Keep it under ${wordLimit} words`;
+${fsdType && fsdType !== "standard" ? "- Include ALL the sub-sections listed above — do not skip any" : "- Do NOT use markdown headers — just plain paragraphs"}
+- Keep the executive summary under ${wordLimit} words (sub-sections can be additional)`;
 
-  const maxTokens = depth === "comprehensive" ? 4096 : 2048;
+  // Increase tokens when type-specific sections are included
+  const hasTypeSections = fsdType && fsdType !== "standard";
+  const maxTokens = hasTypeSections
+    ? (depth === "comprehensive" ? 6144 : 4096)
+    : (depth === "comprehensive" ? 4096 : 2048);
   return await callClaude(withExtraContext(prompt, extraContext), maxTokens);
 }
 
@@ -475,6 +1003,9 @@ export async function aiProposedSolution(
   const fsdTypeInstruction = buildFsdTypeInstruction(fsdType);
   const userPriority = buildUserInputPriorityInstruction(requirements);
   const consultingFramework = buildConsultingFramework("solution-architect");
+  // Build type-specific sub-sections for the proposed solution
+  const typeSpecificSolution = buildTypeSpecificSolutionSections(fsdType, module, depth);
+
   const prompt = `You are a senior SAP ${module} solution architect. Design the proposed solution for this FSD.
 ${consultingFramework}
 ${userPriority}
@@ -499,14 +1030,19 @@ Use → arrows between steps for flow direction. Include decision gateways where
 ### 4.3 Key Design Decisions
 A markdown table with columns: Decision | Option Chosen | Rationale
 Include ${depth === "comprehensive" ? "8-10" : "4-6"} design decisions specific to this process. Decisions MUST reference the user's requirements — not generic SAP best practices.
-
+${typeSpecificSolution}
 Rules:
 - Be specific to SAP ${module}
 - Reference actual tcodes and Fiori apps from the list above
 - Keep it practical and implementable
-- Every process step and design decision must be traceable to the user's input`;
+- Every process step and design decision must be traceable to the user's input
+${typeSpecificSolution ? "- Include ALL type-specific sub-sections listed above — these are MANDATORY for this FSD type" : ""}`;
 
-  const maxTokens = depth === "comprehensive" ? 4096 : 2048;
+  // Increase tokens significantly when type-specific sections are included (interface can have 12+ sub-sections)
+  const hasTypeSections = fsdType && fsdType !== "standard";
+  const maxTokens = hasTypeSections
+    ? (depth === "comprehensive" ? 8192 : 6144)
+    : (depth === "comprehensive" ? 4096 : 2048);
   return await callClaude(withExtraContext(prompt, extraContext), maxTokens);
 }
 
