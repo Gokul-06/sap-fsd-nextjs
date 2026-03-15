@@ -175,55 +175,6 @@ Honestly, it's made consultants faster, sharper, and gives them a way to show up
     category: "AI",
     tags: ["AI", "Consulting", "Productivity", "SAP", "Daily Work"],
   },
-  {
-    slug: "friday-news-florian-wilhelm-ai-characters",
-    title: "Fr-AI-day News: Florian Wilhelm's AI Character Experiment with CrewAI",
-    excerpt:
-      "In our Expert Corner, Florian Wilhelm shares how he built a group of five AI characters who debated music — and what he learned about AI personality and roleplay.",
-    content: `## The Expert Corner
-
-Meet Florian Wilhelm from Cologne, Germany — a veteran at Westernacher with over 17 years of experience. A while ago, Florian got curious about AI and decided to experiment beyond the usual enterprise use cases.
-
-## The Experiment: AI Characters Debating Music
-
-Florian created a group of five AI characters using **CrewAI** and **ChatGPT 3.5**. The idea was brilliant: have distinct AI personalities chat about music, each with their own background, opinions, and style.
-
-## What Happened
-
-The AIs ended up being pretty stiff — they stuck to their assigned roles in every single line of dialogue. One character would say something like:
-
-> "As a communist fan of modern classical music, I see AC/DC's Hells Bells as a modern guitar masterpiece."
-
-And another would respond:
-
-> "As a devoted Rock'n Roll Hall of Fame admirer, I find the song repetitive and overrated."
-
-Not much wiggle room! The characters couldn't break free from their role definitions to have a natural, flowing conversation.
-
-## The Bigger Lesson
-
-Florian's experiment highlights a fascinating challenge in multi-agent AI systems: **persona rigidity**. When you define an AI agent's role too narrowly, it becomes a one-dimensional character rather than a nuanced conversational partner.
-
-This same challenge applies to enterprise AI — whether you're building consulting agents, customer-facing chatbots, or collaborative AI teams. The balance between structure and flexibility is key.
-
-## What This Means for Enterprise AI
-
-- **Role definitions matter** — Too rigid and agents become predictable; too loose and they lose focus
-- **Multi-agent orchestration** is hard — Getting AI characters (or specialist agents) to collaborate naturally requires careful prompt engineering
-- **Experimentation is the path** — Side projects like Florian's push the boundaries of what we understand about AI behavior
-
-## About Fr-AI-day News
-
-Fr-AI-day News is Westernacher's bi-weekly internal newsletter covering AI updates, tips, and awareness. The Expert Corner features team members sharing their personal AI experiments and discoveries.`,
-    author: "Florian Wilhelm",
-    authorRole: "Senior Consultant",
-    authorInitials: "FW",
-    authorColor: "bg-emerald-500",
-    date: "2026-02-28",
-    readingTime: "4 min read",
-    category: "Innovation",
-    tags: ["Fr-AI-day", "CrewAI", "Multi-Agent", "AI Characters", "Innovation"],
-  },
 ];
 
 // Ensure reading times are calculated

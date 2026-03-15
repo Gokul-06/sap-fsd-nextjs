@@ -196,6 +196,12 @@ function GeneratePageContent() {
     });
   }
 
+  // Helper to change step and scroll to top
+  function goToStep(s: 1 | 2 | 3 | 4) {
+    setStep(s);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
   function handleNextToSections() {
     if (!title.trim()) {
       toast({
@@ -214,16 +220,16 @@ function GeneratePageContent() {
       });
       return;
     }
-    setStep(2);
+    goToStep(2);
   }
 
   async function handleGenerate() {
-    setStep(3);
+    goToStep(3);
     const data = await generate(formInput);
     if (data) {
-      setStep(4);
+      goToStep(4);
     } else {
-      setStep(2);
+      goToStep(2);
       toast({
         title: "Generation failed",
         description:
@@ -261,7 +267,7 @@ function GeneratePageContent() {
 
   function handleStartOver() {
     reset();
-    setStep(1);
+    goToStep(1);
     setTitle("");
     setProjectName("");
     setAuthor("GP");
@@ -607,7 +613,7 @@ function GeneratePageContent() {
                     <Button
                       variant="outline"
                       className="border-[#0091DA]/30 text-[#0091DA] hover:bg-[#0091DA]/5"
-                      onClick={() => setStep(1)}
+                      onClick={() => goToStep(1)}
                     >
                       &larr; Back to Requirements
                     </Button>
