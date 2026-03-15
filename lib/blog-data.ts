@@ -48,38 +48,41 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "multi-agent-ai-sap-specifications",
     title: "How Multi-Agent AI Systems Generate Enterprise SAP Specifications",
     excerpt:
-      "Learn how our 6-agent AI team collaborates to produce complete, enterprise-grade SAP Functional Specification Documents in under 30 seconds.",
-    content: `## The Problem with Traditional FSD Writing
+      "A deep dive into the architecture: 6 specialized AI agents, a 4-phase pipeline, shared context, cross-critique, and RICEFW-aware section generation.",
+    content: `## Why a Multi-Agent Architecture?
 
-Writing a Functional Specification Document for SAP projects has always been a time-consuming, manual process. Consultants spend days — sometimes weeks — gathering requirements, mapping SAP objects, and formatting everything into a professional document.
+A single AI model, no matter how powerful, struggles with complex SAP specifications. It loses context over long documents, mixes up module-specific terminology, and can't self-review its own output. The solution: break the problem into specialized roles — just like a real consulting team.
 
-## Enter Multi-Agent AI
+## The 6-Agent Team
 
-Instead of relying on a single AI model to generate everything, we built a team of 6 specialized agents, each focused on a different aspect of the specification:
+Each agent has a defined role, a specific system prompt, and access to SAP-domain knowledge:
 
-1. **Project Director** — Analyses requirements and creates a shared brief
-2. **Business Analyst** — Writes the executive summary and business context
-3. **Solution Architect** — Designs the technical SAP solution
-4. **Technical Consultant** — Handles error scenarios and edge cases
-5. **Project Manager** — Plans migration, testing, and cutover
-6. **BPMN Architect** — Generates process flow diagrams
+1. **Project Director** — Reads the user's requirements, classifies the SAP module, identifies cross-module impacts, and produces a structured brief that all other agents share as their single source of truth
+2. **Business Analyst** — Writes the executive summary, business background, and scoping sections. Trained to reference the user's exact input — not generic boilerplate
+3. **Solution Architect** — Designs the To-Be process flow, maps SAP transactions/Fiori apps, and produces design decision tables. Has access to the SAP object registry (tables, BAPIs, tcodes)
+4. **Technical Consultant** — Generates error handling matrices, input validations, and business rule tables. Focuses on edge cases the user might not think of
+5. **Project Manager** — Builds migration object lists, cutover task tables, and rollback plans. Understands load sequencing and reconciliation
+6. **BPMN Architect** — Produces Signavio-compatible BPMN 2.0 process diagrams as structured JSON with swim lanes, gateways, and SAP transaction references
 
-## How They Collaborate
+## The 4-Phase Pipeline
 
-The agents don't work in isolation. They follow a 4-phase pipeline:
+The agents follow a strict orchestration pattern:
 
-- **Phase 1**: The Project Director analyses requirements and creates a shared context
-- **Phase 2**: All 5 specialists work in parallel, each writing their assigned sections
-- **Phase 2.5**: Cross-Critique — agents peer-review each other's work
-- **Phase 3**: Quality Review — consistency check across all 14 sections
+- **Phase 1 — Analysis**: The Project Director creates a shared context (module strategy, process steps, design decisions, terminology glossary, risk areas). This prevents agents from contradicting each other
+- **Phase 2 — Parallel Generation**: All 5 specialists work simultaneously, each writing their assigned sections. Parallel execution keeps total generation time under 30 seconds
+- **Phase 2.5 — Cross-Critique**: Each agent reviews other agents' sections and flags inconsistencies (e.g., the Solution Architect references a table that the Technical Consultant's error handling doesn't cover)
+- **Phase 3 — Quality Review**: A final consistency check across all 14 sections ensures terminology, module references, and process flows are aligned
 
-## The Result
+## Key Design Principles
 
-A complete, 14-section SAP Functional Specification Document — with tables, process flows, configuration items, test scenarios, and a migration plan — generated in under 30 seconds.
+- **Shared Context, Not Shared Prompts**: Every agent receives the Project Director's brief, ensuring alignment without duplicating the entire prompt
+- **Domain-Specific Training**: Each agent has access to curated SAP knowledge — module-specific tables, transactions, Fiori apps, and best practices from the Westernacher consulting framework
+- **User Input Priority**: The user's requirements are always the primary source. Agents are instructed to reference specific user input rather than generating generic content
+- **RICEFW-Aware**: The system adapts its output structure based on the FSD type — Enhancement, Interface, Report, Form, Conversion, or Workflow — each with type-specific sections based on Westernacher's FS Section Mapping
 
-## What's Next
+## What Makes This Different
 
-We're continuously improving each agent's capabilities through training and feedback loops. The goal is enterprise-grade quality that matches what a senior SAP consultant would produce.`,
+Traditional AI document generation uses a single prompt and hopes for the best. Our approach mirrors how a real consulting team operates: specialized roles, shared context, peer review, and quality gates. The result is a document that reads like it was written by a team of senior SAP consultants — because architecturally, it was.`,
     author: "Gokul Palanisamy",
     authorRole: "Consultant",
     authorInitials: "GP",
